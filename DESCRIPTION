@@ -1,11 +1,29 @@
 Package: mlstats
-Title: What the Package Does (One Line, Title Case)
+Title: Helpful Functions for Multilevel Analysis
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person("Felix", "Dietrich", , "mail@felix-dietrich.de", role = c("aut", "cre"))
+Description: Provides tools for multilevel descriptive statistics and data decomposition.
+    Computes within-group and between-group correlations, intraclass correlation 
+    coefficients (ICCs), and comprehensive descriptive statistics tables for nested data. 
+    Supports both frequentist (via lme4) and Bayesian (via brms) estimation approaches.
+    Includes functions for decomposing variables into within-group and between-group 
+    components for use in Random Effects Within-Between (REWB) models.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+Depends: 
+    R (>= 4.1.0)
+Suggests: 
+    brms,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Imports: 
+    dplyr,
+    glue,
+    gt,
+    lme4,
+    rlang,
+    stringr,
+    tibble

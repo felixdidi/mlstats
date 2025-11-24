@@ -1,2 +1,5 @@
 ^mlstats\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+^brms_models$
+^README\.Rmd$
