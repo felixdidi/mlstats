@@ -87,7 +87,7 @@ data |>
 
 By setting `print_gt = TRUE`, it is also easy to create a nicely formatted table that looks great in your Quarto document and can be directly copied into a manuscript. Here, we use the default setting of `remove_leading_zero = TRUE` to comply with APA formatting guidelines:
 
-```{r gt-example}
+```{r gt-example, eval = FALSE}
 data |> 
   mldesc(
     group = "person",
@@ -96,6 +96,19 @@ data |>
     table_title = "Descriptive statistics, within- and between-person correlations of digital disconnection and motivations"
   )
 ```
+
+```{r gt-example-rendered, echo = FALSE, message = FALSE}
+data |> 
+  mldesc(
+    group = "person",
+    vars = vars,
+    print_gt = TRUE,
+    table_title = "Descriptive statistics, within- and between-person correlations of digital disconnection and motivations"
+  ) |> 
+    gt::gtsave("man/img/gt-example.png")
+```
+
+![](man/img/gt-example.png)
 
 ### Centering
 
