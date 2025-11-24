@@ -3,3 +3,4 @@
 ^LICENSE\.md$
 ^brms_models$
 ^README\.Rmd$
+^\.github$
