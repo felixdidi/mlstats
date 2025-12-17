@@ -34,14 +34,14 @@ test_that("mldesc computes descriptive statistics correctly", {
     vars = "x"
   )
   
-  # Check n_obs
-  expect_equal(result$n_obs, "30")
+  # Check n_obs - extract underlying value
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "30")
   
-  # Check mean
-  expect_equal(result$m, "20.00")
+  # Check mean - extract underlying value
+  expect_equal(vctrs::vec_data(result$m)[1], "20.00")
   
-  # Check range format
-  expect_match(result$range, "^[0-9]+-[0-9]+$")
+  # Check range format - extract underlying value
+  expect_match(vctrs::vec_data(result$range)[1], "^[0-9]+-[0-9]+$")
 })
 
 test_that("mldesc handles multiple variables", {
@@ -86,10 +86,11 @@ test_that("mldesc computes ICC values", {
   
   # ICC should be present and numeric-like
   expect_true("icc" %in% colnames(result))
-  expect_match(result$icc, "^\\.[0-9]{2}$")
+  icc_val <- vctrs::vec_data(result$icc)[1]
+  expect_match(icc_val, "^\\.[0-9]{2}$")
   
   # ICC should be relatively high for this data structure
-  icc_value <- as.numeric(paste0("0", result$icc))
+  icc_value <- as.numeric(paste0("0", icc_val))
   expect_gt(icc_value, 0.5)
 })
 
@@ -111,10 +112,10 @@ test_that("mldesc includes correlation matrix", {
   # Check that correlation columns exist (named "1", "2", "3")
   expect_true(all(c("1", "2", "3") %in% colnames(result)))
   
-  # Diagonal should be "\u2013"
-  expect_equal(result$`1`[1], "\u2013")
-  expect_equal(result$`2`[2], "\u2013")
-  expect_equal(result$`3`[3], "\u2013")
+  # Diagonal should be "\u2013" - extract underlying values
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
+  expect_equal(vctrs::vec_data(result$`2`)[2], "\u2013")
+  expect_equal(vctrs::vec_data(result$`3`)[3], "\u2013")
 })
 
 test_that("mldesc handles missing values", {
@@ -139,9 +140,9 @@ test_that("mldesc handles missing values", {
   expect_s3_class(result, "tbl_df")
   expect_equal(nrow(result), 2)
   
-  # n_obs should reflect non-missing values
-  expect_equal(result$n_obs[1], "27")  # 30 - 3 missing
-  expect_equal(result$n_obs[2], "27")  # 30 - 3 missing
+  # n_obs should reflect non-missing values - extract underlying values
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "27")  # 30 - 3 missing
+  expect_equal(vctrs::vec_data(result$n_obs)[2], "27")  # 30 - 3 missing
 })
 
 test_that("mldesc remove_leading_zero parameter works", {
@@ -166,11 +167,13 @@ test_that("mldesc remove_leading_zero parameter works", {
     remove_leading_zero = FALSE
   )
   
-  # With removal: should have "." format
-  expect_true(any(grepl("^\\.", result_with_removal$icc)))
+  # With removal: should have "." format - extract underlying values
+  icc_with <- vctrs::vec_data(result_with_removal$icc)
+  expect_true(any(grepl("^\\.", icc_with)))
   
-  # Without removal: should have "0." format
-  expect_true(any(grepl("^0\\.", result_without_removal$icc)))
+  # Without removal: should have "0." format - extract underlying values
+  icc_without <- vctrs::vec_data(result_without_removal$icc)
+  expect_true(any(grepl("^0\\.", icc_without)))
 })
 
 test_that("mldesc handles single variable", {
@@ -189,7 +192,7 @@ test_that("mldesc handles single variable", {
   # Should have: variable, n_obs, m, sd, range, 1 correlation column, icc
   expect_equal(nrow(result), 1)
   expect_equal(ncol(result), 7)
-  expect_equal(result$`1`[1], "\u2013")
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
 })
 
 test_that("mldesc handles numeric group variable", {
@@ -244,7 +247,7 @@ test_that("mldesc handles unbalanced groups", {
   
   expect_s3_class(result, "tbl_df")
   expect_equal(nrow(result), 2)
-  expect_equal(result$n_obs[1], "50")
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "50")
 })
 
 test_that("mldesc formats numbers correctly", {
@@ -260,15 +263,21 @@ test_that("mldesc formats numbers correctly", {
     vars = "x"
   )
   
+  # Extract underlying values
+  m_val <- vctrs::vec_data(result$m)[1]
+  sd_val <- vctrs::vec_data(result$sd)[1]
+  range_val <- vctrs::vec_data(result$range)[1]
+  icc_val <- vctrs::vec_data(result$icc)[1]
+  
   # Mean and SD should have 2 decimal places
-  expect_match(result$m, "^[0-9]+\\.[0-9]{2}$")
-  expect_match(result$sd, "^[0-9]+\\.[0-9]{2}$")
+  expect_match(m_val, "^[0-9]+\\.[0-9]{2}$")
+  expect_match(sd_val, "^[0-9]+\\.[0-9]{2}$")
   
   # Range should be integers
-  expect_match(result$range, "^[0-9]+-[0-9]+$")
+  expect_match(range_val, "^[0-9]+-[0-9]+$")
   
   # ICC should have 2 decimal places
-  expect_match(result$icc, "^\\.[0-9]{2}$")
+  expect_match(icc_val, "^\\.[0-9]{2}$")
 })
 
 test_that("mldesc marks significant correlations", {
@@ -286,8 +295,8 @@ test_that("mldesc marks significant correlations", {
     vars = c("x", "y")
   )
   
-  # Should have asterisks for significant correlations
-  cor_values <- c(result$`2`[1], result$`1`[2])
+  # Should have asterisks for significant correlations - extract underlying values
+  cor_values <- c(vctrs::vec_data(result$`2`)[1], vctrs::vec_data(result$`1`)[2])
   cor_values <- cor_values[cor_values != "\u2013"]
   
   expect_true(any(grepl("\\*$", cor_values)))
@@ -312,8 +321,11 @@ test_that("mldesc output format matches expected structure", {
   expected_cols <- c("variable", "n_obs", "m", "sd", "range", "1", "2", "3", "icc")
   expect_equal(colnames(result), expected_cols)
   
-  # Check that all values are character strings
-  expect_true(all(sapply(result, is.character)))
+  # Check that variable is character, others are mlstats_stat
+  expect_type(result$variable, "character")
+  expect_s3_class(result$n_obs, "mlstats_stat")
+  expect_s3_class(result$m, "mlstats_stat")
+  expect_s3_class(result$sd, "mlstats_stat")
 })
 
 test_that("mldesc handles variables with zero variance within groups", {
@@ -379,8 +391,8 @@ test_that("mldesc weight=TRUE uses weighted correlations", {
   expect_s3_class(result_weighted, "tbl_df")
   expect_equal(nrow(result_weighted), 2)
   
-  # Between-group correlation should be present
-  between_val <- result_weighted$`1`[2]
+  # Between-group correlation should be present - extract underlying value
+  between_val <- vctrs::vec_data(result_weighted$`1`)[2]
   expect_true(nchar(between_val) > 0)
   expect_true(between_val != "\u2013")
 })
@@ -404,8 +416,8 @@ test_that("mldesc weight=FALSE uses unweighted correlations", {
   expect_s3_class(result_unweighted, "tbl_df")
   expect_equal(nrow(result_unweighted), 2)
   
-  # Between-group correlation should be present
-  between_val <- result_unweighted$`1`[2]
+  # Between-group correlation should be present - extract underlying value
+  between_val <- vctrs::vec_data(result_unweighted$`1`)[2]
   expect_true(nchar(between_val) > 0)
   expect_true(between_val != "\u2013")
 })
@@ -434,8 +446,8 @@ test_that("mldesc weighted vs unweighted differ with unbalanced data", {
   )
   
   # Extract between-group correlations (lower triangle)
-  between_weighted <- result_weighted$`1`[2]
-  between_unweighted <- result_unweighted$`1`[2]
+  between_weighted <- vctrs::vec_data(result_weighted$`1`)[2]
+  between_unweighted <- vctrs::vec_data(result_unweighted$`1`)[2]
   
   # Both should be valid
   expect_true(nchar(between_weighted) > 0)
@@ -488,8 +500,8 @@ test_that("mldesc unweighted works with balanced groups", {
   expect_s3_class(result_unweighted, "tbl_df")
   expect_equal(nrow(result_unweighted), 2)
   
-  # Descriptive statistics should be unaffected by weight parameter
-  expect_equal(result_unweighted$n_obs[1], "60")
+  # Descriptive statistics - extract underlying value
+  expect_equal(vctrs::vec_data(result_unweighted$n_obs)[1], "60")
 })
 
 test_that("mldesc weight parameter doesn't affect descriptives or ICC", {
@@ -514,19 +526,37 @@ test_that("mldesc weight parameter doesn't affect descriptives or ICC", {
     weight = FALSE
   )
   
-  # n_obs and range should be identical
-  expect_equal(result_weighted$n_obs, result_unweighted$n_obs)
-  expect_equal(result_weighted$range, result_unweighted$range)
+  # n_obs and range should be identical - extract underlying values
+  expect_equal(
+    vctrs::vec_data(result_weighted$n_obs),
+    vctrs::vec_data(result_unweighted$n_obs)
+  )
+  expect_equal(
+    vctrs::vec_data(result_weighted$range),
+    vctrs::vec_data(result_unweighted$range)
+  )
   
-  # Mean and SD should DIFFER with unbalanced groups
-  expect_false(identical(result_weighted$m, result_unweighted$m))
-  expect_false(identical(result_weighted$sd, result_unweighted$sd))
+  # Mean and SD should DIFFER with unbalanced groups - extract underlying values
+  expect_false(identical(
+    vctrs::vec_data(result_weighted$m),
+    vctrs::vec_data(result_unweighted$m)
+  ))
+  expect_false(identical(
+    vctrs::vec_data(result_weighted$sd),
+    vctrs::vec_data(result_unweighted$sd)
+  ))
   
-  # ICC should be identical
-  expect_equal(result_weighted$icc, result_unweighted$icc)
+  # ICC should be identical - extract underlying values
+  expect_equal(
+    vctrs::vec_data(result_weighted$icc),
+    vctrs::vec_data(result_unweighted$icc)
+  )
   
-  # Within-group correlations (upper triangle) should be identical
-  expect_equal(result_weighted$`2`[1], result_unweighted$`2`[1])
+  # Within-group correlations (upper triangle) should be identical - extract underlying values
+  expect_equal(
+    vctrs::vec_data(result_weighted$`2`)[1],
+    vctrs::vec_data(result_unweighted$`2`)[1]
+  )
 })
 
 test_that("mldesc weight=FALSE calculates mean of group means", {
@@ -551,20 +581,69 @@ test_that("mldesc weight=FALSE calculates mean of group means", {
     weight = FALSE
   )
   
+  # Extract underlying values
+  m_weighted <- vctrs::vec_data(result_weighted$m)[1]
+  m_unweighted <- vctrs::vec_data(result_unweighted$m)[1]
+  sd_weighted <- vctrs::vec_data(result_weighted$sd)[1]
+  sd_unweighted <- vctrs::vec_data(result_unweighted$sd)[1]
+  
   # Weighted mean: (5*10 + 10*20 + 30*30) / 45 = 25.56
-  expect_equal(result_weighted$m, "25.56")
+  expect_equal(m_weighted, "25.56")
   
   # Unweighted mean: (10 + 20 + 30) / 3 = 20.00
-  expect_equal(result_unweighted$m, "20.00")
+  expect_equal(m_unweighted, "20.00")
   
   # Weighted SD should be 6.93, sd(c(rep(10, 5), rep(20, 10), rep(30, 30)))
-  expect_equal(result_weighted$sd, "6.93")
+  expect_equal(sd_weighted, "6.93")
   
   # Unweighted SD should be SD of group means: sd(c(10, 20, 30)) = 10.00
-  expect_equal(result_unweighted$sd, "10.00")
+  expect_equal(sd_unweighted, "10.00")
 })
 
-test_that("mldesc returns gt table when print_gt = TRUE", {
+test_that("all non-variable columns have mlstats_stat class", {
+  set.seed(5000)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  # Check that all columns except variable have mlstats_stat class
+  expect_type(result$variable, "character")
+  expect_s3_class(result$n_obs, "mlstats_stat")
+  expect_s3_class(result$m, "mlstats_stat")
+  expect_s3_class(result$sd, "mlstats_stat")
+  expect_s3_class(result$range, "mlstats_stat")
+  expect_s3_class(result$`1`, "mlstats_stat")
+  expect_s3_class(result$`2`, "mlstats_stat")
+  expect_s3_class(result$icc, "mlstats_stat")
+})
+
+test_that("result has mlstats_desc_tibble class", {
+  set.seed(5001)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  # Check custom class is applied
+  expect_s3_class(result, "mlstats_desc_tibble")
+})
+
+test_that("mldesc returns correct default output", {
   set.seed(4000)
   data <- data.frame(
     group = rep(1:3, each = 10),
@@ -572,21 +651,18 @@ test_that("mldesc returns gt table when print_gt = TRUE", {
     y = rnorm(30)
   )
   
-  result_gt <- mldesc(
+  result <- mldesc(
     data = data,
     group = "group",
-    vars = c("x", "y"),
-    print_gt = TRUE
+    vars = c("x", "y")
   )
   
-  # Should return gt_tbl object
-  expect_s3_class(result_gt, "gt_tbl")
-  
-  # Should not be a tibble
-  expect_false(inherits(result_gt, "tbl_df"))
+  # Should return tibble with custom class
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_s3_class(result, "tbl_df")
 })
 
-test_that("mldesc returns tibble when print_gt = FALSE (default)", {
+test_that("mldesc stores default attributes for printing", {
   set.seed(4001)
   data <- data.frame(
     group = rep(1:3, each = 10),
@@ -594,21 +670,31 @@ test_that("mldesc returns tibble when print_gt = FALSE (default)", {
     y = rnorm(30)
   )
   
-  result_tibble <- mldesc(
+  result <- mldesc(
     data = data,
     group = "group",
     vars = c("x", "y"),
-    print_gt = FALSE
+    weight = TRUE
   )
   
-  # Should return tibble
-  expect_s3_class(result_tibble, "tbl_df")
+  # Check that default attributes are stored
+  expect_equal(attr(result, "table_title"), "Multilevel descriptive statistics")
+  expect_equal(attr(result, "correlation_note"), 
+               "Within-group correlations above, between-group correlations below the diagonal.")
+  expect_match(attr(result, "note_text"), "Group-weighted")
   
-  # Should not be a gt_tbl
-  expect_false(inherits(result_tibble, "gt_tbl"))
+  result_unweighted <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    weight = FALSE
+  )
+  
+  # Note should reflect unweighted
+  expect_match(attr(result_unweighted, "note_text"), "Unweighted")
 })
 
-test_that("mldesc gt table accepts custom parameters", {
+test_that("mldesc flip=FALSE stores correct attributes", {
   set.seed(4002)
   data <- data.frame(
     group = rep(1:3, each = 10),
@@ -616,20 +702,154 @@ test_that("mldesc gt table accepts custom parameters", {
     y = rnorm(30)
   )
   
-  custom_title <- "Custom Descriptive Statistics Table"
-  custom_note <- "Custom correlation interpretation"
-  custom_footer <- "Custom footer note"
-  
-  result_gt <- mldesc(
+  result <- mldesc(
     data = data,
     group = "group",
     vars = c("x", "y"),
-    print_gt = TRUE,
-    table_title = custom_title,
-    correlation_note = custom_note,
-    note_text = custom_footer
+    flip = FALSE
   )
   
-  # Should return gt_tbl object with custom parameters
-  expect_s3_class(result_gt, "gt_tbl")
+  # Check flipped attribute
+  expect_false(attr(result, "flipped"))
+  
+  # Check correlation note
+  expect_equal(
+    attr(result, "correlation_note"),
+    "Within-group correlations above, between-group correlations below the diagonal."
+  )
+})
+
+test_that("mldesc flip=TRUE stores correct attributes", {
+  set.seed(4003)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = TRUE
+  )
+  
+  # Check flipped attribute
+  expect_true(attr(result, "flipped"))
+  
+  # Check correlation note
+  expect_equal(
+    attr(result, "correlation_note"),
+    "Between-group correlations above, within-group correlations below the diagonal."
+  )
+})
+
+test_that("mldesc flip=TRUE transposes correlation matrix", {
+  set.seed(4004)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50),
+    z = rnorm(50)
+  )
+  
+  result_normal <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    flip = FALSE
+  )
+  
+  result_flipped <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    flip = TRUE
+  )
+  
+  # Upper triangle of normal should equal lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$`3`)[1],
+    vctrs::vec_data(result_flipped$`1`)[3]
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$`3`)[2],
+    vctrs::vec_data(result_flipped$`2`)[3]
+  )
+})
+
+test_that("mldesc flip defaults to FALSE", {
+  set.seed(4005)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result_default <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  result_explicit <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = FALSE
+  )
+  
+  # Should be identical
+  expect_identical(result_default, result_explicit)
+})
+
+test_that("mldesc flip doesn't affect descriptives or ICC", {
+  set.seed(4006)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  
+  result_normal <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = FALSE
+  )
+  
+  result_flipped <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = TRUE
+  )
+  
+  # Descriptive statistics should be identical
+  expect_equal(
+    vctrs::vec_data(result_normal$n_obs),
+    vctrs::vec_data(result_flipped$n_obs)
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$m),
+    vctrs::vec_data(result_flipped$m)
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$sd),
+    vctrs::vec_data(result_flipped$sd)
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$range),
+    vctrs::vec_data(result_flipped$range)
+  )
+  
+  # ICC should be identical
+  expect_equal(
+    vctrs::vec_data(result_normal$icc),
+    vctrs::vec_data(result_flipped$icc)
+  )
 })

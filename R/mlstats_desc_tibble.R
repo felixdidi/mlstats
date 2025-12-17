@@ -1,0 +1,212 @@
+# Add pillar methods for the custom tibble class
+#' @exportS3Method pillar::tbl_sum
+tbl_sum.mlstats_desc_tibble <- function(x, ...) {
+  table_title <- attr(x, "table_title", exact = TRUE)
+  if (is.null(table_title)) {
+    table_title <- "Multilevel Descriptive Statistics"
+  }
+  pillar::style_subtle(table_title)
+}
+
+#' @exportS3Method pillar::tbl_format_footer
+tbl_format_footer.mlstats_desc_tibble <- function(x, setup, ...) {
+  default_footer <- base::NextMethod()
+  
+  # Check if matrix was flipped
+  flipped <- base::isTRUE(base::attr(x, "flipped"))
+  
+  correlation_note <- if (flipped) {
+    "Between-group correlations above, within-group correlations below the diagonal."
+  } else {
+    "Within-group correlations above, between-group correlations below the diagonal."
+  }
+  
+  # Allow override from stored attribute
+  stored_note <- attr(x, "correlation_note", exact = TRUE)
+  if (!is.null(stored_note)) {
+    correlation_note <- stored_note
+  }
+
+  bayesian <- base::isTRUE(base::attr(x, "bayesian"))
+
+  significance_note <- if (bayesian) {
+    attr(x, "significance_note", exact = TRUE)
+  } else {
+    "All correlations marked with a star are significant at p < .05."
+  }
+  
+  note_text <- attr(x, "note_text", exact = TRUE)
+  
+  extra_footer <- pillar::style_subtle(
+    base::paste0(
+      "# ", correlation_note, "\n",
+      "# ", significance_note, "\n",
+      "# ", note_text
+    )
+  )
+  base::c(default_footer, extra_footer)
+}
+
+#' @exportS3Method pillar::ctl_new_pillar
+ctl_new_pillar.mlstats_desc_tibble <- function(controller, x, width, ..., title = NULL) {
+  out <- base::NextMethod()
+  width <- ifelse(base::attr(out$data, "width") > 5, base::attr(out$data, "width"), 5)
+  rule_char <- pillar::style_subtle(strrep("=", width))
+  mid_rule_char <- pillar::style_subtle(strrep("-", width))
+  
+  pillar::new_pillar(list(
+    top_rule = pillar::new_pillar_component(list(rule_char), width = width),
+    title = out$title,
+    # type = out$type,
+    mid_rule = pillar::new_pillar_component(list(mid_rule_char), width = width),
+    data = out$data,
+    bottom_rule = pillar::new_pillar_component(list(rule_char), width = width)
+  ))
+}
+
+#' @export
+print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL, correlation_note = NULL, significance_note = NULL, note_text = NULL, ...) {
+
+  # Update attributes if custom values provided
+  if (!is.null(table_title)) {
+    attr(x, "table_title") <- table_title
+  }
+  if (!is.null(correlation_note)) {
+    attr(x, "correlation_note") <- correlation_note
+  }
+  if (!is.null(significance_note)) {
+    attr(x, "significance_note") <- significance_note
+  }
+  if (!is.null(note_text)) {
+    attr(x, "note_text") <- note_text
+  }
+  
+  table_title <- attr(x, "table_title", exact = TRUE)
+  correlation_note <- attr(x, "correlation_note", exact = TRUE)
+  significance_note <- attr(x, "significance_note", exact = TRUE)
+  note_text <- attr(x, "note_text", exact = TRUE)
+
+  bayesian <- base::isTRUE(base::attr(x, "bayesian"))
+  if (!bayesian && is.null(significance_note)) {
+    significance_note <- "All correlations marked with a star are significant at p < .05."
+  }
+
+  if (format == "gt") {
+    # Detect correlation columns (numeric column names like "1", "2", "3", etc.)
+    all_cols <- base::names(x)
+    correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]
+
+    # Build the gt table
+    gt_result <- x |>
+      tibble::rowid_to_column(var = "id") |>
+      gt::gt(rowname_col = "id") |>
+      gt::tab_options(quarto.disable_processing = TRUE) |>
+      gt::cols_align(
+        align = "center",
+        columns = dplyr::everything()
+      ) |>
+      gt::cols_align(
+        align = "left",
+        columns = dplyr::any_of("variable")
+      ) |>
+      gt::tab_options(
+        heading.title.font.size = gt::px(16),
+        table.border.top.color = "white",
+        table.border.top.width = gt::px(1),
+        table_body.border.top.color = "white",
+        table_body.border.top.width = gt::px(1),
+        column_labels.border.top.width = gt::px(1),
+        column_labels.border.top.color = "black",
+        column_labels.border.bottom.width = gt::px(1),
+        column_labels.border.bottom.color = "black",
+        table_body.border.bottom.width = gt::px(1),
+        table_body.border.bottom.color = "black",
+        table.width = gt::pct(99),
+        table.background.color = "white"
+      ) |>
+      gt::tab_style(
+        style = base::list(
+          gt::cell_borders(
+            sides = base::c("top", "bottom", "left", "right"),
+            weight = gt::px(0)
+          ),
+          gt::cell_fill(color = "white", alpha = NULL)
+        ),
+        locations = base::list(
+          gt::cells_stub(rows = dplyr::everything()),
+          gt::cells_body(
+            columns = dplyr::everything(),
+            rows = dplyr::everything()
+          )
+        )
+      ) |>
+      gt::tab_style(
+        style = base::list(
+          gt::cell_text(weight = "bold")
+        ),
+        locations = gt::cells_row_groups(groups = dplyr::everything())
+      ) |>
+      gt::tab_style(
+        style = base::list(
+          gt::cell_borders(
+            sides = base::c("top", "bottom"),
+            color = "white",
+            weight = gt::px(1)
+          )
+        ),
+        locations = gt::cells_row_groups(groups = dplyr::everything())
+      ) |>
+      gt::cols_label(
+        variable = "Variable",
+        n_obs = gt::html("<i>N</i><sub>obs</sub>"),
+        m = gt::html("<i>M</i>"),
+        sd = gt::html("<i>SD</i>"),
+        range = "Range",
+        icc = " "
+      ) |>
+      gt::tab_spanner(
+        label = "Descriptives",
+        columns = dplyr::any_of(base::c("n_obs", "m", "sd", "range"))
+      )
+
+    # Add correlations spanner if correlation columns exist
+    if (base::length(correlation_cols) > 0) {
+      gt_result <- gt_result |>
+        gt::tab_spanner(
+          label = gt::html("Correlations<sup>a,b</sup>"),
+          columns = dplyr::any_of(correlation_cols)
+        )
+    }
+
+    # Add ICC spanner
+    gt_result <- gt_result |>
+      gt::tab_spanner(
+        label = "ICC ",
+        columns = dplyr::any_of("icc")
+      ) |>
+      gt::tab_header(
+        title = gt::html(
+          base::paste0("<b>Table.</b> ", table_title)
+        )
+      ) |>
+      gt::tab_source_note(
+        source_note = gt::html(
+          base::paste0(
+            "<sup>a</sup> ",
+            correlation_note,
+            "<br>",
+            "<sup>b</sup> ",
+            significance_note,
+            "<br><br>",
+            "Note. ",
+            note_text
+          )
+        )
+      ) |>
+      gt::opt_align_table_header(align = "left")
+
+    return(gt_result)
+  } else {
+    base::NextMethod()
+  }
+}

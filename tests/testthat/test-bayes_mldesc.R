@@ -150,9 +150,9 @@ test_that("bayes_mldesc includes correlation matrix", {
   expect_true(all(c("1", "2", "3") %in% colnames(result)))
   
   # Diagonal should be "\u2013"
-  expect_equal(result$`1`[1], "\u2013")
-  expect_equal(result$`2`[2], "\u2013")
-  expect_equal(result$`3`[3], "\u2013")
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+  expect_equal(as.character(result$`2`[2]), "\u2013")
+  expect_equal(as.character(result$`3`[3]), "\u2013")
 })
 
 test_that("bayes_mldesc handles missing values", {
@@ -207,7 +207,7 @@ test_that("bayes_mldesc handles single variable", {
   # Should have: variable, n_obs, m, sd, range, 1 correlation column, icc
   expect_equal(nrow(result), 1)
   expect_equal(ncol(result), 7)
-  expect_equal(result$`1`[1], "\u2013")
+  expect_equal(as.character(result$`1`[1]), "\u2013")
 })
 
 test_that("bayes_mldesc handles numeric group variable", {
@@ -265,7 +265,7 @@ test_that("bayes_mldesc marks credible correlations", {
   )
   
   # Should have correlation values
-  cor_values <- c(result$`2`[1], result$`1`[2])
+  cor_values <- c(as.character(result$`2`[1]), as.character(result$`1`[2]))
   cor_values <- cor_values[cor_values != "\u2013"]
   
   expect_true(length(cor_values) > 0)
@@ -284,8 +284,8 @@ test_that("bayes_mldesc output format matches expected structure", {
   expected_cols <- c("variable", "n_obs", "m", "sd", "range", "1", "2", "3", "icc")
   expect_equal(colnames(result), expected_cols)
   
-  # Check that all values are character strings
-  expect_true(all(sapply(result, is.character)))
+  # Check that non-variable columns are mlstats_stat
+  expect_true(all(sapply(result[, -1], function(col) inherits(col, "mlstats_stat"))))
 })
 
 test_that("bayes_mldesc weight=TRUE uses weighted correlations", {
@@ -301,7 +301,7 @@ test_that("bayes_mldesc weight=TRUE uses weighted correlations", {
   expect_equal(nrow(result_weighted), 2)
   
   # Between-group correlation should be present
-  between_val <- result_weighted$`1`[2]
+  between_val <- as.character(result_weighted$`1`[2])
   expect_true(nchar(between_val) > 0)
   expect_true(between_val != "\u2013")
 })
@@ -319,7 +319,7 @@ test_that("bayes_mldesc weight=FALSE uses unweighted correlations", {
   expect_equal(nrow(result_unweighted), 2)
   
   # Between-group correlation should be present
-  between_val <- result_unweighted$`1`[2]
+  between_val <- as.character(result_unweighted$`1`[2])
   expect_true(nchar(between_val) > 0)
   expect_true(between_val != "\u2013")
 })
@@ -362,18 +362,18 @@ test_that("bayes_mldesc weight parameter doesn't affect descriptives or ICC", {
   )
   
   # n_obs and range should be identical
-  expect_equal(result_weighted$n_obs, result_unweighted$n_obs)
-  expect_equal(result_weighted$range, result_unweighted$range)
+  expect_equal(as.character(result_weighted$n_obs), as.character(result_unweighted$n_obs))
+  expect_equal(as.character(result_weighted$range), as.character(result_unweighted$range))
   
   # Mean and SD should DIFFER with unbalanced groups
-  expect_false(identical(result_weighted$m, result_unweighted$m))
-  expect_false(identical(result_weighted$sd, result_unweighted$sd))
+  expect_false(identical(as.character(result_weighted$m), as.character(result_unweighted$m)))
+  expect_false(identical(as.character(result_weighted$sd), as.character(result_unweighted$sd)))
   
   # ICC should be identical
-  expect_equal(result_weighted$icc, result_unweighted$icc)
+  expect_equal(as.character(result_weighted$icc), as.character(result_unweighted$icc))
   
   # Within-group correlations (upper triangle) should be identical
-  expect_equal(result_weighted$`2`[1], result_unweighted$`2`[1])
+  expect_equal(as.character(result_weighted$`2`[1]), as.character(result_unweighted$`2`[1]))
 })
 
 test_that("bayes_mldesc handles different ci levels", {
@@ -440,8 +440,8 @@ test_that("bayes_mldesc weighted vs unweighted differ with unbalanced data", {
   )
   
   # Extract between-group correlations (lower triangle)
-  between_weighted <- result_weighted$`1`[2]
-  between_unweighted <- result_unweighted$`1`[2]
+  between_weighted <- as.character(result_weighted$`1`[2])
+  between_unweighted <- as.character(result_unweighted$`1`[2])
   
   # Both should be valid
   expect_true(nchar(between_weighted) > 0)
@@ -474,66 +474,69 @@ test_that("bayes_mldesc weight=FALSE calculates mean of group means", {
   )
   
   # Weighted mean: (5*10 + 10*20 + 30*30) / 45 = 25.56
-  expect_equal(result_weighted$m, "25.56")
+  expect_equal(as.character(result_weighted$m), "25.56")
   
   # Unweighted mean: (10 + 20 + 30) / 3 = 20.00
-  expect_equal(result_unweighted$m, "20.00")
+  expect_equal(as.character(result_unweighted$m), "20.00")
   
   # Weighted SD should be 6.93, sd(c(rep(10, 5), rep(20, 10), rep(30, 30)))
-  expect_equal(result_weighted$sd, "6.93")
+  expect_equal(as.character(result_weighted$sd), "6.93")
   
   # Unweighted SD should be SD of group means: sd(c(10, 20, 30)) = 10.00
-  expect_equal(result_unweighted$sd, "10.00")
+  expect_equal(as.character(result_unweighted$sd), "10.00")
 })
 
-test_that("bayes_mldesc returns gt table when print_gt = TRUE", {
-  result_gt <- bayes_mldesc(
+test_that("bayes_mldesc has custom class and attributes", {
+  result <- bayes_mldesc(
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    print_gt = TRUE,
     folder = "brms_models"
   )
   
-  # Should return gt_tbl object
+  # Should have mlstats_desc_tibble class
+  expect_s3_class(result, "mlstats_desc_tibble")
+  
+  # Should have required attributes
+  expect_true(!is.null(attr(result, "table_title")))
+  expect_true(!is.null(attr(result, "flipped")))
+  expect_true(!is.null(attr(result, "correlation_note")))
+  expect_true(!is.null(attr(result, "note_text")))
+})
+
+test_that("bayes_mldesc print method accepts format parameter", {
+  result <- bayes_mldesc(
+    data = test_data$basic,
+    group = "group",
+    vars = c("x", "y"),
+    folder = "brms_models"
+  )
+  
+  # Should be able to print as gt
+  result_gt <- print(result, "gt")
   expect_s3_class(result_gt, "gt_tbl")
-  
-  # Should not be a tibble
-  expect_false(inherits(result_gt, "tbl_df"))
 })
 
-test_that("bayes_mldesc returns tibble when print_gt = FALSE (default)", {
-  result_tibble <- bayes_mldesc(
+test_that("bayes_mldesc print method accepts custom parameters", {
+  result <- bayes_mldesc(
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    print_gt = FALSE,
     folder = "brms_models"
   )
   
-  # Should return tibble
-  expect_s3_class(result_tibble, "tbl_df")
-  
-  # Should not be a gt_tbl
-  expect_false(inherits(result_tibble, "gt_tbl"))
-})
-
-test_that("bayes_mldesc gt table accepts custom parameters", {
   custom_title <- "Custom Bayesian Descriptive Statistics Table"
   custom_note <- "Custom correlation interpretation"
   custom_footer <- "Custom footer note"
   
-  result_gt <- bayes_mldesc(
-    data = test_data$basic,
-    group = "group",
-    vars = c("x", "y"),
-    print_gt = TRUE,
+  # Should be able to print with custom parameters
+  result_gt <- print(
+    result,
+    "gt",
     table_title = custom_title,
     correlation_note = custom_note,
-    note_text = custom_footer,
-    folder = "brms_models"
+    note_text = custom_footer
   )
   
-  # Should return gt_tbl object with custom parameters
   expect_s3_class(result_gt, "gt_tbl")
 })

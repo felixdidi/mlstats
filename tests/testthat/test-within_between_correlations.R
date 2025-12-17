@@ -15,6 +15,7 @@ test_that("within_between_correlations handles basic input correctly", {
   
   # Check structure
   expect_s3_class(result, "tbl_df")
+  expect_s3_class(result, "mlstats_wb_tibble")
   expect_equal(nrow(result), 2)
   expect_equal(ncol(result), 3)
   expect_equal(result$variable, c("x", "y"))
@@ -39,10 +40,10 @@ test_that("within_between_correlations produces symmetric matrix structure", {
   expect_equal(nrow(result), 3)
   expect_equal(ncol(result), 4)  # variable column + 3 correlation columns
   
-  # Check diagonal is "\u2013"
-  expect_equal(result$`1`[1], "\u2013")
-  expect_equal(result$`2`[2], "\u2013")
-  expect_equal(result$`3`[3], "\u2013")
+  # Check diagonal is "\u2013" - need to extract underlying data
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
+  expect_equal(vctrs::vec_data(result$`2`)[2], "\u2013")
+  expect_equal(vctrs::vec_data(result$`3`)[3], "\u2013")
 })
 
 test_that("within_between_correlations handles perfect correlations", {
@@ -58,8 +59,9 @@ test_that("within_between_correlations handles perfect correlations", {
     vars = c("x", "y")
   )
   
-  # Should contain correlation values
-  expect_true(grepl("1\\.00", result$`2`[1]) || grepl("0\\.", result$`2`[1]))
+  # Should contain correlation values - extract underlying data
+  val <- vctrs::vec_data(result$`2`)[1]
+  expect_true(grepl("1\\.00", val) || grepl("0\\.", val))
 })
 
 test_that("within_between_correlations marks significant correlations", {
@@ -79,7 +81,8 @@ test_that("within_between_correlations marks significant correlations", {
   
   # Check that asterisk exists for significant correlations
   # At least one cell should have content
-  expect_true(nchar(result$`2`[1]) > 0)
+  val <- vctrs::vec_data(result$`2`)[1]
+  expect_true(nchar(val) > 0)
 })
 
 test_that("within_between_correlations handles missing values", {
@@ -121,7 +124,7 @@ test_that("within_between_correlations handles single variable", {
   # Should return 1x2 tibble with diagonal only
   expect_equal(nrow(result), 1)
   expect_equal(ncol(result), 2)
-  expect_equal(result$`1`[1], "\u2013")
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
 })
 
 test_that("within_between_correlations handles many variables", {
@@ -163,8 +166,8 @@ test_that("within_between_correlations upper triangle is within-group", {
   
   # Upper triangle should be within-group (likely small/non-significant)
   # Lower triangle should be between-group
-  within_val <- result$`2`[1]
-  between_val <- result$`1`[2]
+  within_val <- vctrs::vec_data(result$`2`)[1]
+  between_val <- vctrs::vec_data(result$`1`)[2]
   
   expect_true(nchar(within_val) > 0)
   expect_true(nchar(between_val) > 0)
@@ -262,7 +265,8 @@ test_that("within_between_correlations output format is correct", {
   expect_true(all(colnames(result)[-1] %in% as.character(1:2)))
   
   # Check that correlations are formatted correctly (e.g., "0.45" or "-0.23*")
-  cor_vals <- unlist(result[, -1])
+  # Need to extract underlying character data from mlstats_stat vectors
+  cor_vals <- c(vctrs::vec_data(result$`1`), vctrs::vec_data(result$`2`))
   cor_vals <- cor_vals[cor_vals != "\u2013"]
   
   # Should be numeric-like strings
@@ -289,7 +293,7 @@ test_that("within_between_correlations weight=TRUE uses weighted correlations", 
   expect_equal(nrow(result_weighted), 2)
   
   # Between-group correlation should be computed with all observations
-  between_val <- result_weighted$`1`[2]
+  between_val <- vctrs::vec_data(result_weighted$`1`)[2]
   expect_true(nchar(between_val) > 0)
 })
 
@@ -313,7 +317,7 @@ test_that("within_between_correlations weight=FALSE uses unweighted correlations
   expect_equal(nrow(result_unweighted), 2)
   
   # Between-group correlation should be computed with only group means
-  between_val <- result_unweighted$`1`[2]
+  between_val <- vctrs::vec_data(result_unweighted$`1`)[2]
   expect_true(nchar(between_val) > 0)
 })
 
@@ -341,8 +345,8 @@ test_that("within_between_correlations weighted vs unweighted differ with unbala
   )
   
   # Extract between-group correlations (lower triangle)
-  between_weighted <- result_weighted$`1`[2]
-  between_unweighted <- result_unweighted$`1`[2]
+  between_weighted <- vctrs::vec_data(result_weighted$`1`)[2]
+  between_unweighted <- vctrs::vec_data(result_unweighted$`1`)[2]
   
   # They should differ (though we can't guarantee direction without knowing exact values)
   # At minimum, both should be valid
@@ -393,4 +397,143 @@ test_that("within_between_correlations unweighted works with balanced groups", {
   
   expect_s3_class(result_unweighted, "tbl_df")
   expect_equal(nrow(result_unweighted), 2)
+})
+
+test_that("correlation columns have mlstats_stat class", {
+  set.seed(1004)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  # Check that correlation columns have the mlstats_stat class
+  expect_s3_class(result$`1`, "mlstats_stat")
+  expect_s3_class(result$`2`, "mlstats_stat")
+})
+
+test_that("result has mlstats_wb_tibble class", {
+  set.seed(1005)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  # Check custom class is applied
+  expect_s3_class(result, "mlstats_wb_tibble")
+})
+
+test_that("flip=FALSE shows within above diagonal", {
+  set.seed(1006)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = FALSE
+  )
+  
+  # Check flipped attribute is FALSE
+  expect_false(attr(result, "flipped"))
+})
+
+test_that("flip=TRUE shows between above diagonal", {
+  set.seed(1007)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = TRUE
+  )
+  
+  # Check flipped attribute is TRUE
+  expect_true(attr(result, "flipped"))
+})
+
+test_that("flip=TRUE transposes the correlation matrix", {
+  set.seed(1008)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50),
+    z = rnorm(50)
+  )
+  
+  result_normal <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    flip = FALSE
+  )
+  
+  result_flipped <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    flip = TRUE
+  )
+  
+  # Upper triangle of normal should equal lower triangle of flipped
+  # Extract values and compare
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$`3`)[1],
+    vctrs::vec_data(result_flipped$`1`)[3]
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$`3`)[2],
+    vctrs::vec_data(result_flipped$`2`)[3]
+  )
+})
+
+test_that("flip defaults to FALSE", {
+  set.seed(1009)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result_default <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  result_explicit <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    flip = FALSE
+  )
+  
+  # Should be identical
+  expect_identical(result_default, result_explicit)
 })

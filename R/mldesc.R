@@ -10,19 +10,12 @@
 #' @param weight Logical. If TRUE (default), statistics are weighted by group size so that
 #'   each observation contributes equally. If FALSE, statistics are unweighted by group
 #'   size (each group contributes equally).
+#' @param flip Logical. If TRUE, between-group correlations are shown in the upper
+#'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param remove_leading_zero Logical. If TRUE (default), removes leading zeros from
 #'   decimal values in correlation and ICC columns according to APA standards.
-#' @param print_gt Logical. If TRUE, returns a formatted gt table instead of a tibble.
-#'   Default is FALSE.
-#' @param table_title Character string. Custom title for the gt table when print_gt = TRUE.
-#'   Default describes descriptive statistics with within-group and between-group correlations.
-#' @param correlation_note Character string. Custom note text for correlation interpretation
-#'   when print_gt = TRUE. Default describes within-group and between-group correlations.
-#' @param note_text Character string. Custom note text to append to the table footer
-#'   when print_gt = TRUE.
 #'
-#' @return A tibble containing descriptive statistics (default), or a gt table object
-#'   if print_gt = TRUE. The tibble contains:
+#' @return A tibble of class \code{mlstats_desc_tibble} containing:
 #' \itemize{
 #'   \item \code{variable}: Variable name
 #'   \item \code{n_obs}: Number of observations
@@ -32,6 +25,8 @@
 #'   \item One column per variable in \code{vars} containing correlations
 #'   \item \code{icc}: Intraclass correlation coefficient
 #' }
+#'
+#' The tibble can be printed in gt format using \code{print(result, "gt")}.
 #'
 #' @details
 #' The function combines three types of information:
@@ -67,23 +62,24 @@
 #'   vars = c("math_score", "reading_score", "motivation")
 #' )
 #'
+#' # Print as default tibble
+#' print(result)
+#'
+#' # Print as formatted gt table
+#' print(result, "gt")
+#'
+#' # Print as gt table with custom title and notes
+#' print(result, "gt",
+#'       table_title = "Custom Table Title",
+#'       correlation_note = "Custom correlation note",
+#'       note_text = "Data collected from 5 schools.")
+#'
 #' # Compute with unweighted between-group correlations
 #' result_unweighted <- mldesc(
 #'   data = data,
 #'   group = "school",
 #'   vars = c("math_score", "reading_score", "motivation"),
 #'   weight = FALSE
-#' )
-#'
-#' # Return as formatted gt table with custom title
-#' gt_result <- mldesc(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score", "motivation"),
-#'   print_gt = TRUE,
-#'   table_title = "Custom Table Title",
-#'   correlation_note = "Custom correlation note",
-#'   note_text = "Data collected from 5 schools."
 #' )
 #' }
 #'
@@ -96,22 +92,10 @@ mldesc <- function(
   group,
   vars,
   weight = TRUE,
-  remove_leading_zero = TRUE,
-  print_gt = FALSE,
-  table_title = NULL,
-  correlation_note = NULL,
-  note_text = NULL
+  flip = FALSE,
+  remove_leading_zero = TRUE
 ) {
-  # Set default table title, correlation note, and note text if not provided
-  if (is.null(table_title)) {
-    table_title <- "Descriptive statistics, within-group correlations, between-group correlations, and intraclass correlations (ICCs)"
-  }
-  if (is.null(correlation_note)) {
-    correlation_note <- "Within-group correlations depicted above, between-group correlations below the diagonal."
-  }
-  if (is.null(note_text)) {
-    note_text <- "Multilevel descriptive statistics computed with mlstats."
-  }
+  
   # Internal function to remove leading zeros from decimal strings
   remove_zero <- function(x) {
     if (!remove_leading_zero) {
@@ -183,7 +167,7 @@ mldesc <- function(
 
       tibble::tibble(
         variable = var,
-        n_obs = base::as.character(base::length(var_data_clean)),
+        n_obs = base::as.character(scales::comma(base::length(var_data_clean))),
         m = base::sprintf("%.2f", m_val),
         sd = base::sprintf("%.2f", sd_val),
         range = base::paste0(
@@ -201,7 +185,7 @@ mldesc <- function(
   desc_stats <- get_desc(data, vars, group)
 
   # Compute within-between correlations
-  corr_matrix <- within_between_correlations(data, group, vars, weight = weight)
+  corr_matrix <- within_between_correlations(data, group, vars, weight = weight, flip = flip)
 
   # Remove first column (variable names) from correlation matrix
   corr_values <- corr_matrix[, -1]
@@ -228,126 +212,28 @@ mldesc <- function(
         dplyr::all_of("variable"),
         ~ stringr::str_replace_all(.x, "_", " ") |>
           stringr::str_to_sentence()
+      ),
+      dplyr::across(
+        -variable,
+        ~ vctrs::new_vctr(.x, class = "mlstats_stat", inherit_base_type = TRUE)
       )
     )
 
-  # Return gt table if requested
-  if (print_gt) {
-    x <- result
-
-    # Detect correlation columns (numeric column names like "1", "2", "3", etc.)
-    all_cols <- base::names(x)
-    correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]
-
-    # Build the gt table
-    gt_result <- x |>
-      tibble::rowid_to_column(var = "id") |>
-      gt::gt(rowname_col = "id") |>
-      gt::tab_options(quarto.disable_processing = TRUE) |>
-      gt::cols_align(
-        align = "center",
-        columns = dplyr::everything()
-      ) |>
-      gt::cols_align(
-        align = "left",
-        columns = dplyr::any_of("variable")
-      ) |>
-      gt::tab_options(
-        heading.title.font.size = gt::px(16),
-        table.border.top.color = "white",
-        table.border.top.width = gt::px(1),
-        table_body.border.top.color = "white",
-        table_body.border.top.width = gt::px(1),
-        column_labels.border.top.width = gt::px(1),
-        column_labels.border.top.color = "black",
-        column_labels.border.bottom.width = gt::px(1),
-        column_labels.border.bottom.color = "black",
-        table_body.border.bottom.color = "black",
-        table_body.border.bottom.width = gt::px(1),
-        table.width = gt::pct(99),
-        table.background.color = "white"
-      ) |>
-      gt::tab_style(
-        style = base::list(
-          gt::cell_borders(
-            sides = base::c("top", "bottom", "left", "right"),
-            color = "white",
-            weight = gt::px(1)
-          ),
-          gt::cell_fill(color = "white", alpha = NULL)
-        ),
-        locations = base::list(
-          gt::cells_stub(rows = dplyr::everything()),
-          gt::cells_body(
-            columns = dplyr::everything(),
-            rows = dplyr::everything()
-          )
-        )
-      ) |>
-      gt::tab_style(
-        style = base::list(
-          gt::cell_text(weight = "bold")
-        ),
-        locations = gt::cells_row_groups(groups = dplyr::everything())
-      ) |>
-      gt::tab_style(
-        style = base::list(
-          gt::cell_borders(
-            sides = base::c("top", "bottom"),
-            color = "white",
-            weight = gt::px(1)
-          )
-        ),
-        locations = gt::cells_row_groups(groups = dplyr::everything())
-      ) |>
-      gt::cols_label(
-        variable = "Variable",
-        n_obs = gt::html("<i>N</i><sub>obs</sub>"),
-        m = gt::html("<i>M</i>"),
-        sd = gt::html("<i>SD</i>"),
-        range = "Range",
-        icc = " "
-      ) |>
-      gt::tab_spanner(
-        label = "Descriptives",
-        columns = dplyr::any_of(base::c("n_obs", "m", "sd", "range"))
-      )
-
-    # Add correlations spanner if correlation columns exist
-    if (base::length(correlation_cols) > 0) {
-      gt_result <- gt_result |>
-        gt::tab_spanner(
-          label = gt::html("Correlations<sup>a,b</sup>"),
-          columns = dplyr::any_of(correlation_cols)
-        )
-    }
-
-    # Add ICC spanner
-    gt_result <- gt_result |>
-      gt::tab_spanner(
-        label = "ICC ",
-        columns = dplyr::any_of("icc")
-      ) |>
-      gt::tab_header(
-        title = gt::html(
-          base::paste0("<b>Table.</b> ", table_title)
-        )
-      ) |>
-      gt::tab_source_note(
-        source_note = gt::html(
-          base::paste0(
-            "<sup>a</sup> ",
-            correlation_note,
-            "<br>",
-            "<sup>b</sup> All correlations marked with a star are significant at <i>p</i> < .05.<br><br>",
-            "<i>Note.</i> ",
-            note_text
-          )
-        )
-      ) |>
-      gt::opt_align_table_header(align = "left")
-
-    return(gt_result)
+  # Add custom class for tibble printing
+  class(result) <- c("mlstats_desc_tibble", class(result))
+  
+  # Store default values as attributes
+  attr(result, "table_title") <- "Multilevel descriptive statistics"
+  attr(result, "flipped") <- flip
+  attr(result, "correlation_note") <- if (flip) {
+    "Between-group correlations above, within-group correlations below the diagonal."
+  } else {
+    "Within-group correlations above, between-group correlations below the diagonal."
+  }
+  attr(result, "note_text") <- if (weight) {
+    "Group-weighted multilevel descriptive statistics computed with mlstats."
+  } else {
+    "Unweighted multilevel descriptive statistics computed with mlstats."
   }
 
   return(result)

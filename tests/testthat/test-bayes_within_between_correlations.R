@@ -103,9 +103,9 @@ test_that("bayes_within_between_correlations produces symmetric matrix structure
   expect_equal(ncol(result), 4)  # variable column + 3 correlation columns
   
   # Check diagonal is "\u2013"
-  expect_equal(result$`1`[1], "\u2013")
-  expect_equal(result$`2`[2], "\u2013")
-  expect_equal(result$`3`[3], "\u2013")
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+  expect_equal(as.character(result$`2`[2]), "\u2013")
+  expect_equal(as.character(result$`3`[3]), "\u2013")
 })
 
 test_that("bayes_within_between_correlations output format is correct", {
@@ -139,7 +139,7 @@ test_that("bayes_within_between_correlations handles single variable", {
   # Should return 1x2 tibble with diagonal only
   expect_equal(nrow(result), 1)
   expect_equal(ncol(result), 2)
-  expect_equal(result$`1`[1], "\u2013")
+  expect_equal(as.character(result$`1`[1]), "\u2013")
 })
 
 test_that("bayes_within_between_correlations handles missing values", {

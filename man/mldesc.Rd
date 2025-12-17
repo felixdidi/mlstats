@@ -9,11 +9,8 @@ mldesc(
   group,
   vars,
   weight = TRUE,
-  remove_leading_zero = TRUE,
-  print_gt = FALSE,
-  table_title = NULL,
-  correlation_note = NULL,
-  note_text = NULL
+  flip = FALSE,
+  remove_leading_zero = TRUE
 )
 }
 \arguments{
@@ -27,24 +24,14 @@ mldesc(
 each observation contributes equally. If FALSE, statistics are unweighted by group
 size (each group contributes equally).}
 
+\item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
+triangle and within-group correlations in the lower triangle. Default is FALSE.}
+
 \item{remove_leading_zero}{Logical. If TRUE (default), removes leading zeros from
 decimal values in correlation and ICC columns according to APA standards.}
-
-\item{print_gt}{Logical. If TRUE, returns a formatted gt table instead of a tibble.
-Default is FALSE.}
-
-\item{table_title}{Character string. Custom title for the gt table when print_gt = TRUE.
-Default describes descriptive statistics with within-group and between-group correlations.}
-
-\item{correlation_note}{Character string. Custom note text for correlation interpretation
-when print_gt = TRUE. Default describes within-group and between-group correlations.}
-
-\item{note_text}{Character string. Custom note text to append to the table footer
-when print_gt = TRUE.}
 }
 \value{
-A tibble containing descriptive statistics (default), or a gt table object
-if print_gt = TRUE. The tibble contains:
+A tibble of class \code{mlstats_desc_tibble} containing:
 \itemize{
 \item \code{variable}: Variable name
 \item \code{n_obs}: Number of observations
@@ -54,6 +41,8 @@ if print_gt = TRUE. The tibble contains:
 \item One column per variable in \code{vars} containing correlations
 \item \code{icc}: Intraclass correlation coefficient
 }
+
+The tibble can be printed in gt format using \code{print(result, "gt")}.
 }
 \description{
 This function creates a comprehensive descriptive statistics table for multilevel data,
@@ -94,23 +83,24 @@ result <- mldesc(
   vars = c("math_score", "reading_score", "motivation")
 )
 
+# Print as default tibble
+print(result)
+
+# Print as formatted gt table
+print(result, "gt")
+
+# Print as gt table with custom title and notes
+print(result, "gt",
+      table_title = "Custom Table Title",
+      correlation_note = "Custom correlation note",
+      note_text = "Data collected from 5 schools.")
+
 # Compute with unweighted between-group correlations
 result_unweighted <- mldesc(
   data = data,
   group = "school",
   vars = c("math_score", "reading_score", "motivation"),
   weight = FALSE
-)
-
-# Return as formatted gt table with custom title
-gt_result <- mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
-  print_gt = TRUE,
-  table_title = "Custom Table Title",
-  correlation_note = "Custom correlation note",
-  note_text = "Data collected from 5 schools."
 )
 }
 

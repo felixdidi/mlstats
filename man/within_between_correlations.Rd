@@ -4,7 +4,7 @@
 \alias{within_between_correlations}
 \title{Compute Within-Group and Between-Group Correlations}
 \usage{
-within_between_correlations(data, group, vars, weight = TRUE)
+within_between_correlations(data, group, vars, weight = TRUE, flip = FALSE)
 }
 \arguments{
 \item{data}{A data frame containing the variables to analyze.}
@@ -15,6 +15,9 @@ within_between_correlations(data, group, vars, weight = TRUE)
 
 \item{weight}{Logical. If TRUE (default), between-group correlations are weighted by group size.
 If FALSE, each group contributes equally (unweighted group means).}
+
+\item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
+triangle and within-group correlations in the lower triangle. Default is FALSE.}
 }
 \value{
 A tibble containing a correlation matrix where:

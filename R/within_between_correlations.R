@@ -10,6 +10,8 @@
 #' @param vars A character vector specifying the names of variables to correlate.
 #' @param weight Logical. If TRUE (default), between-group correlations are weighted by group size.
 #'   If FALSE, each group contributes equally (unweighted group means).
+#' @param flip Logical. If TRUE, between-group correlations are shown in the upper
+#'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #'
 #' @return A tibble containing a correlation matrix where:
 #' \itemize{
@@ -70,10 +72,9 @@
 #' @seealso \code{\link[psych]{statsBy}} for the original implementation
 #'
 #' @export
-within_between_correlations <- function(data, group, vars, weight = TRUE) {
-  
+within_between_correlations <- function(data, group, vars, weight = TRUE, flip = FALSE) {
   # Compute group means
-  group_means <- 
+  group_means <-
     data |>
     dplyr::group_by(!!rlang::sym(group)) |>
     dplyr::summarise(
@@ -83,9 +84,9 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
       ),
       .groups = "drop"
     )
-  
+
   # Merge group means back to original data
-  d_with_means <- 
+  d_with_means <-
     data |>
     dplyr::select(dplyr::all_of(c(group, vars))) |>
     dplyr::left_join(
@@ -93,7 +94,7 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
       by = group,
       suffix = c("", "_between")
     )
-  
+
   # Compute within-group deviations
   d_centered <-
     d_with_means |>
@@ -104,7 +105,7 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
         .names = "{col}_within"
       )
     )
-  
+
   # Prepare data for between-group correlations
   if (weight) {
     # Use all observations (variance-weighted)
@@ -114,12 +115,12 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
     d_between <- d_centered |>
       dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
   }
-  
+
   # Initialize comparison matrix
   n_groups <- base::nrow(group_means)
   n <- base::length(vars)
   comparison_matrix <- base::matrix("", nrow = n, ncol = n)
-  
+
   # Compute correlations
   for (i in base::seq_along(vars)) {
     for (j in base::seq_along(vars)) {
@@ -129,9 +130,12 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
         # Within-group correlation (on all observations)
         within_x <- d_centered[[base::paste0(vars[i], "_within")]]
         within_y <- d_centered[[base::paste0(vars[j], "_within")]]
-        
+
         # Check for zero variance
-        if (stats::sd(within_x, na.rm = TRUE) == 0 || stats::sd(within_y, na.rm = TRUE) == 0) {
+        if (
+          stats::sd(within_x, na.rm = TRUE) == 0 ||
+            stats::sd(within_y, na.rm = TRUE) == 0
+        ) {
           comparison_matrix[i, j] <- "NA"
         } else {
           cor_within <- base::suppressWarnings(
@@ -139,7 +143,11 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
           )
           est <- base::as.numeric(cor_within$estimate)
           pval <- cor_within$p.value
-          label <- if (base::is.finite(est)) base::sprintf("%.2f", est) else "NA"
+          label <- if (base::is.finite(est)) {
+            base::sprintf("%.2f", est)
+          } else {
+            "NA"
+          }
           if (!base::is.na(pval) && pval < 0.05) {
             label <- base::paste0(label, "*")
           }
@@ -149,9 +157,12 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
         # Between-group correlation
         between_x <- d_between[[base::paste0(vars[i], "_between")]]
         between_y <- d_between[[base::paste0(vars[j], "_between")]]
-        
+
         # Check for zero variance
-        if (stats::sd(between_x, na.rm = TRUE) == 0 || stats::sd(between_y, na.rm = TRUE) == 0) {
+        if (
+          stats::sd(between_x, na.rm = TRUE) == 0 ||
+            stats::sd(between_y, na.rm = TRUE) == 0
+        ) {
           comparison_matrix[i, j] <- "NA"
         } else {
           r_bg <- stats::cor(
@@ -167,9 +178,13 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
             # With 2 or fewer groups, p-value is undefined
             pval <- NA
           }
-          
+
           est <- r_bg
-          label <- if (base::is.finite(est)) base::sprintf("%.2f", est) else "NA"
+          label <- if (base::is.finite(est)) {
+            base::sprintf("%.2f", est)
+          } else {
+            "NA"
+          }
           if (!base::is.na(pval) && pval < 0.05) {
             label <- base::paste0(label, "*")
           }
@@ -178,13 +193,33 @@ within_between_correlations <- function(data, group, vars, weight = TRUE) {
       }
     }
   }
-  
+
   # Convert to tibble for output
   result_tibble <-
     dplyr::bind_cols(
       dplyr::tibble(variable = vars),
       dplyr::as_tibble(comparison_matrix, .name_repair = ~ as.character(c(1:n)))
     )
-  
+
+  # Flip matrix if requested
+  if (flip) {
+    comparison_matrix <- base::t(comparison_matrix)
+    result_tibble <-
+      dplyr::bind_cols(
+        dplyr::tibble(variable = vars),
+        dplyr::as_tibble(comparison_matrix, .name_repair = ~ base::as.character(c(1:n)))
+      )
+  }
+
+  result_tibble <- result_tibble |>
+    dplyr::mutate(
+      dplyr::across(
+        -variable,
+        ~ vctrs::new_vctr(.x, class = "mlstats_stat", inherit_base_type = TRUE)
+      )
+    )
+
+  class(result_tibble) <- c("mlstats_wb_tibble", class(result_tibble))
+  base::attr(result_tibble, "flipped") <- flip
   return(result_tibble)
 }

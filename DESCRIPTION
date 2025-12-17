@@ -24,6 +24,9 @@ Imports:
     glue,
     gt,
     lme4,
+    pillar,
     rlang,
+    scales,
     stringr,
-    tibble
+    tibble,
+    vctrs

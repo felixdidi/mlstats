@@ -10,7 +10,8 @@ bayes_within_between_correlations(
   vars,
   weight = TRUE,
   ci = 0.9,
-  folder
+  folder,
+  flip = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ If FALSE, each group contributes equally (unweighted group means).}
 
 \item{folder}{Character string specifying the directory path where brms models
 should be saved. No default; must be specified.}
+
+\item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
+triangle and within-group correlations in the lower triangle. Default is FALSE.}
 }
 \value{
 A tibble containing a correlation matrix where:

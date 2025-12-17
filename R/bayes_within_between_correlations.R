@@ -14,6 +14,8 @@
 #'   (default = 0.9 for 90% CI).
 #' @param folder Character string specifying the directory path where brms models
 #'   should be saved. No default; must be specified.
+#' @param flip Logical. If TRUE, between-group correlations are shown in the upper
+#'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #'
 #' @return A tibble containing a correlation matrix where:
 #' \itemize{
@@ -83,7 +85,8 @@ bayes_within_between_correlations <- function(
   vars,
   weight = TRUE,
   ci = 0.9,
-  folder
+  folder,
+  flip = FALSE
 ) {
   # Check that brms is installed
   rlang::check_installed(
@@ -374,6 +377,36 @@ bayes_within_between_correlations <- function(
       dplyr::tibble(variable = vars),
       dplyr::as_tibble(comparison_matrix, .name_repair = ~ base::as.character(base::c(1:n)))
     )
+
+  # Flip matrix if requested
+  if (flip) {
+    comparison_matrix <- base::t(comparison_matrix)
+    result_tibble <-
+      dplyr::bind_cols(
+        dplyr::tibble(variable = vars),
+        dplyr::as_tibble(comparison_matrix, .name_repair = ~ base::as.character(base::c(1:n)))
+      )
+  }
+
+  result_tibble <- result_tibble |>
+    dplyr::mutate(
+      dplyr::across(
+        -variable,
+        ~ vctrs::new_vctr(.x, class = "mlstats_stat", inherit_base_type = TRUE)
+      )
+    )
+
+  class(result_tibble) <- c("mlstats_wb_tibble", class(result_tibble))
+  base::attr(result_tibble, "flipped") <- flip
+
+  ci_percent <- base::round(ci * 100)
+  attr(result_tibble, "significance_note") <- base::paste0(
+    "Correlations marked with a star have ",
+    ci_percent,
+    "% credible intervals that exclude zero."
+  )
+
+  attr(result_tibble, "bayesian") <- TRUE
 
   return(result_tibble)
 }
