@@ -155,15 +155,22 @@ print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL,
           )
         ),
         locations = gt::cells_row_groups(groups = dplyr::everything())
-      ) |>
-      gt::cols_label(
-        variable = "Variable",
-        n_obs = gt::html("<i>N</i><sub>obs</sub>"),
-        m = gt::html("<i>M</i>"),
-        sd = gt::html("<i>SD</i>"),
-        range = "Range",
-        icc = " "
-      ) |>
+      )
+
+    # Only set labels for columns that exist
+    col_labels <- base::list()
+    if ("variable" %in% all_cols) col_labels$variable <- "Variable"
+    if ("n_obs" %in% all_cols) col_labels$n_obs <- gt::html("<i>N</i><sub>obs</sub>")
+    if ("m" %in% all_cols) col_labels$m <- gt::html("<i>M</i>")
+    if ("sd" %in% all_cols) col_labels$sd <- gt::html("<i>SD</i>")
+    if ("range" %in% all_cols) col_labels$range <- "Range"
+    if ("icc" %in% all_cols) col_labels$icc <- " "
+    
+    if (base::length(col_labels) > 0) {
+      gt_result <- rlang::exec(gt::cols_label, gt_result, !!!col_labels)
+    }
+
+    gt_result <- gt_result |>
       gt::tab_spanner(
         label = "Descriptives",
         columns = dplyr::any_of(base::c("n_obs", "m", "sd", "range"))
