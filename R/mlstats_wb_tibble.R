@@ -5,20 +5,30 @@ tbl_sum.mlstats_wb_tibble <- function(x, ...) {
 
 #' @exportS3Method pillar::tbl_format_footer
 tbl_format_footer.mlstats_wb_tibble <- function(x, setup, ...) {
-  default_footer <- base::NextMethod()
-
-  significance_note <- base::attr(x, "significance_note", exact = TRUE)
+default_footer <- base::NextMethod()
   
-  # Check if matrix was flipped by looking for flip attribute
-  flipped <- base::isTRUE(base::attr(x, "flipped"))
-  
-  if (flipped) {
-    extra_footer <- pillar::style_subtle(base::paste0("# Between-group correlations above, within-group correlations below the diagonal.\n# ", significance_note))
-  } else {
-    extra_footer <- pillar::style_subtle(base::paste0("# Within-group correlations above, between-group correlations below the diagonal.\n# ", significance_note))
+  # Get correlation note from attribute
+  correlation_note <- base::attr(x, "correlation_note", exact = TRUE)
+  if (base::is.null(correlation_note)) {
+    # Fallback if not set
+    flipped <- base::isTRUE(base::attr(x, "flipped"))
+    correlation_note <- if (flipped) {
+      "Between-group correlations above, within-group correlations below the diagonal."
+    } else {
+      "Within-group correlations above, between-group correlations below the diagonal."
+    }
   }
-  
-  base::c(default_footer, extra_footer)
+
+  correlation_note <- base::paste0("\u2139 ", correlation_note)
+
+  significance_note <- base::paste0("\u2139 ", base::attr(x, "significance_note", exact = TRUE))
+
+  base::c(
+    default_footer,
+    pillar:::format_comment(correlation_note, width = setup$width),
+    pillar:::format_comment(significance_note, width = setup$width)
+  ) |> 
+  pillar::style_subtle()
 }
 
 #' @exportS3Method pillar::ctl_new_pillar

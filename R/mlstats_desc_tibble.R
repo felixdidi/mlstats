@@ -24,18 +24,19 @@ tbl_format_footer.mlstats_desc_tibble <- function(x, setup, ...) {
     }
   }
 
-  significance_note <- base::attr(x, "significance_note", exact = TRUE)
-  
-  note_text <- attr(x, "note_text", exact = TRUE)
-  
-  extra_footer <- pillar::style_subtle(
-    base::paste0(
-      "# ", correlation_note, "\n",
-      "# ", significance_note, "\n",
-      "# ", note_text
-    )
-  )
-  base::c(default_footer, extra_footer)
+  correlation_note <- base::paste0("\u2139 ", correlation_note)
+
+  significance_note <- base::paste0("\u2139 ", base::attr(x, "significance_note", exact = TRUE))
+
+  note_text <- base::paste0("\u2139 ", attr(x, "note_text", exact = TRUE))
+
+  base::c(
+    default_footer,
+    pillar:::format_comment(correlation_note, width = setup$width),
+    pillar:::format_comment(significance_note, width = setup$width),
+    pillar:::format_comment(note_text, width = setup$width)
+  ) |> 
+  pillar::style_subtle()
 }
 
 #' @exportS3Method pillar::ctl_new_pillar
@@ -56,8 +57,15 @@ ctl_new_pillar.mlstats_desc_tibble <- function(controller, x, width, ..., title 
 }
 
 #' @export
-print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL, correlation_note = NULL, significance_note = NULL, note_text = NULL, ...) {
-
+print.mlstats_desc_tibble <- function(
+  x,
+  format = "default",
+  table_title = NULL,
+  correlation_note = NULL,
+  significance_note = NULL,
+  note_text = NULL,
+  ...
+) {
   # Update attributes if custom values provided
   if (!is.null(table_title)) {
     attr(x, "table_title") <- table_title
@@ -71,7 +79,7 @@ print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL,
   if (!is.null(note_text)) {
     attr(x, "note_text") <- note_text
   }
-  
+
   table_title <- attr(x, "table_title", exact = TRUE)
   correlation_note <- attr(x, "correlation_note", exact = TRUE)
   significance_note <- attr(x, "significance_note", exact = TRUE)
@@ -145,13 +153,25 @@ print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL,
 
     # Only set labels for columns that exist
     col_labels <- base::list()
-    if ("variable" %in% all_cols) col_labels$variable <- "Variable"
-    if ("n_obs" %in% all_cols) col_labels$n_obs <- gt::html("<i>N</i><sub>obs</sub>")
-    if ("m" %in% all_cols) col_labels$m <- gt::html("<i>M</i>")
-    if ("sd" %in% all_cols) col_labels$sd <- gt::html("<i>SD</i>")
-    if ("range" %in% all_cols) col_labels$range <- "Range"
-    if ("icc" %in% all_cols) col_labels$icc <- " "
-    
+    if ("variable" %in% all_cols) {
+      col_labels$variable <- "Variable"
+    }
+    if ("n_obs" %in% all_cols) {
+      col_labels$n_obs <- gt::html("<i>N</i><sub>obs</sub>")
+    }
+    if ("m" %in% all_cols) {
+      col_labels$m <- gt::html("<i>M</i>")
+    }
+    if ("sd" %in% all_cols) {
+      col_labels$sd <- gt::html("<i>SD</i>")
+    }
+    if ("range" %in% all_cols) {
+      col_labels$range <- "Range"
+    }
+    if ("icc" %in% all_cols) {
+      col_labels$icc <- " "
+    }
+
     if (base::length(col_labels) > 0) {
       gt_result <- rlang::exec(gt::cols_label, gt_result, !!!col_labels)
     }
@@ -183,16 +203,21 @@ print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL,
         )
       ) |>
       gt::tab_source_note(
+        source_note = gt::html(note_text)
+      ) |>
+      gt::tab_source_note(
         source_note = gt::html(
           base::paste0(
             "<sup>a</sup> ",
-            correlation_note,
-            "<br>",
+            correlation_note
+          )
+        )
+      ) |>
+      gt::tab_source_note(
+        source_note = gt::html(
+          base::paste0(
             "<sup>b</sup> ",
-            significance_note,
-            "<br><br>",
-            "Note. ",
-            note_text
+            significance_note
           )
         )
       ) |>
