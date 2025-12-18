@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The **mlstats** package provides tools for conducting multilevel analyses, such as centering variables to compute random effects within-between (REWB) models or creating publication-ready descriptive tables, including within-group and between-group correlations, as well as intraclass correlation coefficients (ICCs). The package supports both frequentist (using `lme4`) and Bayesian (using `brms`) estimation methods.
+The **mlstats** package provides tools for conducting multilevel analyses, such as centering variables to compute random effects within-between (REWB) models or creating publication-ready descriptive tables, including within-group and between-group correlations, as well as intraclass correlation coefficients (ICCs). The package supports frequentist (using `lme4`) and Bayesian (using `brms`) estimation.
 
 ## Installation
 
@@ -34,20 +34,22 @@ pak::pak("felixdidi/mlstats")
 
 ### Easy Defaults
 
-The `mldesc()` function makes it easy to compute descriptive statistics for multilevel data, including basic descriptives (mean, SD, range), within-group and between-group correlations, as well as intraclass correlation coefficients (ICCs). Let's attempt to recreate Table 1 from Klingelhoefer et al. (2024):
+The `mldesc()` function has defaults that make it easy to compute descriptive statistics for multilevel data. It outputs basic descriptives, ICCs, as well as within-group and between-group correlations for a set of variables, given a grouping variable (e.g., person ID). If desired, the `within_between_correlations()` function computes only a correlation matrix without additional descriptives.
 
 ```{r data, echo = FALSE, message = FALSE}
 library(dplyr)
 library(tidyr)
+library(stringr)
 data <-
-  read.csv("https://files.de-1.osf.io/v1/resources/486aq/providers/osfstorage/669e9f8b11532c02b2b35b21") |> 
-  filter(compliance >= .6) |> 
+  read.csv(
+    "https://files.de-1.osf.io/v1/resources/m8pu3/providers/osfstorage/6935c4c2bd3315c47d2a1952?view_only=9321c19e5fd34eff87ff934ac2e0c8af"
+  ) |>
   mutate(
     person = id,
-    disconnective_behavior = disco_m,
-    distraction_motivation = motivation_distraction,
-    wellbeing_motivation = motivation_wellbeing,
-    presence_motivation = motivation_presence,
+    self_control = sc_m_pre,
+    goal_conflict = goal_conf,
+    disconnection = disco_b,
+    procrastination = procra,
     .keep = "none"
   )
 ```
@@ -56,10 +58,10 @@ data <-
 library(mlstats)
 
 vars <- c(
-  "disconnective_behavior",
-  "distraction_motivation",
-  "wellbeing_motivation",
-  "presence_motivation"
+  "self_control",
+  "goal_conflict",
+  "disconnection",
+  "procrastination"
 )
 
 data |>
@@ -71,11 +73,12 @@ data |>
 
 ### Customizable Options
 
-The `mldesc()` function offers several options to customize the output:
+There are several options to customize the output:
 
-- **Weight by group size**: By default, `mldesc()` weights the group means, standard deviations, and between-group correlations by group size. This can be disabled by setting `weight = FALSE` (e.g., so that each person in the sample contributes equally to the overall mean and the between-person correlations).
+- **Weight by group size**: By default, the group means, standard deviations, and between-group correlations are weighted by group size. This can be disabled by setting `weight = FALSE` (e.g., so that each person in the sample contributes equally to the overall mean and the between-person correlations).
 - **Remove leading zeros**: By default, `mldesc()` removes leading zeros from decimal numbers to comply with APA formatting guidelines. This can be disabled by setting `remove_leading_zero = FALSE`.
-- **Flip correlation matrix**: By default, `mldesc()` displays within-group correlations above the diagonal and between-group correlations below the diagonal. This can be changed by setting `flip = TRUE`.
+- **Flip correlation matrix**: By default, within-group correlations are displayed above the diagonal and between-group correlations below the diagonal. This can be changed by setting `flip = TRUE`.
+- **Significance stars**: By default, one star is added to all correlation coefficients with *p* < .05. By setting `significance = "detailed"`, this can be changed to one star for *p* < .05, two stars for *p* < .01, and three stars for *p* < .001.
 
 ```{r no-weight-example}
 data |>
@@ -84,41 +87,74 @@ data |>
     vars = vars,
     weight = FALSE,
     remove_leading_zero = FALSE,
-    flip = TRUE
+    flip = TRUE,
+    significance = "detailed"
   )
 ```
 
 
 ### Pretty Printing
 
-The `mldesc()`-function also supports various print-methods to create nicely formatted tables that look great in your Quarto document and can be directly copied into a manuscript. Whereas the default print method outputs the table to the console, `gt` and `tinytable` outputs are also supported by setting the respective `format` option. In addition, users can provide a custom table title via the `table_title` parameter, as well as custom `correlation_note` and `note_text`.
+The `mldesc()` function supports various print-methods that can be accessed by passing its output to `print()`. All printing methods allow customization of the `table_title`, `correlation_note`, `significance_note`, and `note_text`. Whereas the default print method prints to the console, a `gt` object is returned when setting `format = "gt"`.
+
+All outputs are designed to look great by default — however, users can further customize the output by modifying the resulting `tibble` and `gt` objects (for customization of `gt` tables, see its documentation [here](https://gt.rstudio.com/)). To reproduce Table 1 from Klingelhoefer et al. (2025) more closely, we can adjust the output by selecting relevant columns, replacing `NA`s with dashes, and adding footnotes:
 
 ```{r gt-example, eval = FALSE}
 data |>
-  mldesc(
-    group = "person",
-    vars = vars
-  ) |> 
+  mldesc(group = "person", vars = vars, significance = "detailed") |>
+  select(-n_obs, -range) |>
+  mutate(across(everything(), ~ str_replace(.x, "NA", "–"))) |>
+  mutate(across(any_of(c("m", "sd")), ~ if_else(variable == "Disconnection", "–", .x))) |>
+  mutate(variable = case_when(variable == "Self control" ~ "Self-control<sup>c</sup>", variable == "Goal conflict" ~ "Goal-conflict", variable == "Disconnection" ~ "Disconnection<sup>d</sup>", variable == "Procrastination" ~ "Procrastination")) |>
   print(
-    format = "gt", # "tt" for tinytable
-    table_title = "Descriptive statistics, within- and between-person correlations of digital disconnection and motivations",
-    correlation_note = "Within-person correlations are displayed above the diagonal, between-person correlations below the diagonal.",
-    note_text = NULL
-  )
+    format = "gt",
+    table_title = "Descriptive statistics, within- and between-person correlations for central variables",
+    correlation_note = "Within-person correlations depicted above, between-person correlations below the diagonal.",
+    note_text = "<i>Note</i>. <i>N</i> = 237, <i>T</i> = 12,408."
+  ) |>
+  gt::tab_source_note(source_note = gt::html("<sup>c</sup> Self-control was measured as a trait, and no within-person correlation is available.")) |>
+  gt::tab_source_note(source_note = gt::html("<sup>d</sup> Digital disconnection was operationalized as a binary variable and does not have a mean or standard deviation.")) |>
+  gt::fmt_markdown(columns = variable)
 ```
 
 ```{r gt-example-rendered, echo = FALSE, message = FALSE}
 data |>
   mldesc(
     group = "person",
-    vars = vars
+    vars = vars,
+    significance = "detailed"
+  ) |>
+  select(-n_obs, -range) |>
+  mutate(across(everything(), ~ str_replace(.x, "NA", "–"))) |>
+  mutate(across(
+    any_of(c("m", "sd")),
+    ~ if_else(variable == "Disconnection", "–", .x)
+  )) |>
+  mutate(
+    variable = case_when(
+      variable == "Self control" ~ "Self-control<sup>c</sup>",
+      variable == "Goal conflict" ~ "Goal-conflict",
+      variable == "Disconnection" ~ "Disconnection<sup>d</sup>",
+      variable == "Procrastination" ~ "Procrastination"
+    )
   ) |>
   print(
     format = "gt",
-    table_title = "Descriptive statistics, within- and between-person correlations of digital disconnection and motivations",
-    correlation_note = "Within-person correlations are displayed above the diagonal, between-person correlations below the diagonal.",
-    note_text = NULL
+    table_title = "Descriptive statistics, within- and between-person correlations for central variables",
+    correlation_note = "Within-person correlations depicted above, between-person correlations below the diagonal.",
+    note_text = "<i>Note</i>. <i>N</i> = 237, <i>T</i> = 12,408."
   ) |>
+  gt::tab_source_note(
+    source_note = gt::html(
+      "<sup>c</sup> Self-control was measured as a trait, and no within-person correlation is available."
+    )
+  ) |>
+  gt::tab_source_note(
+    source_note = gt::html(
+      "<sup>d</sup> Digital disconnection was operationalized as a binary variable and does not have a mean or standard deviation."
+    )
+  ) |>
+  gt::fmt_markdown(columns = variable) |>
   gt::gtsave("man/img/gt-example.png")
 ```
 
@@ -154,7 +190,7 @@ The package also facilitates centering of variables for further use with the `de
 
 ```{r decompose-example}
 data |>
-  rename(disco = disconnective_behavior) |>
+  rename(disco = disconnection) |>
   decompose_within_between(
     group = "person",
     vars = "disco"
@@ -174,5 +210,6 @@ Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: 
 
 Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sectional multilevel models: A new look at an old issue. *Psychological Methods, 12*(2), 121–138. https://doi.org/10/b2jz57
 
-Klingelhoefer, J., Gilbert, A., & Meier, A. (2024). Momentary motivations for digital disconnection: An experience sampling study. *Journal of Computer-Mediated Communication, 29*(5), zmae013. https://doi.org/10/hbb5gx
+Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital disconnection as a self-regulatory strategy against procrastination. *PsyArXiv*. https://doi.org/10.31234/osf.io/3j64v_v1
+
 

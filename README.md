@@ -12,9 +12,8 @@ The **mlstats** package provides tools for conducting multilevel
 analyses, such as centering variables to compute random effects
 within-between (REWB) models or creating publication-ready descriptive
 tables, including within-group and between-group correlations, as well
-as intraclass correlation coefficients (ICCs). The package supports both
-frequentist (using `lme4`) and Bayesian (using `brms`) estimation
-methods.
+as intraclass correlation coefficients (ICCs). The package supports
+frequentist (using `lme4`) and Bayesian (using `brms`) estimation.
 
 ## Installation
 
@@ -29,20 +28,21 @@ pak::pak("felixdidi/mlstats")
 
 ### Easy Defaults
 
-The `mldesc()` function makes it easy to compute descriptive statistics
-for multilevel data, including basic descriptives (mean, SD, range),
-within-group and between-group correlations, as well as intraclass
-correlation coefficients (ICCs). Let’s attempt to recreate Table 1 from
-Klingelhoefer et al. (2024):
+The `mldesc()` function has defaults that make it easy to compute
+descriptive statistics for multilevel data. It outputs basic
+descriptives, ICCs, as well as within-group and between-group
+correlations for a set of variables, given a grouping variable (e.g.,
+person ID). If desired, the `within_between_correlations()` function
+computes only a correlation matrix without additional descriptives.
 
 ``` r
 library(mlstats)
 
 vars <- c(
-  "disconnective_behavior",
-  "distraction_motivation",
-  "wellbeing_motivation",
-  "presence_motivation"
+  "self_control",
+  "goal_conflict",
+  "disconnection",
+  "procrastination"
 )
 
 data |>
@@ -51,35 +51,39 @@ data |>
     vars = vars
   )
 #> # Multilevel descriptive statistics
-#>   ====================== ====== ===== ===== ===== ===== ===== ===== ===== =====
-#>   variable                n_obs     m    sd range   `1`   `2`   `3`   `4`   icc
-#>   ---------------------- ------ ----- ----- ----- ----- ----- ----- ----- -----
-#> 1 Disconnective behavior 12,407  0.38  0.39   0-1     –  .12*   .02  .15*   .45
-#> 2 Distraction motivation  7,360  5.11  2.02   1-7   .10     –  .13*  .20*   .27
-#> 3 Wellbeing motivation    7,360  3.59  2.20   1-7  .23*  .41*     –  .10*   .50
-#> 4 Presence motivation     7,360  4.61  2.21   1-7  .18*  .39*  .32*     –   .31
-#>   ====================== ====== ===== ===== ===== ===== ===== ===== ===== =====
-#> # Within-group correlations above, between-group correlations below the diagonal.
-#> # All correlations marked with a star are significant at p < .05.
-#> # Group-weighted multilevel descriptive statistics computed with mlstats.
+#>   =============== ====== ===== ===== ===== ===== ===== ===== ===== =====
+#>   variable         n_obs     m    sd range   `1`   `2`   `3`   `4`   icc
+#>   --------------- ------ ----- ----- ----- ----- ----- ----- ----- -----
+#> 1 Self control    12,408  3.78  1.15   2-7     –    NA    NA    NA  1.00
+#> 2 Goal conflict   12,408  3.19  2.13   1-7 -.22*     –  .13*  .31*   .47
+#> 3 Disconnection   12,408  0.59  0.49   0-1  .14*  .36*     – -.09*   .40
+#> 4 Procrastination 12,408  2.27  1.76   1-7 -.37*  .56*   .05     –   .25
+#>   =============== ====== ===== ===== ===== ===== ===== ===== ===== =====
+#> # ℹ Within-group correlations above, between-group correlations below the
+#> #   diagonal.
+#> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
 
 ### Customizable Options
 
-The `mldesc()` function offers several options to customize the output:
+There are several options to customize the output:
 
-- **Weight by group size**: By default, `mldesc()` weights the group
-  means, standard deviations, and between-group correlations by group
-  size. This can be disabled by setting `weight = FALSE` (e.g., so that
-  each person in the sample contributes equally to the overall mean and
-  the between-person correlations).
+- **Weight by group size**: By default, the group means, standard
+  deviations, and between-group correlations are weighted by group size.
+  This can be disabled by setting `weight = FALSE` (e.g., so that each
+  person in the sample contributes equally to the overall mean and the
+  between-person correlations).
 - **Remove leading zeros**: By default, `mldesc()` removes leading zeros
   from decimal numbers to comply with APA formatting guidelines. This
   can be disabled by setting `remove_leading_zero = FALSE`.
-- **Flip correlation matrix**: By default, `mldesc()` displays
-  within-group correlations above the diagonal and between-group
-  correlations below the diagonal. This can be changed by setting
-  `flip = TRUE`.
+- **Flip correlation matrix**: By default, within-group correlations are
+  displayed above the diagonal and between-group correlations below the
+  diagonal. This can be changed by setting `flip = TRUE`.
+- **Significance stars**: By default, one star is added to all
+  correlation coefficients with *p* \< .05. By setting
+  `significance = "detailed"`, this can be changed to one star for *p*
+  \< .05, two stars for *p* \< .01, and three stars for *p* \< .001.
 
 ``` r
 data |>
@@ -88,44 +92,59 @@ data |>
     vars = vars,
     weight = FALSE,
     remove_leading_zero = FALSE,
-    flip = TRUE
+    flip = TRUE,
+    significance = "detailed"
   )
 #> # Multilevel descriptive statistics
-#>   ====================== ====== ===== ===== ===== ===== ===== ===== ===== =====
-#>   variable                n_obs     m    sd range   `1`   `2`   `3`   `4`   icc
-#>   ---------------------- ------ ----- ----- ----- ----- ----- ----- ----- -----
-#> 1 Disconnective behavior 12,407  0.38  0.27   0-1     –  0.12 0.25* 0.19*  0.45
-#> 2 Distraction motivation  7,360  5.09  1.19   1-7 0.12*     – 0.39* 0.38*  0.27
-#> 3 Wellbeing motivation    7,360  3.48  1.58   1-7  0.02 0.13*     – 0.33*  0.50
-#> 4 Presence motivation     7,360  4.50  1.39   1-7 0.15* 0.20* 0.10*     –  0.31
-#>   ====================== ====== ===== ===== ===== ===== ===== ===== ===== =====
-#> # Between-group correlations above, within-group correlations below the diagonal.
-#> # All correlations marked with a star are significant at p < .05.
-#> # Unweighted multilevel descriptive statistics computed with mlstats.
+#>   =============== ====== ===== ===== ===== ===== ======== ======== ========
+#>   variable         n_obs     m    sd range   `1`      `2`      `3`      `4`
+#>   --------------- ------ ----- ----- ----- ----- -------- -------- --------
+#> 1 Self control    12,408  3.78  1.16   2-7     – -0.22***    0.13* -0.36***
+#> 2 Goal conflict   12,408  3.22  1.48   1-7    NA        –  0.37***  0.56***
+#> 3 Disconnection   12,408  0.60  0.32   0-1    NA  0.13***        –     0.06
+#> 4 Procrastination 12,408  2.29  0.90   1-7    NA  0.31*** -0.09***        –
+#>   =============== ====== ===== ===== ===== ===== ======== ======== ========
+#> # ℹ 1 more variable: icc <mls>
+#> # ℹ Between-group correlations above, within-group correlations below the
+#> #   diagonal.
+#> # ℹ Correlations marked with * are significant at p < .05, ** at p < .01, and
+#> #   *** at p < .001.
+#> # ℹ Unweighted multilevel descriptive statistics computed with mlstats.
 ```
 
 ### Pretty Printing
 
-The `mldesc()`-function also supports various print-methods to create
-nicely formatted tables that look great in your Quarto document and can
-be directly copied into a manuscript. Whereas the default print method
-outputs the table to the console, `gt` and `tinytable` outputs are also
-supported by setting the respective `format` option. In addition, users
-can provide a custom table title via the `table_title` parameter, as
-well as custom `correlation_note` and `note_text`.
+The `mldesc()` function supports various print-methods that can be
+accessed by passing its output to `print()`. All printing methods allow
+customization of the `table_title`, `correlation_note`,
+`significance_note`, and `note_text`. Whereas the default print method
+prints to the console, a `gt` object is returned when setting
+`format = "gt"`.
+
+All outputs are designed to look great by default — however, users can
+further customize the output by modifying the resulting `tibble` and
+`gt` objects (for customization of `gt` tables, see its documentation
+[here](https://gt.rstudio.com/)). To reproduce Table 1 from
+Klingelhoefer et al. (2025) more closely, we can adjust the output by
+selecting relevant columns, replacing `NA`s with dashes, and adding
+footnotes:
 
 ``` r
 data |>
-  mldesc(
-    group = "person",
-    vars = vars
-  ) |> 
+  mldesc(group = "person", vars = vars, significance = "detailed") |>
+  select(-n_obs, -range) |>
+  mutate(across(everything(), ~ str_replace(.x, "NA", "–"))) |>
+  mutate(across(any_of(c("m", "sd")), ~ if_else(variable == "Disconnection", "–", .x))) |>
+  mutate(variable = case_when(variable == "Self control" ~ "Self-control<sup>c</sup>", variable == "Goal conflict" ~ "Goal-conflict", variable == "Disconnection" ~ "Disconnection<sup>d</sup>", variable == "Procrastination" ~ "Procrastination")) |>
   print(
-    format = "gt", # "tt" for tinytable
-    table_title = "Descriptive statistics, within- and between-person correlations of digital disconnection and motivations",
-    correlation_note = "Within-person correlations are displayed above the diagonal, between-person correlations below the diagonal.",
-    note_text = NULL
-  )
+    format = "gt",
+    table_title = "Descriptive statistics, within- and between-person correlations for central variables",
+    correlation_note = "Within-person correlations depicted above, between-person correlations below the diagonal.",
+    note_text = "<i>Note</i>. <i>N</i> = 237, <i>T</i> = 12,408."
+  ) |>
+  gt::tab_source_note(source_note = gt::html("<sup>c</sup> Self-control was measured as a trait, and no within-person correlation is available.")) |>
+  gt::tab_source_note(source_note = gt::html("<sup>d</sup> Digital disconnection was operationalized as a binary variable and does not have a mean or standard deviation.")) |>
+  gt::fmt_markdown(columns = variable)
 ```
 
 ![](man/img/gt-example.png)
@@ -160,9 +179,9 @@ cors |>
   filter(type == "wp") |> 
   filter(value == max(value))
 #> # A tibble: 1 × 4
-#>   v1                     v2                  value type 
-#>   <chr>                  <chr>               <dbl> <chr>
-#> 1 distraction_motivation presence_motivation   0.2 wp
+#>   v1            v2              value type 
+#>   <chr>         <chr>           <dbl> <chr>
+#> 1 goal_conflict procrastination  0.31 wp
 ```
 
 ## Centering
@@ -177,26 +196,26 @@ estimation of distinct within-group and between-group effects.
 
 ``` r
 data |>
-  rename(disco = disconnective_behavior) |>
+  rename(disco = disconnection) |>
   decompose_within_between(
     group = "person",
     vars = "disco"
   ) |>
   select(person, matches("disco"))
-#> # A tibble: 12,407 × 5
+#> # A tibble: 12,408 × 5
 #>    person disco disco_grand_mean_cent…¹ disco_between_person disco_within_person
-#>     <int> <dbl>                   <dbl>                <dbl>               <dbl>
-#>  1      1   0                   -0.376                 0.127             -0.127 
-#>  2      1   0                   -0.376                 0.127             -0.127 
-#>  3      1   0                   -0.376                 0.127             -0.127 
-#>  4      1   0                   -0.376                 0.127             -0.127 
-#>  5      1   0.2                 -0.176                 0.127              0.0727
-#>  6      1   0                   -0.376                 0.127             -0.127 
-#>  7      1   0.4                  0.0239                0.127              0.273 
-#>  8      1   0                   -0.376                 0.127             -0.127 
-#>  9      1   0                   -0.376                 0.127             -0.127 
-#> 10      1   0                   -0.376                 0.127             -0.127 
-#> # ℹ 12,397 more rows
+#>     <int> <int>                   <dbl>                <dbl>               <dbl>
+#>  1      1     0                  -0.593                0.488              -0.488
+#>  2      1     1                   0.407                0.488               0.512
+#>  3      1     0                  -0.593                0.488              -0.488
+#>  4      1     1                   0.407                0.488               0.512
+#>  5      1     1                   0.407                0.488               0.512
+#>  6      1     0                  -0.593                0.488              -0.488
+#>  7      1     0                  -0.593                0.488              -0.488
+#>  8      1     0                  -0.593                0.488              -0.488
+#>  9      1     1                   0.407                0.488               0.512
+#> 10      1     1                   0.407                0.488               0.512
+#> # ℹ 12,398 more rows
 #> # ℹ abbreviated name: ¹​disco_grand_mean_centered
 ```
 
@@ -223,7 +242,6 @@ Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
 cross-sectional multilevel models: A new look at an old issue.
 *Psychological Methods, 12*(2), 121–138. <https://doi.org/10/b2jz57>
 
-Klingelhoefer, J., Gilbert, A., & Meier, A. (2024). Momentary
-motivations for digital disconnection: An experience sampling study.
-*Journal of Computer-Mediated Communication, 29*(5), zmae013.
-<https://doi.org/10/hbb5gx>
+Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital
+disconnection as a self-regulatory strategy against procrastination.
+*PsyArXiv*. <https://doi.org/10.31234/osf.io/3j64v_v1>
