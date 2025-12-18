@@ -12,13 +12,17 @@
 #'   If FALSE, each group contributes equally (unweighted group means).
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
+#' @param significance Character string specifying the significance marking style.
+#'   Either "basic" (default) or "detailed". If "basic", correlations with p < .05
+#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars 
+#'   for p < .05, p < .01, or p < .001, respectively.
 #'
 #' @return A tibble containing a correlation matrix where:
 #' \itemize{
 #'   \item The upper triangle contains within-group correlations
 #'   \item The lower triangle contains between-group correlations
 #'   \item Diagonal elements are marked with "-"
-#'   \item Significant correlations (p < 0.05) are marked with "*"
+#'   \item Significant correlations are marked with asterisks (see \code{significance} parameter)
 #' }
 #'
 #' @details
@@ -64,6 +68,14 @@
 #'   vars = c("math_score", "reading_score"),
 #'   weight = FALSE
 #' )
+#'
+#' # Use detailed significance marking
+#' result_detailed <- within_between_correlations(
+#'   data = data,
+#'   group = "school",
+#'   vars = c("math_score", "reading_score"),
+#'   significance = "detailed"
+#' )
 #' }
 #'
 #' @references
@@ -72,7 +84,36 @@
 #' @seealso \code{\link[psych]{statsBy}} for the original implementation
 #'
 #' @export
-within_between_correlations <- function(data, group, vars, weight = TRUE, flip = FALSE) {
+within_between_correlations <- function(data, group, vars, weight = TRUE, flip = FALSE, significance = c("basic", "detailed")) {
+  significance <- base::match.arg(significance)
+  
+  # Helper function to add significance stars
+  add_stars <- function(est, pval, style) {
+    label <- if (base::is.finite(est)) {
+      base::sprintf("%.2f", est)
+    } else {
+      "NA"
+    }
+    
+    if (!base::is.na(pval)) {
+      if (style == "detailed") {
+        if (pval < 0.001) {
+          label <- base::paste0(label, "***")
+        } else if (pval < 0.01) {
+          label <- base::paste0(label, "**")
+        } else if (pval < 0.05) {
+          label <- base::paste0(label, "*")
+        }
+      } else {  # basic
+        if (pval < 0.05) {
+          label <- base::paste0(label, "*")
+        }
+      }
+    }
+    
+    return(label)
+  }
+  
   # Compute group means
   group_means <-
     data |>
@@ -143,15 +184,7 @@ within_between_correlations <- function(data, group, vars, weight = TRUE, flip =
           )
           est <- base::as.numeric(cor_within$estimate)
           pval <- cor_within$p.value
-          label <- if (base::is.finite(est)) {
-            base::sprintf("%.2f", est)
-          } else {
-            "NA"
-          }
-          if (!base::is.na(pval) && pval < 0.05) {
-            label <- base::paste0(label, "*")
-          }
-          comparison_matrix[i, j] <- label
+          comparison_matrix[i, j] <- add_stars(est, pval, significance)
         }
       } else {
         # Between-group correlation
@@ -180,15 +213,7 @@ within_between_correlations <- function(data, group, vars, weight = TRUE, flip =
           }
 
           est <- r_bg
-          label <- if (base::is.finite(est)) {
-            base::sprintf("%.2f", est)
-          } else {
-            "NA"
-          }
-          if (!base::is.na(pval) && pval < 0.05) {
-            label <- base::paste0(label, "*")
-          }
-          comparison_matrix[i, j] <- label
+          comparison_matrix[i, j] <- add_stars(est, pval, significance)
         }
       }
     }
@@ -219,7 +244,15 @@ within_between_correlations <- function(data, group, vars, weight = TRUE, flip =
       )
     )
 
+  # Set significance note based on style
+  if (significance == "detailed") {
+    significance_note <- "Correlations marked with * are significant at p < .05, ** at p < .01, and *** at p < .001."
+  } else {
+    significance_note <- "All correlations marked with a star are significant at p < .05."
+  }
+
   class(result_tibble) <- c("mlstats_wb_tibble", class(result_tibble))
   base::attr(result_tibble, "flipped") <- flip
+  base::attr(result_tibble, "significance_note") <- significance_note
   return(result_tibble)
 }

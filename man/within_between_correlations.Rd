@@ -4,7 +4,14 @@
 \alias{within_between_correlations}
 \title{Compute Within-Group and Between-Group Correlations}
 \usage{
-within_between_correlations(data, group, vars, weight = TRUE, flip = FALSE)
+within_between_correlations(
+  data,
+  group,
+  vars,
+  weight = TRUE,
+  flip = FALSE,
+  significance = c("basic", "detailed")
+)
 }
 \arguments{
 \item{data}{A data frame containing the variables to analyze.}
@@ -18,6 +25,11 @@ If FALSE, each group contributes equally (unweighted group means).}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
+
+\item{significance}{Character string specifying the significance marking style.
+Either "basic" (default) or "detailed". If "basic", correlations with p < .05
+are marked with a star. If "detailed", correlations are marked with 1-3 stars
+for p < .05, p < .01, or p < .001, respectively.}
 }
 \value{
 A tibble containing a correlation matrix where:
@@ -25,7 +37,7 @@ A tibble containing a correlation matrix where:
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
 \item Diagonal elements are marked with "-"
-\item Significant correlations (p < 0.05) are marked with "*"
+\item Significant correlations are marked with asterisks (see \code{significance} parameter)
 }
 }
 \description{
@@ -75,6 +87,14 @@ result_unweighted <- within_between_correlations(
   group = "school",
   vars = c("math_score", "reading_score"),
   weight = FALSE
+)
+
+# Use detailed significance marking
+result_detailed <- within_between_correlations(
+  data = data,
+  group = "school",
+  vars = c("math_score", "reading_score"),
+  significance = "detailed"
 )
 }
 

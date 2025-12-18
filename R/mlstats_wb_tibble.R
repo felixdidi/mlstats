@@ -7,13 +7,7 @@ tbl_sum.mlstats_wb_tibble <- function(x, ...) {
 tbl_format_footer.mlstats_wb_tibble <- function(x, setup, ...) {
   default_footer <- base::NextMethod()
 
-  bayesian <- base::isTRUE(base::attr(x, "bayesian"))
-
-  significance_note <- if (bayesian) {
-    attr(x, "significance_note", exact = TRUE)
-  } else {
-    "All correlations marked with a star are significant at p < .05."
-  }
+  significance_note <- base::attr(x, "significance_note", exact = TRUE)
   
   # Check if matrix was flipped by looking for flip attribute
   flipped <- base::isTRUE(base::attr(x, "flipped"))

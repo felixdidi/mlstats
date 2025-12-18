@@ -12,28 +12,19 @@ tbl_sum.mlstats_desc_tibble <- function(x, ...) {
 tbl_format_footer.mlstats_desc_tibble <- function(x, setup, ...) {
   default_footer <- base::NextMethod()
   
-  # Check if matrix was flipped
-  flipped <- base::isTRUE(base::attr(x, "flipped"))
-  
-  correlation_note <- if (flipped) {
-    "Between-group correlations above, within-group correlations below the diagonal."
-  } else {
-    "Within-group correlations above, between-group correlations below the diagonal."
-  }
-  
-  # Allow override from stored attribute
-  stored_note <- attr(x, "correlation_note", exact = TRUE)
-  if (!is.null(stored_note)) {
-    correlation_note <- stored_note
+  # Get correlation note from attribute
+  correlation_note <- base::attr(x, "correlation_note", exact = TRUE)
+  if (base::is.null(correlation_note)) {
+    # Fallback if not set
+    flipped <- base::isTRUE(base::attr(x, "flipped"))
+    correlation_note <- if (flipped) {
+      "Between-group correlations above, within-group correlations below the diagonal."
+    } else {
+      "Within-group correlations above, between-group correlations below the diagonal."
+    }
   }
 
-  bayesian <- base::isTRUE(base::attr(x, "bayesian"))
-
-  significance_note <- if (bayesian) {
-    attr(x, "significance_note", exact = TRUE)
-  } else {
-    "All correlations marked with a star are significant at p < .05."
-  }
+  significance_note <- base::attr(x, "significance_note", exact = TRUE)
   
   note_text <- attr(x, "note_text", exact = TRUE)
   
@@ -85,11 +76,6 @@ print.mlstats_desc_tibble <- function(x, format = "default", table_title = NULL,
   correlation_note <- attr(x, "correlation_note", exact = TRUE)
   significance_note <- attr(x, "significance_note", exact = TRUE)
   note_text <- attr(x, "note_text", exact = TRUE)
-
-  bayesian <- base::isTRUE(base::attr(x, "bayesian"))
-  if (!bayesian && is.null(significance_note)) {
-    significance_note <- "All correlations marked with a star are significant at p < .05."
-  }
 
   if (format == "gt") {
     # Detect correlation columns (numeric column names like "1", "2", "3", etc.)

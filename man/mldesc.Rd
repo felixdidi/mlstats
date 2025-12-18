@@ -10,6 +10,7 @@ mldesc(
   vars,
   weight = TRUE,
   flip = FALSE,
+  significance = c("basic", "detailed"),
   remove_leading_zero = TRUE
 )
 }
@@ -26,6 +27,11 @@ size (each group contributes equally).}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
+
+\item{significance}{Character string specifying the significance marking style.
+Either "basic" (default) or "detailed". If "basic", correlations with p < .05
+are marked with a star. If "detailed", correlations are marked with 1-3 stars
+for p < .05, p < .01, or p < .001, respectively.}
 
 \item{remove_leading_zero}{Logical. If TRUE (default), removes leading zeros from
 decimal values in correlation and ICC columns according to APA standards.}
@@ -101,6 +107,14 @@ result_unweighted <- mldesc(
   group = "school",
   vars = c("math_score", "reading_score", "motivation"),
   weight = FALSE
+)
+
+# Use detailed significance marking
+result_detailed <- mldesc(
+  data = data,
+  group = "school",
+  vars = c("math_score", "reading_score", "motivation"),
+  significance = "detailed"
 )
 }
 
