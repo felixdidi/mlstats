@@ -24,20 +24,52 @@ You can install the development version of mlstats from GitHub:
 pak::pak("felixdidi/mlstats")
 ```
 
+## Decompose Within- and Between-Group Effects
+
+You can easily center variables with the `decompose_within_between()`
+function. This centering approach is commonly used in multilevel
+modeling (Enders & Tofighi, 2007). The decomposed variables are
+particularly useful for Random Effects Within-Between (REWB) models
+(Bell et al., 2019), which allow the estimation of distinct within-group
+and between-group effects.
+
+``` r
+data |>
+  rename(disco = disconnection) |>
+  decompose_within_between(
+    group = "person",
+    vars = "disco"
+  ) |>
+  select(person, matches("disco"))
+#> # A tibble: 12,408 × 5
+#>    person disco disco_grand_mean_cent…¹ disco_between_person disco_within_person
+#>     <int> <int>                   <dbl>                <dbl>               <dbl>
+#>  1      1     0                  -0.593                0.488              -0.488
+#>  2      1     1                   0.407                0.488               0.512
+#>  3      1     0                  -0.593                0.488              -0.488
+#>  4      1     1                   0.407                0.488               0.512
+#>  5      1     1                   0.407                0.488               0.512
+#>  6      1     0                  -0.593                0.488              -0.488
+#>  7      1     0                  -0.593                0.488              -0.488
+#>  8      1     0                  -0.593                0.488              -0.488
+#>  9      1     1                   0.407                0.488               0.512
+#> 10      1     1                   0.407                0.488               0.512
+#> # ℹ 12,398 more rows
+#> # ℹ abbreviated name: ¹​disco_grand_mean_centered
+```
+
 ## Multilevel Descriptives
 
 ### Easy Defaults
 
-The `mldesc()` function has defaults that make it easy to compute
-descriptive statistics for multilevel data. It outputs basic
-descriptives, ICCs, as well as within-group and between-group
-correlations for a set of variables, given a grouping variable (e.g.,
-person ID). If desired, the `within_between_correlations()` function
-computes only a correlation matrix without additional descriptives.
+You can also easily compute descriptive statistics for multilevel data.
+`mldesc()` outputs basic descriptives, ICCs, as well as within-group and
+between-group correlations for a set of variables, given a grouping
+variable (e.g., person ID). If desired, the
+`within_between_correlations()` function computes only a correlation
+matrix without additional descriptives.
 
 ``` r
-library(mlstats)
-
 vars <- c(
   "self_control",
   "goal_conflict",
@@ -118,13 +150,39 @@ The `mldesc()` function supports various print-methods that can be
 accessed by passing its output to `print()`. All printing methods allow
 customization of the `table_title`, `correlation_note`,
 `significance_note`, and `note_text`. Whereas the default print method
-prints to the console, a `gt` object is returned when setting
-`format = "gt"` and a `tinytable` object when setting `format = "tt"`.
+prints to the console, a `tinytable` object is returned when setting
+`format = "tt"` and a `gt` object is returned when setting
+`format = "gt"`. Please note that the `gt` package is rather large and
+therefore not installed together with `mlstats` by default. It must be
+installed separately by calling `install.packages("gt")`.
+
+The `gt` format is particularly useful for creating publication-ready
+tables for manuscripts, as it supports rich text formatting and many
+customization options. The `tinytable` format is a lightweight
+alternative that is included in `mlstats` by default. It can be easily
+converted to other formats such as HTML, PDF, or Microsoft Word. For
+example, the output can be rendered directly into a Microsoft Word
+document using [Quarto](https://quarto.org/).
+
+``` yaml
+---
+format: docx
+---
+```
+
+``` r
+data |>
+  mldesc(
+    group = "person",
+    vars = vars
+  ) |>
+  print(format = "tt")
+```
 
 All outputs are designed to look great by default — however, users can
 further customize the output by modifying the resulting `tibble`, `gt`,
-and `tt` objects (for customization of `gt` tables, see its
-documentation [here](https://gt.rstudio.com/); for tinytable, see
+or `tt` object (for customization of `gt` tables, see the documentation
+[here](https://gt.rstudio.com/); for tinytable, see
 [here](https://vincentarelbundock.github.io/tinytable/)). For example,
 to reproduce Table 1 from Klingelhoefer et al. (2025), we can adjust the
 output by selecting relevant columns, replacing `NA`s with dashes, and
@@ -183,41 +241,6 @@ cors |>
 #>   v1            v2              value type 
 #>   <chr>         <chr>           <dbl> <chr>
 #> 1 goal_conflict procrastination  0.31 wp
-```
-
-## Centering
-
-The package also facilitates centering of variables for further use with
-the `decompose_within_between()` function. This centering approach is
-commonly used in multilevel modeling to separate within-group and
-between-group variance components (Enders & Tofighi, 2007). The
-decomposed variables are particularly useful for Random Effects
-Within-Between (REWB) models (Bell et al., 2019), which allow the
-estimation of distinct within-group and between-group effects.
-
-``` r
-data |>
-  rename(disco = disconnection) |>
-  decompose_within_between(
-    group = "person",
-    vars = "disco"
-  ) |>
-  select(person, matches("disco"))
-#> # A tibble: 12,408 × 5
-#>    person disco disco_grand_mean_cent…¹ disco_between_person disco_within_person
-#>     <int> <int>                   <dbl>                <dbl>               <dbl>
-#>  1      1     0                  -0.593                0.488              -0.488
-#>  2      1     1                   0.407                0.488               0.512
-#>  3      1     0                  -0.593                0.488              -0.488
-#>  4      1     1                   0.407                0.488               0.512
-#>  5      1     1                   0.407                0.488               0.512
-#>  6      1     0                  -0.593                0.488              -0.488
-#>  7      1     0                  -0.593                0.488              -0.488
-#>  8      1     0                  -0.593                0.488              -0.488
-#>  9      1     1                   0.407                0.488               0.512
-#> 10      1     1                   0.407                0.488               0.512
-#> # ℹ 12,398 more rows
-#> # ℹ abbreviated name: ¹​disco_grand_mean_centered
 ```
 
 ## Bayesian Estimation

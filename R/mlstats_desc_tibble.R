@@ -231,7 +231,7 @@ print.mlstats_desc_tibble <- function(
     
     tt_result <- 
       x |>
-      rename_with(
+      dplyr::rename_with(
         ~ case_when(
           .x == "variable" ~ "Variable",
           .x == "n_obs" ~ "Descriptives__*N*<sub>obs</sub>",
