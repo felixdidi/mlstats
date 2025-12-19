@@ -224,6 +224,37 @@ print.mlstats_desc_tibble <- function(
       gt::opt_align_table_header(align = "left")
 
     return(gt_result)
+  } else if (format == "tt") {
+    
+    all_cols <- base::names(x)
+    correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]
+    
+    tt_result <- 
+      x |>
+      rename_with(
+        ~ case_when(
+          .x == "variable" ~ "Variable",
+          .x == "n_obs" ~ "Descriptives__*N*<sub>obs</sub>",
+          .x == "m" ~ "Descriptives__*M*",
+          .x == "sd" ~ "Descriptives__*SD*",
+          .x == "range" ~ "Descriptives__Range",
+          .x == "icc" ~ "ICC__",
+          .x %in% correlation_cols ~ stringr::str_c("Correlations^a,b^__", .x),
+          TRUE ~ .x
+        )
+      ) |>
+      tinytable::tt(
+        notes = list(
+          stringr::str_c("*Note.* ", note_text),
+          a = correlation_note,
+          b = significance_note
+        )
+      ) |>
+      tinytable::group_tt(j = "__") |>
+      tinytable::format_tt(markdown = TRUE)
+    
+    return(tt_result)
+
   } else {
     base::NextMethod()
   }

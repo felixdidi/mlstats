@@ -119,15 +119,16 @@ accessed by passing its output to `print()`. All printing methods allow
 customization of the `table_title`, `correlation_note`,
 `significance_note`, and `note_text`. Whereas the default print method
 prints to the console, a `gt` object is returned when setting
-`format = "gt"`.
+`format = "gt"` and a `tinytable` object when setting `format = "tt"`.
 
 All outputs are designed to look great by default — however, users can
-further customize the output by modifying the resulting `tibble` and
-`gt` objects (for customization of `gt` tables, see its documentation
-[here](https://gt.rstudio.com/)). To reproduce Table 1 from
-Klingelhoefer et al. (2025) more closely, we can adjust the output by
-selecting relevant columns, replacing `NA`s with dashes, and adding
-footnotes:
+further customize the output by modifying the resulting `tibble`, `gt`,
+and `tt` objects (for customization of `gt` tables, see its
+documentation [here](https://gt.rstudio.com/); for tinytable, see
+[here](https://vincentarelbundock.github.io/tinytable/)). For example,
+to reproduce Table 1 from Klingelhoefer et al. (2025), we can adjust the
+output by selecting relevant columns, replacing `NA`s with dashes, and
+adding footnotes:
 
 ``` r
 data |>

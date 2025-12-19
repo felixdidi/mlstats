@@ -39,8 +39,7 @@ triangle and within-group correlations in the lower triangle. Default is FALSE.}
 decimal values in correlation and ICC columns according to APA standards.}
 }
 \value{
-A tibble of class \code{mlstats_desc_tibble} containing descriptive statistics (default), or a gt table object
-if print_gt = TRUE. The tibble contains:
+A tibble of class \code{mlstats_desc_tibble} containing:
 \itemize{
 \item \code{variable}: Variable name
 \item \code{n_obs}: Number of observations
@@ -50,6 +49,9 @@ if print_gt = TRUE. The tibble contains:
 \item One column per variable in \code{vars} containing correlations
 \item \code{icc}: Intraclass correlation coefficient
 }
+
+The tibble can be returned as a gt object using \code{print("gt")}
+and as a tinytable object using \code{print("tt")}.
 }
 \description{
 This function creates a comprehensive descriptive statistics table for multilevel data,

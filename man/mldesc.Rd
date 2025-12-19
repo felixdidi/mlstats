@@ -48,7 +48,8 @@ A tibble of class \code{mlstats_desc_tibble} containing:
 \item \code{icc}: Intraclass correlation coefficient
 }
 
-The tibble can be printed in gt format using \code{print(result, "gt")}.
+The tibble can be returned as a gt object using \code{print("gt")}
+and as a tinytable object using \code{print("tt")}.
 }
 \description{
 This function creates a comprehensive descriptive statistics table for multilevel data,
