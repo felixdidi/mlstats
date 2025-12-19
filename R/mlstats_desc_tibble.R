@@ -32,9 +32,9 @@ tbl_format_footer.mlstats_desc_tibble <- function(x, setup, ...) {
 
   base::c(
     default_footer,
-    pillar:::format_comment(correlation_note, width = setup$width),
-    pillar:::format_comment(significance_note, width = setup$width),
-    pillar:::format_comment(note_text, width = setup$width)
+    format_comment(correlation_note, width = setup$width),
+    format_comment(significance_note, width = setup$width),
+    format_comment(note_text, width = setup$width)
   ) |> 
   pillar::style_subtle()
 }

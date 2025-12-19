@@ -25,8 +25,8 @@ default_footer <- base::NextMethod()
 
   base::c(
     default_footer,
-    pillar:::format_comment(correlation_note, width = setup$width),
-    pillar:::format_comment(significance_note, width = setup$width)
+    format_comment(correlation_note, width = setup$width),
+    format_comment(significance_note, width = setup$width)
   ) |> 
   pillar::style_subtle()
 }
