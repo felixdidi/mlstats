@@ -112,12 +112,12 @@ The `mldesc()` function supports various print-methods that can be accessed by p
 
 The `gt` format is particularly useful for creating publication-ready tables for manuscripts, as it supports rich text formatting and many customization options. The `tinytable` format is a lightweight alternative that is included in `mlstats` by default. It can be easily converted to other formats such as HTML, PDF, or Microsoft Word. For example, the output can be rendered directly into a Microsoft Word document using [Quarto](https://quarto.org/).
 
-```yaml
+````{verbatim}
 ---
 format: docx
 ---
-```
-```{r tinytable-example, eval = FALSE}
+
+```{r}
 data |>
   mldesc(
     group = "person",
@@ -125,6 +125,7 @@ data |>
   ) |>
   print(format = "tt")
 ```
+````
 
 All outputs are designed to look great by default — however, users can further customize the output by modifying the resulting `tibble`, `gt`, or `tt` object (for customization of `gt` tables, see the documentation [here](https://gt.rstudio.com/); for tinytable, see [here](https://vincentarelbundock.github.io/tinytable/)). For example, to reproduce Table 1 from Klingelhoefer et al. (2025), we can adjust the output by selecting relevant columns, replacing `NA`s with dashes, and adding footnotes:
 

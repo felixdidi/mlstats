@@ -164,13 +164,12 @@ converted to other formats such as HTML, PDF, or Microsoft Word. For
 example, the output can be rendered directly into a Microsoft Word
 document using [Quarto](https://quarto.org/).
 
-``` yaml
+```` default
 ---
 format: docx
 ---
-```
 
-``` r
+```{r}
 data |>
   mldesc(
     group = "person",
@@ -178,6 +177,7 @@ data |>
   ) |>
   print(format = "tt")
 ```
+````
 
 All outputs are designed to look great by default — however, users can
 further customize the output by modifying the resulting `tibble`, `gt`,
