@@ -853,3 +853,65 @@ test_that("mldesc flip doesn't affect descriptives or ICC", {
     vctrs::vec_data(result_flipped$icc)
   )
 })
+
+test_that("bayes_mldesc print method accepts format parameter", {
+  set.seed(6000)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  result_gt <- print(result, "gt")
+  # Should return a gt table
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  # Should return a tinytable
+  expect_s4_class(result_tt, "tinytable")
+})
+
+test_that("bayes_mldesc print method accepts custom parameters", {
+  set.seed(6000)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+  
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+  
+  custom_title <- "Custom Bayesian Descriptive Statistics Table"
+  custom_note <- "Custom correlation interpretation"
+  custom_footer <- "Custom footer note"
+  
+  result_gt <- print(
+    result,
+    "gt",
+    table_title = custom_title,
+    correlation_note = custom_note,
+    note_text = custom_footer
+  )
+
+  result_tt <- print(
+    result,
+    "tt",
+    table_title = custom_title,
+    correlation_note = custom_note,
+    note_text = custom_footer
+  )
+  
+  # Should return correct classes
+  expect_s3_class(result_gt, "gt_tbl")
+  expect_s4_class(result_tt, "tinytable")
+})

@@ -512,9 +512,13 @@ test_that("bayes_mldesc print method accepts format parameter", {
     folder = "brms_models"
   )
   
-  # Should be able to print as gt
   result_gt <- print(result, "gt")
+  # Should return a gt table
   expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  # Should return a tinytable
+  expect_s4_class(result_tt, "tinytable")
 })
 
 test_that("bayes_mldesc print method accepts custom parameters", {
@@ -529,7 +533,6 @@ test_that("bayes_mldesc print method accepts custom parameters", {
   custom_note <- "Custom correlation interpretation"
   custom_footer <- "Custom footer note"
   
-  # Should be able to print with custom parameters
   result_gt <- print(
     result,
     "gt",
@@ -537,6 +540,16 @@ test_that("bayes_mldesc print method accepts custom parameters", {
     correlation_note = custom_note,
     note_text = custom_footer
   )
+
+  result_tt <- print(
+    result,
+    "tt",
+    table_title = custom_title,
+    correlation_note = custom_note,
+    note_text = custom_footer
+  )
   
+  # Should return correct classes
   expect_s3_class(result_gt, "gt_tbl")
+  expect_s4_class(result_tt, "tinytable")
 })
