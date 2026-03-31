@@ -40,7 +40,7 @@
 #' within-group effect of the predictor in REWB models.
 #'
 #' @examples
-#' \dontrun{
+#' set.seed(123)
 #' # Create sample data
 #' data <- data.frame(
 #'   participant = rep(1:10, each = 5),
@@ -54,7 +54,6 @@
 #'   group = "participant",
 #'   vars = c("stress", "mood")
 #' )
-#' }
 #'
 #' @references
 #' Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: 

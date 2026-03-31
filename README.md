@@ -17,7 +17,13 @@ frequentist (using `lme4`) and Bayesian (using `brms`) estimation.
 
 ## Installation
 
-You can install the development version of mlstats from GitHub:
+You can install mlstats from CRAN:
+
+``` r
+install.packages("mlstats")
+```
+
+You can also install the development version from GitHub:
 
 ``` r
 # install.packages("pak")
@@ -44,16 +50,16 @@ data |>
 #> # A tibble: 12,408 × 5
 #>    person disco disco_grand_mean_cent…¹ disco_between_person disco_within_person
 #>     <int> <int>                   <dbl>                <dbl>               <dbl>
-#>  1      1     0                  -0.593                0.488              -0.488
-#>  2      1     1                   0.407                0.488               0.512
-#>  3      1     0                  -0.593                0.488              -0.488
-#>  4      1     1                   0.407                0.488               0.512
-#>  5      1     1                   0.407                0.488               0.512
-#>  6      1     0                  -0.593                0.488              -0.488
-#>  7      1     0                  -0.593                0.488              -0.488
-#>  8      1     0                  -0.593                0.488              -0.488
-#>  9      1     1                   0.407                0.488               0.512
-#> 10      1     1                   0.407                0.488               0.512
+#>  1      1     1                   0.407               0.0204              0.980 
+#>  2      1     0                  -0.593               0.0204             -0.0204
+#>  3      1     0                  -0.593               0.0204             -0.0204
+#>  4      1     0                  -0.593               0.0204             -0.0204
+#>  5      1     0                  -0.593               0.0204             -0.0204
+#>  6      1     0                  -0.593               0.0204             -0.0204
+#>  7      1     0                  -0.593               0.0204             -0.0204
+#>  8      1     0                  -0.593               0.0204             -0.0204
+#>  9      1     0                  -0.593               0.0204             -0.0204
+#> 10      1     0                  -0.593               0.0204             -0.0204
 #> # ℹ 12,398 more rows
 #> # ℹ abbreviated name: ¹​disco_grand_mean_centered
 ```
@@ -260,11 +266,12 @@ because they fit one `brms`-model per correlation coefficient.
 
 Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects
 models: Making an informed choice. *Quality & Quantity, 53*(2),
-1051–1074. <https://doi.org/10/gd8wcr>
+1051–1074. <https://doi.org/10.1007/s11135-018-0802-x>
 
 Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
 cross-sectional multilevel models: A new look at an old issue.
-*Psychological Methods, 12*(2), 121–138. <https://doi.org/10/b2jz57>
+*Psychological Methods, 12*(2), 121–138.
+<https://doi.org/10.1037/1082-989X.12.2.121>
 
 Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital
 disconnection as a self-regulatory strategy against procrastination.

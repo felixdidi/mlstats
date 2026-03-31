@@ -1,0 +1,175 @@
+---
+title: "Getting Started with mlstats"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with mlstats}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The **mlstats** package provides tools for multilevel descriptive statistics
+and data preparation. It supports:
+
+- Decomposing variables into within-group and between-group components for
+  Random Effects Within-Between (REWB) models
+- Computing within-group and between-group correlations
+- Creating publication-ready descriptive statistics tables with ICCs
+- Both frequentist (via lme4) and Bayesian (via brms) estimation
+
+## Setup
+
+```{r setup}
+library(mlstats)
+```
+
+## Example Data
+
+We use simulated data from 50 students nested within 10 schools, where both
+school-level and student-level variation exist in math scores, reading scores,
+and motivation.
+
+```{r data}
+set.seed(42)
+n_schools <- 10
+n_per_school <- 5
+
+school_math <- rep(rnorm(n_schools, 50, 8), each = n_per_school)
+school_read <- rep(rnorm(n_schools, 50, 8), each = n_per_school)
+school_motiv <- rep(rnorm(n_schools, 5, 1.5), each = n_per_school)
+
+data <- data.frame(
+  school = rep(1:n_schools, each = n_per_school),
+  math_score = school_math + rnorm(n_schools * n_per_school, 0, 5),
+  reading_score = school_read + rnorm(n_schools * n_per_school, 0, 5),
+  motivation = school_motiv + rnorm(n_schools * n_per_school, 0, 1)
+)
+
+head(data)
+```
+
+## Decomposing Variables
+
+The `decompose_within_between()` function splits each variable into:
+
+- **Grand mean centered** values (deviation from overall mean)
+- **Between-group** component (group means)
+- **Within-group** component (deviation from group mean)
+
+These components are useful for fitting Random Effects Within-Between (REWB)
+models (Bell et al., 2019), which separate within-group from between-group
+effects.
+
+```{r decompose}
+decomposed <- decompose_within_between(
+  data = data,
+  group = "school",
+  vars = c("math_score", "motivation")
+)
+
+# View the decomposed math_score columns
+math_cols <- grep("school|math_score", names(decomposed))
+head(decomposed[, math_cols], 10)
+```
+
+## Within-Group and Between-Group Correlations
+
+The `within_between_correlations()` function computes a correlation matrix with
+within-group correlations in the upper triangle and between-group correlations
+in the lower triangle:
+
+```{r correlations}
+vars <- c("math_score", "reading_score", "motivation")
+
+within_between_correlations(
+  data = data,
+  group = "school",
+  vars = vars
+)
+```
+
+## Multilevel Descriptive Statistics
+
+The `mldesc()` function combines descriptive statistics, correlations, and ICCs
+into a single publication-ready table:
+
+```{r mldesc, warning = FALSE}
+result <- mldesc(
+  data = data,
+  group = "school",
+  vars = vars
+)
+
+result
+```
+
+### Customization Options
+
+Control weighting, significance marking, and formatting:
+
+```{r mldesc-options, warning = FALSE}
+mldesc(
+  data = data,
+  group = "school",
+  vars = vars,
+  weight = FALSE,
+  significance = "detailed",
+  flip = TRUE,
+  remove_leading_zero = FALSE
+)
+```
+
+### Table Output Formats
+
+The output can be rendered as a `tinytable` table for use in documents:
+
+```{r tt-output, warning = FALSE}
+result |>
+  print(format = "tt")
+```
+
+For `gt` table output (requires the **gt** package), use
+`print(result, format = "gt")`. See the
+[package README](https://github.com/felixdidi/mlstats) for detailed examples
+of formatted table output.
+
+### Pipe-Friendly Output
+
+The output tibbles contain vectors of class `mlstats_stat` (abbreviated `mls`).
+These can be cast to numeric for subsequent calculations:
+
+```{r pipe-friendly}
+# Extract correlations
+cors <- within_between_correlations(
+  data = data,
+  group = "school",
+  vars = vars
+)
+
+# Convert to numeric (removes significance stars)
+cors_numeric <- cors
+cors_numeric[-1] <- lapply(cors[-1], as.numeric)
+cors_numeric
+```
+
+## Bayesian Estimation
+
+For Bayesian estimation with credible intervals instead of *p*-values, use
+`bayes_mldesc()` and `bayes_within_between_correlations()`. These functions
+require the **brms** package and may take considerable time to run. See
+`?bayes_mldesc` for details.
+
+## References
+
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects
+models: making an informed choice. *Quality & Quantity*, 53(2), 1051--1074.
+
+Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
+cross-sectional multilevel models: A new look at an old issue.
+*Psychological Methods*, 12(2), 121--138.

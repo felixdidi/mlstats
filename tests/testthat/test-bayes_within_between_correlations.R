@@ -21,6 +21,14 @@ setup_test_data <- function() {
   )
 }
 
+skip_on_cran()
+skip_if_not_installed("brms")
+
+# Use a fresh temp folder so models are refit every test run
+brms_folder <- file.path(tempdir(), "mlstats_test_bayes_wb_corr")
+if (dir.exists(brms_folder)) unlink(brms_folder, recursive = TRUE)
+dir.create(brms_folder, recursive = TRUE)
+
 # Setup: Create test data once for all tests
 test_data <- setup_test_data()
 
@@ -42,7 +50,7 @@ test_that("bayes_within_between_correlations validates ci argument", {
       group = "group",
       vars = c("x", "y"),
       ci = 0,
-      folder = "brms_models"
+      folder = brms_folder
     ),
     "ci.*must be between 0 and 1"
   )
@@ -53,7 +61,7 @@ test_that("bayes_within_between_correlations validates ci argument", {
       group = "group",
       vars = c("x", "y"),
       ci = 1.5,
-      folder = "brms_models"
+      folder = brms_folder
     ),
     "ci.*must be between 0 and 1"
   )
@@ -80,7 +88,7 @@ test_that("bayes_within_between_correlations handles basic input correctly", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check structure
@@ -95,7 +103,7 @@ test_that("bayes_within_between_correlations produces symmetric matrix structure
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2", "v3"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check dimensions
@@ -113,7 +121,7 @@ test_that("bayes_within_between_correlations output format is correct", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check column names
@@ -133,7 +141,7 @@ test_that("bayes_within_between_correlations handles single variable", {
     data = test_data$basic,
     group = "group",
     vars = "x",
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should return 1x2 tibble with diagonal only
@@ -151,7 +159,7 @@ test_that("bayes_within_between_correlations handles missing values", {
     data = data_with_na,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should complete without error
@@ -165,7 +173,7 @@ test_that("bayes_within_between_correlations weight=TRUE uses weighted correlati
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result_weighted, "tbl_df")
@@ -182,7 +190,7 @@ test_that("bayes_within_between_correlations weight=FALSE uses unweighted correl
     group = "group",
     vars = c("x", "y"),
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result_unweighted, "tbl_df")
@@ -198,7 +206,7 @@ test_that("bayes_within_between_correlations weight argument defaults to TRUE", 
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_explicit <- bayes_within_between_correlations(
@@ -206,7 +214,7 @@ test_that("bayes_within_between_correlations weight argument defaults to TRUE", 
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should be identical (models are cached, so results should match exactly)
@@ -219,7 +227,7 @@ test_that("bayes_within_between_correlations handles different ci levels", {
     group = "group",
     vars = c("x", "y"),
     ci = 0.9,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_95 <- bayes_within_between_correlations(
@@ -227,7 +235,7 @@ test_that("bayes_within_between_correlations handles different ci levels", {
     group = "group",
     vars = c("x", "y"),
     ci = 0.95,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Both should complete successfully
@@ -243,7 +251,7 @@ test_that("bayes_within_between_correlations marks credible correlations", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # At least one cell should have content (correlation value)
@@ -256,7 +264,7 @@ test_that("bayes_within_between_correlations handles numeric group variable", {
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result, "tbl_df")
@@ -271,7 +279,7 @@ test_that("bayes_within_between_correlations handles factor group variable", {
     data = data_factor,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result, "tbl_df")
@@ -284,7 +292,7 @@ test_that("bayes_within_between_correlations reuses cached models", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Second run should use cached models
@@ -292,7 +300,7 @@ test_that("bayes_within_between_correlations reuses cached models", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Results should be identical
@@ -305,7 +313,7 @@ test_that("bayes_within_between_correlations weighted vs unweighted differ", {
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_unweighted <- bayes_within_between_correlations(
@@ -313,7 +321,7 @@ test_that("bayes_within_between_correlations weighted vs unweighted differ", {
     group = "group",
     vars = c("x", "y"),
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Extract between-group correlations
@@ -330,7 +338,7 @@ test_that("bayes_within_between_correlations upper triangle is within-group", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Upper triangle should be within-group

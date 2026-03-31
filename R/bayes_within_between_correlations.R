@@ -48,7 +48,7 @@
 #' by whether the specified credible interval excludes zero.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Create sample data
 #' data <- data.frame(
 #'   school = rep(1:5, each = 20),
@@ -62,7 +62,7 @@
 #'   group = "school",
 #'   vars = c("math_score", "reading_score"),
 #'   ci = 0.9,
-#'   folder = "brms_models/"
+#'   folder = tempdir()
 #' )
 #'
 #' # Compute unweighted between-group correlations
@@ -72,7 +72,7 @@
 #'   vars = c("math_score", "reading_score"),
 #'   weight = FALSE,
 #'   ci = 0.9,
-#'   folder = "brms_models/"
+#'   folder = tempdir()
 #' )
 #' }
 #'

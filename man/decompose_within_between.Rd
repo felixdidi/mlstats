@@ -51,7 +51,7 @@ their group mean. This removes all between-group variance and represents the
 within-group effect of the predictor in REWB models.
 }
 \examples{
-\dontrun{
+set.seed(123)
 # Create sample data
 data <- data.frame(
   participant = rep(1:10, each = 5),
@@ -65,7 +65,6 @@ result <- decompose_within_between(
   group = "participant",
   vars = c("stress", "mood")
 )
-}
 
 }
 \references{

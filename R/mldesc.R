@@ -51,7 +51,7 @@
 #' the proportion of variance in each variable that exists between groups.
 #'
 #' @examples
-#' \dontrun{
+#' set.seed(123)
 #' # Create sample data
 #' data <- data.frame(
 #'   school = rep(1:5, each = 20),
@@ -60,24 +60,14 @@
 #'   motivation = rnorm(100, 5, 2)
 #' )
 #'
-#' # Compute multilevel descriptives with weighted between-group correlations
+#' # Compute multilevel descriptives
 #' result <- mldesc(
 #'   data = data,
 #'   group = "school",
 #'   vars = c("math_score", "reading_score", "motivation")
 #' )
 #'
-#' # Print as default tibble
-#' print(result)
-#'
-#' # Print as formatted gt table
-#' print(result, "gt")
-#'
-#' # Print as gt table with custom title and notes
-#' print(result, "gt",
-#'       table_title = "Custom Table Title",
-#'       correlation_note = "Custom correlation note",
-#'       note_text = "Data collected from 5 schools.")
+#' result
 #'
 #' # Compute with unweighted between-group correlations
 #' result_unweighted <- mldesc(
@@ -94,8 +84,6 @@
 #'   vars = c("math_score", "reading_score", "motivation"),
 #'   significance = "detailed"
 #' )
-#' }
-#'
 #'
 #' @seealso \code{\link{within_between_correlations}}
 #'

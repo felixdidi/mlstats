@@ -21,6 +21,14 @@ setup_test_data <- function() {
   )
 }
 
+skip_on_cran()
+skip_if_not_installed("brms")
+
+# Use a fresh temp folder so models are refit every test run
+brms_folder <- file.path(tempdir(), "mlstats_test_bayes_mldesc")
+if (dir.exists(brms_folder)) unlink(brms_folder, recursive = TRUE)
+dir.create(brms_folder, recursive = TRUE)
+
 # Setup: Create test data once for all tests
 test_data <- setup_test_data()
 
@@ -42,7 +50,7 @@ test_that("bayes_mldesc validates ci argument", {
       group = "group",
       vars = c("x", "y"),
       ci = 0,
-      folder = "brms_models"
+      folder = brms_folder
     ),
     "ci.*must be between 0 and 1"
   )
@@ -53,7 +61,7 @@ test_that("bayes_mldesc validates ci argument", {
       group = "group",
       vars = c("x", "y"),
       ci = 1.5,
-      folder = "brms_models"
+      folder = brms_folder
     ),
     "ci.*must be between 0 and 1"
   )
@@ -80,7 +88,7 @@ test_that("bayes_mldesc handles basic input correctly", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check structure
@@ -97,7 +105,7 @@ test_that("bayes_mldesc computes descriptive statistics correctly", {
     data = test_data$basic,
     group = "group",
     vars = "x",
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check that statistics are present
@@ -112,7 +120,7 @@ test_that("bayes_mldesc handles multiple variables", {
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2", "v3"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check dimensions
@@ -130,7 +138,7 @@ test_that("bayes_mldesc computes ICC values", {
     data = test_data$basic,
     group = "group",
     vars = "x",
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # ICC should be present and formatted
@@ -143,7 +151,7 @@ test_that("bayes_mldesc includes correlation matrix", {
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2", "v3"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check that correlation columns exist (named "1", "2", "3")
@@ -164,7 +172,7 @@ test_that("bayes_mldesc handles missing values", {
     data = data_with_na,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should complete without error
@@ -178,7 +186,7 @@ test_that("bayes_mldesc remove_leading_zero parameter works", {
     group = "group",
     vars = c("x", "y"),
     remove_leading_zero = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_without_removal <- bayes_mldesc(
@@ -186,7 +194,7 @@ test_that("bayes_mldesc remove_leading_zero parameter works", {
     group = "group",
     vars = c("x", "y"),
     remove_leading_zero = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # With removal: should have "." format
@@ -201,7 +209,7 @@ test_that("bayes_mldesc handles single variable", {
     data = test_data$basic,
     group = "group",
     vars = "x",
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should have: variable, n_obs, m, sd, range, 1 correlation column, icc
@@ -215,7 +223,7 @@ test_that("bayes_mldesc handles numeric group variable", {
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result, "tbl_df")
@@ -230,7 +238,7 @@ test_that("bayes_mldesc handles factor group variable", {
     data = data_factor,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result, "tbl_df")
@@ -242,7 +250,7 @@ test_that("bayes_mldesc formats numbers correctly", {
     data = test_data$basic,
     group = "group",
     vars = "x",
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Mean and SD should have 2 decimal places
@@ -261,7 +269,7 @@ test_that("bayes_mldesc marks credible correlations", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should have correlation values
@@ -277,7 +285,7 @@ test_that("bayes_mldesc output format matches expected structure", {
     data = test_data$multi_var,
     group = "group",
     vars = c("v1", "v2", "v3"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Check column order: variable, n_obs, m, sd, range, correlations, icc
@@ -294,7 +302,7 @@ test_that("bayes_mldesc weight=TRUE uses weighted correlations", {
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result_weighted, "tbl_df")
@@ -312,7 +320,7 @@ test_that("bayes_mldesc weight=FALSE uses unweighted correlations", {
     group = "group",
     vars = c("x", "y"),
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   expect_s3_class(result_unweighted, "tbl_df")
@@ -329,7 +337,7 @@ test_that("bayes_mldesc weight argument defaults to TRUE", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_explicit <- bayes_mldesc(
@@ -337,7 +345,7 @@ test_that("bayes_mldesc weight argument defaults to TRUE", {
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should be identical (models are cached)
@@ -350,7 +358,7 @@ test_that("bayes_mldesc weight parameter doesn't affect descriptives or ICC", {
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_unweighted <- bayes_mldesc(
@@ -358,7 +366,7 @@ test_that("bayes_mldesc weight parameter doesn't affect descriptives or ICC", {
     group = "group",
     vars = c("x", "y"),
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # n_obs and range should be identical
@@ -382,7 +390,7 @@ test_that("bayes_mldesc handles different ci levels", {
     group = "group",
     vars = c("x", "y"),
     ci = 0.9,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_95 <- bayes_mldesc(
@@ -390,7 +398,7 @@ test_that("bayes_mldesc handles different ci levels", {
     group = "group",
     vars = c("x", "y"),
     ci = 0.95,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Both should complete successfully
@@ -407,7 +415,7 @@ test_that("bayes_mldesc reuses cached models", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Second run should use cached models
@@ -415,7 +423,7 @@ test_that("bayes_mldesc reuses cached models", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Results should be identical
@@ -428,7 +436,7 @@ test_that("bayes_mldesc weighted vs unweighted differ with unbalanced data", {
     group = "group",
     vars = c("x", "y"),
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_unweighted <- bayes_mldesc(
@@ -436,7 +444,7 @@ test_that("bayes_mldesc weighted vs unweighted differ with unbalanced data", {
     group = "group",
     vars = c("x", "y"),
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Extract between-group correlations (lower triangle)
@@ -462,7 +470,7 @@ test_that("bayes_mldesc weight=FALSE calculates mean of group means", {
     group = "group",
     vars = "x",
     weight = TRUE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_unweighted <- bayes_mldesc(
@@ -470,7 +478,7 @@ test_that("bayes_mldesc weight=FALSE calculates mean of group means", {
     group = "group",
     vars = "x",
     weight = FALSE,
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Weighted mean: (5*10 + 10*20 + 30*30) / 45 = 25.56
@@ -491,7 +499,7 @@ test_that("bayes_mldesc has custom class and attributes", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   # Should have mlstats_desc_tibble class
@@ -509,7 +517,7 @@ test_that("bayes_mldesc print method accepts format parameter", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   result_gt <- print(result, "gt")
@@ -526,7 +534,7 @@ test_that("bayes_mldesc print method accepts custom parameters", {
     data = test_data$basic,
     group = "group",
     vars = c("x", "y"),
-    folder = "brms_models"
+    folder = brms_folder
   )
   
   custom_title <- "Custom Bayesian Descriptive Statistics Table"

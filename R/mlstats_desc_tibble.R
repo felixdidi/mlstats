@@ -86,6 +86,7 @@ print.mlstats_desc_tibble <- function(
   note_text <- attr(x, "note_text", exact = TRUE)
 
   if (format == "gt") {
+    rlang::check_installed("gt", reason = "to render tables in gt format")
     # Detect correlation columns (numeric column names like "1", "2", "3", etc.)
     all_cols <- base::names(x)
     correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]

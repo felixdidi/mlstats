@@ -71,7 +71,7 @@ Models are saved to the specified folder for caching. Significance is determined
 by whether the specified credible interval excludes zero.
 }
 \examples{
-\dontrun{
+\donttest{
 # Create sample data
 data <- data.frame(
   school = rep(1:5, each = 20),
@@ -85,7 +85,7 @@ result <- bayes_within_between_correlations(
   group = "school",
   vars = c("math_score", "reading_score"),
   ci = 0.9,
-  folder = "brms_models/"
+  folder = tempdir()
 )
 
 # Compute unweighted between-group correlations
@@ -95,7 +95,7 @@ result_unweighted <- bayes_within_between_correlations(
   vars = c("math_score", "reading_score"),
   weight = FALSE,
   ci = 0.9,
-  folder = "brms_models/"
+  folder = tempdir()
 )
 }
 

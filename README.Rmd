@@ -23,7 +23,13 @@ The **mlstats** package provides tools for conducting multilevel analyses, such 
 
 ## Installation
 
-You can install the development version of mlstats from GitHub:
+You can install mlstats from CRAN:
+
+```r
+install.packages("mlstats")
+```
+
+You can also install the development version from GitHub:
 
 ```r
 # install.packages("pak")
@@ -222,9 +228,9 @@ Note that the Bayesian functions may take a considerable amount of time to run (
 
 ## References
 
-Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: Making an informed choice. *Quality & Quantity, 53*(2), 1051–1074. https://doi.org/10/gd8wcr
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: Making an informed choice. *Quality & Quantity, 53*(2), 1051–1074. https://doi.org/10.1007/s11135-018-0802-x
 
-Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sectional multilevel models: A new look at an old issue. *Psychological Methods, 12*(2), 121–138. https://doi.org/10/b2jz57
+Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sectional multilevel models: A new look at an old issue. *Psychological Methods, 12*(2), 121–138. https://doi.org/10.1037/1082-989X.12.2.121
 
 Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital disconnection as a self-regulatory strategy against procrastination. *PsyArXiv*. https://doi.org/10.31234/osf.io/3j64v_v1
 

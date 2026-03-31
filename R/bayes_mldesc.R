@@ -51,7 +51,7 @@
 #' the proportion of variance in each variable that exists between groups.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Create sample data
 #' data <- data.frame(
 #'   school = rep(1:5, each = 20),
@@ -65,7 +65,7 @@
 #'   data = data,
 #'   group = "school",
 #'   vars = c("math_score", "reading_score", "motivation"),
-#'   folder = "brms_models/"
+#'   folder = tempdir()
 #' )
 #'
 #' # Print as default tibble
@@ -86,7 +86,7 @@
 #'   group = "school",
 #'   vars = c("math_score", "reading_score", "motivation"),
 #'   weight = FALSE,
-#'   folder = "brms_models/"
+#'   folder = tempdir()
 #' )
 #' }
 #'

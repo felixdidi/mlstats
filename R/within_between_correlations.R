@@ -46,7 +46,7 @@
 #'
 #'
 #' @examples
-#' \dontrun{
+#' set.seed(123)
 #' # Create sample data
 #' data <- data.frame(
 #'   school = rep(1:5, each = 20),
@@ -76,7 +76,6 @@
 #'   vars = c("math_score", "reading_score"),
 #'   significance = "detailed"
 #' )
-#' }
 #'
 #' @references
 #' Pedhazur, E. J. (1997). Multiple regression in behavioral research: explanation and prediction. Harcourt Brace.

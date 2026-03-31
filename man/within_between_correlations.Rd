@@ -66,7 +66,7 @@ The significance tests account for the effective sample size:
 }
 }
 \examples{
-\dontrun{
+set.seed(123)
 # Create sample data
 data <- data.frame(
   school = rep(1:5, each = 20),
@@ -96,7 +96,6 @@ result_detailed <- within_between_correlations(
   vars = c("math_score", "reading_score"),
   significance = "detailed"
 )
-}
 
 }
 \references{
