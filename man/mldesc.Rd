@@ -8,6 +8,7 @@ mldesc(
   data,
   group,
   vars,
+  method = c("decomposition", "sem"),
   weight = TRUE,
   flip = FALSE,
   significance = c("basic", "detailed"),
@@ -21,9 +22,16 @@ mldesc(
 
 \item{vars}{A character vector specifying the names of variables to describe.}
 
+\item{method}{Character string specifying the estimation method for correlations.
+Either \code{"decomposition"} (default) for explicit variance decomposition
+following Pedhazur (1997), or \code{"sem"} for a two-level structural equation
+model estimated via \code{lavaan::sem}. See
+\code{\link{within_between_correlations}} for details.}
+
 \item{weight}{Logical. If TRUE (default), statistics are weighted by group size so that
 each observation contributes equally. If FALSE, statistics are unweighted by group
-size (each group contributes equally).}
+size (each group contributes equally).
+For correlations, this is only used when \code{method = "decomposition"}.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
@@ -66,8 +74,12 @@ the SD is the standard deviation of group means, representing between-group vari
 
 \strong{Correlations:} Within-group correlations (upper triangle) and between-group
 correlations (lower triangle) computed using \code{\link{within_between_correlations}}.
-The \code{weight} parameter controls whether between-group correlations are weighted
-by group size (default) or unweighted.
+The estimation method is controlled by the \code{method} parameter.
+When \code{method = "decomposition"}, the \code{weight} parameter controls whether
+between-group correlations are weighted by group size (default) or unweighted.
+When \code{method = "sem"}, the \code{weight} parameter does not affect correlations
+(ML estimation handles unbalanced groups natively), but still affects descriptive
+statistics (M, SD).
 
 \strong{ICC:} The intraclass correlation coefficient computed from an unconditional
 (intercept-only) multilevel model using \code{lme4::lmer}. The ICC represents
@@ -83,7 +95,7 @@ data <- data.frame(
   motivation = rnorm(100, 5, 2)
 )
 
-# Compute multilevel descriptives
+# Compute multilevel descriptives (default: decomposition method)
 result <- mldesc(
   data = data,
   group = "school",
@@ -99,6 +111,16 @@ result_unweighted <- mldesc(
   vars = c("math_score", "reading_score", "motivation"),
   weight = FALSE
 )
+
+# Use SEM-based estimation for correlations
+\donttest{
+result_sem <- mldesc(
+  data = data,
+  group = "school",
+  vars = c("math_score", "reading_score", "motivation"),
+  method = "sem"
+)
+}
 
 # Use detailed significance marking
 result_detailed <- mldesc(

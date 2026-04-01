@@ -41,27 +41,24 @@ and between-group effects.
 
 ``` r
 data |>
-  rename(disco = disconnection) |>
   decompose_within_between(
     group = "person",
-    vars = "disco"
+    vars = c("procrastination", "disconnection")
   ) |>
-  select(person, matches("disco"))
-#> # A tibble: 12,408 × 5
-#>    person disco disco_grand_mean_cent…¹ disco_between_person disco_within_person
-#>     <int> <int>                   <dbl>                <dbl>               <dbl>
-#>  1      1     1                   0.407               0.0204              0.980 
-#>  2      1     0                  -0.593               0.0204             -0.0204
-#>  3      1     0                  -0.593               0.0204             -0.0204
-#>  4      1     0                  -0.593               0.0204             -0.0204
-#>  5      1     0                  -0.593               0.0204             -0.0204
-#>  6      1     0                  -0.593               0.0204             -0.0204
-#>  7      1     0                  -0.593               0.0204             -0.0204
-#>  8      1     0                  -0.593               0.0204             -0.0204
-#>  9      1     0                  -0.593               0.0204             -0.0204
-#> 10      1     0                  -0.593               0.0204             -0.0204
-#> # ℹ 12,398 more rows
-#> # ℹ abbreviated name: ¹​disco_grand_mean_centered
+  glimpse()
+#> Rows: 12,408
+#> Columns: 11
+#> $ person                              <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+#> $ self_control                        <dbl> 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5,…
+#> $ goal_conflict                       <int> 5, 4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1…
+#> $ disconnection                       <int> 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+#> $ procrastination                     <int> 4, 5, 6, 7, 3, 4, 3, 2, 1, 1, 1, 1…
+#> $ procrastination_grand_mean_centered <dbl> 1.7253385, 2.7253385, 3.7253385, 4…
+#> $ disconnection_grand_mean_centered   <dbl> 0.4068343, -0.5931657, -0.5931657,…
+#> $ procrastination_between_person      <dbl> 3.510204, 3.510204, 3.510204, 3.51…
+#> $ disconnection_between_person        <dbl> 0.02040816, 0.02040816, 0.02040816…
+#> $ procrastination_within_person       <dbl> 0.4897959, 1.4897959, 2.4897959, 3…
+#> $ disconnection_within_person         <dbl> 0.97959184, -0.02040816, -0.020408…
 ```
 
 ## Multilevel Descriptives
@@ -118,6 +115,13 @@ There are several options to customize the output:
 - **Flip correlation matrix**: By default, within-group correlations are
   displayed above the diagonal and between-group correlations below the
   diagonal. This can be changed by setting `flip = TRUE`.
+- **Estimation method**: By default, within-group and between-group
+  correlations are estimated via variance decomposition
+  (`method = "decomposition"`), following Pedhazur (1997).
+  Alternatively, correlations can be estimated using a two-level
+  structural equation model via `lavaan` by setting `method = "sem"`,
+  similar to the approach in `misty::multilevel.cor()`. Note that the
+  `weight` parameter is only available for the decomposition method.
 - **Significance stars**: By default, one star is added to all
   correlation coefficients with *p* \< .05. By setting
   `significance = "detailed"`, this can be changed to one star for *p*
@@ -276,3 +280,6 @@ cross-sectional multilevel models: A new look at an old issue.
 Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital
 disconnection as a self-regulatory strategy against procrastination.
 *PsyArXiv*. <https://doi.org/10.31234/osf.io/3j64v_v1>
+
+Pedhazur, E. J. (1997). *Multiple regression in behavioral research:
+Explanation and prediction* (3rd ed.). Harcourt Brace.

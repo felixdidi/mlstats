@@ -8,6 +8,7 @@ within_between_correlations(
   data,
   group,
   vars,
+  method = c("decomposition", "sem"),
   weight = TRUE,
   flip = FALSE,
   significance = c("basic", "detailed")
@@ -20,8 +21,15 @@ within_between_correlations(
 
 \item{vars}{A character vector specifying the names of variables to correlate.}
 
+\item{method}{Character string specifying the estimation method. Either
+\code{"decomposition"} (default) for explicit variance decomposition following
+Pedhazur (1997), or \code{"sem"} for a two-level structural equation model
+estimated via \code{lavaan::sem}.}
+
 \item{weight}{Logical. If TRUE (default), between-group correlations are weighted by group size.
-If FALSE, each group contributes equally (unweighted group means).}
+If FALSE, each group contributes equally (unweighted group means).
+Only used when \code{method = "decomposition"}; ignored (with a message) when
+\code{method = "sem"} because ML estimation handles unbalanced groups natively.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
@@ -41,12 +49,17 @@ A tibble containing a correlation matrix where:
 }
 }
 \description{
-This function decomposes observed correlations between variables into within-group
-and between-group components following the approach of Pedhazur (1997) as originally implemented
-in \code{psych::statsBy}. The decomposition follows the formula:
-\deqn{r_{xy} = \eta_{x,wg} * \eta_{y,wg} * r_{xy,wg} + \eta_{x,bg} * \eta_{y,bg} * r_{xy,bg}}
+This function computes within-group and between-group correlations using one of
+two estimation methods. The \code{"decomposition"} method (default) follows the
+approach of Pedhazur (1997) as originally implemented in \code{psych::statsBy},
+explicitly decomposing scores into within and between components. The \code{"sem"}
+method uses a two-level structural equation model via \code{lavaan::sem} to
+simultaneously estimate within-group and between-group covariance matrices, similar
+to the approach in \code{misty::multilevel.cor}.
 }
 \details{
+\strong{Method \code{"decomposition"} (Pedhazur, 1997):}
+
 \strong{Within-group correlations} are computed on deviation scores (individual values
 minus group means).
 
@@ -64,6 +77,34 @@ The significance tests account for the effective sample size:
 \item Within-group p-values use the total number of observations
 \item Between-group p-values use the number of groups
 }
+
+\strong{Method \code{"sem"} (two-level SEM):}
+
+This method fits a two-level structural equation model using \code{lavaan::sem} with
+\code{cluster = group}. Within-group and between-group covariance matrices are
+estimated simultaneously via maximum likelihood. The standardized solution provides
+correlations at each level, and significance is based on z-tests from lavaan's
+parameter estimates (using MLR for robust standard errors). The \code{weight}
+parameter is not applicable for this method because ML estimation naturally handles
+unbalanced group sizes.
+
+The function automatically classifies variables by their level of variation,
+following the same approach as \code{misty::multilevel.cor}:
+\itemize{
+\item \strong{Between-only variables} have zero variance within all clusters
+(e.g., time-invariant traits). These are modeled only at the between level
+(level 2), and within-group correlations involving these variables are reported
+as \code{NA}.
+\item \strong{Within-only variables} have an ICC of approximately zero, meaning
+virtually all variance is within clusters. These are modeled only at the within
+level (level 1), and between-group correlations involving these variables are
+reported as \code{NA}.
+\item All other variables are modeled at both levels.
+}
+
+The optimizer follows a fallback chain: the quasi-Newton method (\code{nlminb}) is
+tried first, then the EM algorithm if \code{nlminb} does not converge, and finally
+\code{estimator = "ML"} if robust standard errors (MLR) cannot be computed.
 }
 \examples{
 set.seed(123)
@@ -74,7 +115,7 @@ data <- data.frame(
   reading_score = rnorm(100, 50, 10)
 )
 
-# Compute weighted between-group correlations (default)
+# Compute weighted between-group correlations (default, decomposition method)
 result_weighted <- within_between_correlations(
   data = data,
   group = "school",
@@ -89,6 +130,16 @@ result_unweighted <- within_between_correlations(
   weight = FALSE
 )
 
+# Use SEM-based estimation
+\donttest{
+result_sem <- within_between_correlations(
+  data = data,
+  group = "school",
+  vars = c("math_score", "reading_score"),
+  method = "sem"
+)
+}
+
 # Use detailed significance marking
 result_detailed <- within_between_correlations(
   data = data,
@@ -99,8 +150,16 @@ result_detailed <- within_between_correlations(
 
 }
 \references{
-Pedhazur, E. J. (1997). Multiple regression in behavioral research: explanation and prediction. Harcourt Brace.
+Hox, J., Moerbeek, M., & van de Schoot, R. (2018). \emph{Multilevel analysis:
+Techniques and applications} (3rd ed.). Routledge.
+
+Pedhazur, E. J. (1997). \emph{Multiple regression in behavioral research:
+Explanation and prediction}. Harcourt Brace.
+
+Snijders, T. A. B., & Bosker, R. J. (2012). \emph{Multilevel analysis: An
+introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishers.
 }
 \seealso{
-\code{\link[psych]{statsBy}} for the original implementation
+\code{\link[psych]{statsBy}} for the decomposition approach,
+\code{\link[misty]{multilevel.cor}} for the SEM-based approach
 }

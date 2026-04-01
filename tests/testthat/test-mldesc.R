@@ -915,3 +915,187 @@ test_that("bayes_mldesc print method accepts custom parameters", {
   expect_s3_class(result_gt, "gt_tbl")
   expect_s4_class(result_tt, "tinytable")
 })
+
+# ---- Tests for method = "sem" ----
+
+test_that("mldesc method='sem' handles basic input correctly", {
+  set.seed(7001)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200, 50, 10),
+    y = rnorm(200, 50, 10)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # Check structure
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_equal(nrow(result), 2)
+  expect_true(all(c("variable", "n_obs", "m", "sd", "range", "1", "2", "icc") %in% colnames(result)))
+})
+
+test_that("mldesc method='sem' stores correct method attribute", {
+  set.seed(7002)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result_sem <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  expect_equal(attr(result_sem, "method"), "sem")
+  expect_match(attr(result_sem, "note_text"), "SEM-based")
+})
+
+test_that("mldesc method='sem' still computes descriptives and ICC", {
+  set.seed(7003)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rep(1:10, each = 20) + rnorm(200, 0, 0.5)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem"
+  )
+
+  # ICC should be present and high
+  icc_val <- vctrs::vec_data(result$icc)[1]
+  expect_match(icc_val, "^\\.[0-9]{2}$")
+  icc_value <- as.numeric(paste0("0", icc_val))
+  expect_gt(icc_value, 0.5)
+
+  # n_obs should be correct
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "200")
+})
+
+test_that("mldesc method defaults to decomposition", {
+  set.seed(7004)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result_default <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  result_explicit <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "decomposition"
+  )
+
+  expect_identical(result_default, result_explicit)
+})
+
+test_that("mldesc method='sem' works with flip=TRUE", {
+  set.seed(7005)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200),
+    y = rnorm(200),
+    z = rnorm(200)
+  )
+
+  result_normal <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    method = "sem",
+    flip = FALSE
+  )
+
+  result_flipped <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    method = "sem",
+    flip = TRUE
+  )
+
+  # Upper triangle of normal should equal lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+
+  # Descriptives and ICC should be identical
+  expect_equal(
+    vctrs::vec_data(result_normal$icc),
+    vctrs::vec_data(result_flipped$icc)
+  )
+})
+
+test_that("mldesc method='sem' print methods work", {
+  set.seed(7006)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  result_gt <- print(result, "gt")
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  expect_s4_class(result_tt, "tinytable")
+})
+
+test_that("mldesc method='sem' handles between-only variables correctly", {
+  set.seed(7007)
+  # Create a between-only variable (constant within groups, like a trait)
+  data <- data.frame(
+    group = rep(1:20, each = 25)
+  )
+  data$trait <- rep(rnorm(20, 10, 3), each = 25)
+  data$x <- rnorm(500, 5, 2)
+  data$y <- rnorm(500, 5, 2)
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("trait", "x", "y"),
+    method = "sem"
+  )
+
+  # Check structure
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_equal(nrow(result), 3)
+
+  # Descriptives should be computed for all variables
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "500")
+  expect_equal(vctrs::vec_data(result$n_obs)[2], "500")
+
+  # Within-group correlations involving the trait should be NA
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")
+  expect_equal(vctrs::vec_data(result$`3`)[1], "NA")
+
+  # ICC for the between-only variable should be very high (close to 1)
+  icc_trait <- as.numeric(paste0("0", vctrs::vec_data(result$icc)[1]))
+  expect_gt(icc_trait, 0.9)
+})

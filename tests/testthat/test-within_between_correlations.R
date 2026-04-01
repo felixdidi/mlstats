@@ -537,3 +537,341 @@ test_that("flip defaults to FALSE", {
   # Should be identical
   expect_identical(result_default, result_explicit)
 })
+
+# ---- Tests for method = "sem" ----
+
+test_that("method='sem' handles basic input correctly", {
+  set.seed(2001)
+  data <- data.frame(
+    group = rep(c("A", "B", "C", "D", "E"), each = 20),
+    x = c(rnorm(20, 10, 2), rnorm(20, 15, 2), rnorm(20, 20, 2), rnorm(20, 25, 2), rnorm(20, 30, 2)),
+    y = c(rnorm(20, 5, 1), rnorm(20, 10, 1), rnorm(20, 15, 1), rnorm(20, 20, 1), rnorm(20, 25, 1))
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # Check structure
+  expect_s3_class(result, "tbl_df")
+  expect_s3_class(result, "mlstats_wb_tibble")
+  expect_equal(nrow(result), 2)
+  expect_equal(ncol(result), 3)
+  expect_equal(result$variable, c("x", "y"))
+})
+
+test_that("method='sem' produces correct matrix structure", {
+  set.seed(2002)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    v1 = rnorm(200),
+    v2 = rnorm(200),
+    v3 = rnorm(200)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("v1", "v2", "v3"),
+    method = "sem"
+  )
+
+  # Check dimensions
+  expect_equal(nrow(result), 3)
+  expect_equal(ncol(result), 4)
+
+  # Check diagonal is en-dash
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
+  expect_equal(vctrs::vec_data(result$`2`)[2], "\u2013")
+  expect_equal(vctrs::vec_data(result$`3`)[3], "\u2013")
+})
+
+test_that("method='sem' correlation values are within [-1, 1]", {
+  set.seed(2003)
+  data <- data.frame(
+    group = rep(1:20, each = 20),
+    x = rnorm(400),
+    y = rnorm(400)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # Extract non-diagonal values
+  cor_vals <- c(vctrs::vec_data(result$`1`), vctrs::vec_data(result$`2`))
+  cor_vals <- cor_vals[cor_vals != "\u2013" & cor_vals != "NA"]
+  numeric_vals <- as.numeric(gsub("\\*+$", "", cor_vals))
+
+  expect_true(all(numeric_vals >= -1 & numeric_vals <= 1, na.rm = TRUE))
+})
+
+test_that("method='sem' marks significant correlations", {
+  set.seed(2004)
+  # Create data with strong between-group and within-group correlations
+  data <- data.frame(
+    group = rep(1:20, each = 30)
+  )
+  data$x <- rep(1:20, each = 30) * 5 + rnorm(600, 0, 1)
+  data$y <- data$x + rnorm(600, 0, 2)
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # With strong correlations, at least one should be significant
+  cor_vals <- c(vctrs::vec_data(result$`2`)[1], vctrs::vec_data(result$`1`)[2])
+  expect_true(any(grepl("\\*", cor_vals)))
+})
+
+test_that("method='sem' handles significance='detailed'", {
+  set.seed(2005)
+  data <- data.frame(
+    group = rep(1:20, each = 30)
+  )
+  data$x <- rep(1:20, each = 30) * 5 + rnorm(600, 0, 1)
+  data$y <- data$x + rnorm(600, 0, 2)
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem",
+    significance = "detailed"
+  )
+
+  # Should complete without error
+  expect_s3_class(result, "mlstats_wb_tibble")
+
+  # With strong correlations, should have multiple stars
+  cor_vals <- c(vctrs::vec_data(result$`2`)[1], vctrs::vec_data(result$`1`)[2])
+  expect_true(any(grepl("\\*{2,}", cor_vals)))
+})
+
+test_that("method='sem' ignores weight with message", {
+  set.seed(2006)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  expect_message(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem",
+      weight = FALSE
+    ),
+    "weight"
+  )
+})
+
+test_that("method='sem' flip works correctly", {
+  set.seed(2007)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200),
+    y = rnorm(200),
+    z = rnorm(200)
+  )
+
+  result_normal <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    method = "sem",
+    flip = FALSE
+  )
+
+  result_flipped <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y", "z"),
+    method = "sem",
+    flip = TRUE
+  )
+
+  # Upper triangle of normal should equal lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$`3`)[1],
+    vctrs::vec_data(result_flipped$`1`)[3]
+  )
+
+  expect_true(attr(result_flipped, "flipped"))
+  expect_false(attr(result_normal, "flipped"))
+})
+
+test_that("method='sem' stores method attribute", {
+  set.seed(2008)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result_sem <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  result_decomp <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "decomposition"
+  )
+
+  expect_equal(attr(result_sem, "method"), "sem")
+  expect_equal(attr(result_decomp, "method"), "decomposition")
+})
+
+test_that("method='sem' handles single variable", {
+  set.seed(2009)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem"
+  )
+
+  expect_equal(nrow(result), 1)
+  expect_equal(ncol(result), 2)
+  expect_equal(vctrs::vec_data(result$`1`)[1], "\u2013")
+})
+
+test_that("method='sem' columns have mlstats_stat class", {
+  set.seed(2010)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  expect_s3_class(result$`1`, "mlstats_stat")
+  expect_s3_class(result$`2`, "mlstats_stat")
+})
+
+test_that("method defaults to decomposition", {
+  set.seed(2011)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result_default <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  result_explicit <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "decomposition"
+  )
+
+  expect_identical(result_default, result_explicit)
+})
+
+test_that("method='sem' handles between-only variables (zero within-cluster variance)", {
+  set.seed(2012)
+  # Create a between-only variable (constant within each group, like a trait)
+  data <- data.frame(
+    group = rep(1:20, each = 25)
+  )
+  data$trait <- rep(rnorm(20, 10, 3), each = 25)  # Between-only: constant within groups
+  data$x <- rnorm(500, 5, 2)  # Within+between variation
+  data$y <- rnorm(500, 5, 2)  # Within+between variation
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("trait", "x", "y"),
+    method = "sem"
+  )
+
+  # Structure checks
+  expect_s3_class(result, "mlstats_wb_tibble")
+  expect_equal(nrow(result), 3)
+  expect_equal(ncol(result), 4)
+
+  # Within-group correlations involving the between-only variable should be NA
+  # Upper triangle: row 1 (trait) cols 2, 3
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")  # trait ~~ x within
+  expect_equal(vctrs::vec_data(result$`3`)[1], "NA")  # trait ~~ y within
+
+  # Within-group correlation between x and y should be a valid number
+  val_xy_within <- vctrs::vec_data(result$`3`)[2]
+  expect_false(val_xy_within == "NA")
+  expect_false(val_xy_within == "\u2013")
+
+  # Between-group correlations should still be present for the trait
+  # Lower triangle: rows 2, 3 col 1
+  val_trait_x_between <- vctrs::vec_data(result$`1`)[2]
+  val_trait_y_between <- vctrs::vec_data(result$`1`)[3]
+  expect_false(val_trait_x_between == "NA")
+  expect_false(val_trait_y_between == "NA")
+})
+
+test_that("method='sem' between-only variable correlations do not distort other correlations", {
+  set.seed(2013)
+  # Create data where x and y have known strong within-group correlation
+  data <- data.frame(
+    group = rep(1:20, each = 25)
+  )
+  data$trait <- rep(rnorm(20, 10, 3), each = 25)
+  data$x <- rnorm(500)
+  data$y <- data$x * 0.5 + rnorm(500, 0, 0.5)  # Correlated with x
+
+  # With trait included
+  result_with <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("trait", "x", "y"),
+    method = "sem"
+  )
+
+  # Without trait
+  result_without <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # Within-group x~~y correlation should be similar regardless of trait inclusion
+  val_with <- as.numeric(gsub("\\*+$", "", vctrs::vec_data(result_with$`3`)[2]))
+  val_without <- as.numeric(gsub("\\*+$", "", vctrs::vec_data(result_without$`2`)[1]))
+  expect_equal(val_with, val_without, tolerance = 0.05)
+})
