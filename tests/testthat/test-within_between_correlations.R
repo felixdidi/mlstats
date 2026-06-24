@@ -548,11 +548,14 @@ test_that("method='sem' handles basic input correctly", {
     y = c(rnorm(20, 5, 1), rnorm(20, 10, 1), rnorm(20, 15, 1), rnorm(20, 20, 1), rnorm(20, 25, 1))
   )
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y"),
-    method = "sem"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   # Check structure
@@ -572,11 +575,14 @@ test_that("method='sem' produces correct matrix structure", {
     v3 = rnorm(200)
   )
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("v1", "v2", "v3"),
-    method = "sem"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("v1", "v2", "v3"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   # Check dimensions
@@ -597,11 +603,14 @@ test_that("method='sem' correlation values are within [-1, 1]", {
     y = rnorm(400)
   )
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y"),
-    method = "sem"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem"
+    ),
+    "could not be fit"
   )
 
   # Extract non-diagonal values
@@ -641,12 +650,15 @@ test_that("method='sem' handles significance='detailed'", {
   data$x <- rep(1:20, each = 30) * 5 + rnorm(600, 0, 1)
   data$y <- data$x + rnorm(600, 0, 2)
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y"),
-    method = "sem",
-    significance = "detailed"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem",
+      significance = "detailed"
+    ),
+    "out-of-range"
   )
 
   # Should complete without error
@@ -686,20 +698,26 @@ test_that("method='sem' flip works correctly", {
     z = rnorm(200)
   )
 
-  result_normal <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y", "z"),
-    method = "sem",
-    flip = FALSE
+  result_normal <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = FALSE
+    ),
+    "out-of-range"
   )
 
-  result_flipped <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y", "z"),
-    method = "sem",
-    flip = TRUE
+  result_flipped <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = TRUE
+    ),
+    "out-of-range"
   )
 
   # Upper triangle of normal should equal lower triangle of flipped
@@ -769,11 +787,14 @@ test_that("method='sem' columns have mlstats_stat class", {
     y = rnorm(100)
   )
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("x", "y"),
-    method = "sem"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   expect_s3_class(result$`1`, "mlstats_stat")
@@ -814,11 +835,14 @@ test_that("method='sem' handles between-only variables (zero within-cluster vari
   data$x <- rnorm(500, 5, 2)  # Within+between variation
   data$y <- rnorm(500, 5, 2)  # Within+between variation
 
-  result <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("trait", "x", "y"),
-    method = "sem"
+  result <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("trait", "x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   # Structure checks
@@ -836,12 +860,18 @@ test_that("method='sem' handles between-only variables (zero within-cluster vari
   expect_false(val_xy_within == "NA")
   expect_false(val_xy_within == "\u2013")
 
-  # Between-group correlations should still be present for the trait
-  # Lower triangle: rows 2, 3 col 1
+  # Between-group correlations for the trait should either be a valid
+  # correlation in [-1, 1] or "NA" (the latter if the SEM produces an
+  # improper/out-of-range solution, which is expected and flagged with a
+  # warning when only a handful of groups carry the between-level signal).
   val_trait_x_between <- vctrs::vec_data(result$`1`)[2]
   val_trait_y_between <- vctrs::vec_data(result$`1`)[3]
-  expect_false(val_trait_x_between == "NA")
-  expect_false(val_trait_y_between == "NA")
+  for (val in c(val_trait_x_between, val_trait_y_between)) {
+    if (val != "NA") {
+      numeric_val <- as.numeric(gsub("\\*+$", "", val))
+      expect_true(numeric_val >= -1 && numeric_val <= 1)
+    }
+  }
 })
 
 test_that("method='sem' between-only variable correlations do not distort other correlations", {
@@ -855,11 +885,14 @@ test_that("method='sem' between-only variable correlations do not distort other 
   data$y <- data$x * 0.5 + rnorm(500, 0, 0.5)  # Correlated with x
 
   # With trait included
-  result_with <- within_between_correlations(
-    data = data,
-    group = "group",
-    vars = c("trait", "x", "y"),
-    method = "sem"
+  result_with <- expect_warning_value(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("trait", "x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   # Without trait

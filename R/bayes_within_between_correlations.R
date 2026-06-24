@@ -95,6 +95,7 @@ bayes_within_between_correlations <- function(
   )
 
   # Validate inputs
+  .validate_group_vars(data, group, vars)
   if (base::missing(folder)) {
     base::stop("Argument 'folder' must be specified to save brms models.")
   }

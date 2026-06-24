@@ -141,9 +141,9 @@
 #' @export
 within_between_correlations <- function(data, group, vars, method = c("decomposition", "sem"), weight = TRUE, flip = FALSE, significance = c("basic", "detailed")) {
   method <- base::match.arg(method)
-  method <- base::match.arg(method)
   significance <- base::match.arg(significance)
-  
+  .validate_group_vars(data, group, vars)
+
   # Warn if weight is specified with SEM method
   if (method == "sem" && !base::missing(weight) && !weight) {
     cli::cli_inform(c(
@@ -154,12 +154,11 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   
   # Helper function to add significance stars
   add_stars <- function(est, pval, style) {
-    label <- if (base::is.finite(est)) {
-      base::sprintf("%.2f", est)
-    } else {
-      "NA"
+    if (!base::is.finite(est)) {
+      return("NA")
     }
-    
+    label <- base::sprintf("%.2f", est)
+
     if (!base::is.na(pval)) {
       if (style == "detailed") {
         if (pval < 0.001) {
@@ -417,34 +416,40 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   )
 
   # --- Fit the model (MLR with nlminb -> EM fallback -> ML fallback) ---
-  fit <- base::suppressWarnings(
-    lavaan::sem(
+  .try_sem <- function(...) {
+    base::tryCatch(
+      base::suppressWarnings(lavaan::sem(...)),
+      error = function(e) NULL
+    )
+  }
+  .converged <- function(fit) {
+    !base::is.null(fit) && base::isTRUE(lavaan::lavInspect(fit, "converged"))
+  }
+
+  fit <- .try_sem(
+    model_syntax,
+    data = data,
+    cluster = group,
+    estimator = "MLR",
+    missing = "listwise",
+    optim.method = "nlminb",
+    check.gradient = FALSE,
+    check.post = FALSE,
+    check.vcov = FALSE
+  )
+
+  if (!.converged(fit)) {
+    fit <- .try_sem(
       model_syntax,
       data = data,
       cluster = group,
       estimator = "MLR",
       missing = "listwise",
-      optim.method = "nlminb",
+      optim.method = "em",
+      se = "robust.huber.white",
       check.gradient = FALSE,
       check.post = FALSE,
       check.vcov = FALSE
-    )
-  )
-
-  if (!lavaan::lavInspect(fit, "converged")) {
-    fit <- base::suppressWarnings(
-      lavaan::sem(
-        model_syntax,
-        data = data,
-        cluster = group,
-        estimator = "MLR",
-        missing = "listwise",
-        optim.method = "em",
-        se = "robust.huber.white",
-        check.gradient = FALSE,
-        check.post = FALSE,
-        check.vcov = FALSE
-      )
     )
   }
 
@@ -456,19 +461,28 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     error = function(e) FALSE
   )
 
-  if (!lavaan::lavInspect(fit, "converged") || !se_ok) {
-    fit <- base::suppressWarnings(
-      lavaan::sem(
-        model_syntax,
-        data = data,
-        cluster = group,
-        estimator = "ML",
-        missing = "listwise",
-        check.gradient = FALSE,
-        check.post = FALSE,
-        check.vcov = FALSE
-      )
+  if (!.converged(fit) || !se_ok) {
+    fit <- .try_sem(
+      model_syntax,
+      data = data,
+      cluster = group,
+      estimator = "ML",
+      missing = "listwise",
+      check.gradient = FALSE,
+      check.post = FALSE,
+      check.vcov = FALSE
     )
+  }
+
+  if (!.converged(fit)) {
+    cli::cli_warn(c(
+      "The two-level SEM model could not be fit for variables {.val {vars}}.",
+      "i" = "Returning {.val NA} for all correlations.",
+      "i" = "Try {.code method = \"decomposition\"} instead, or check your data for collinearity or small group sizes."
+    ))
+    comparison_matrix[] <- "NA"
+    base::diag(comparison_matrix) <- "–"
+    return(comparison_matrix)
   }
 
   # --- Extract results via lavMatrixRepresentation ---
@@ -510,6 +524,8 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   }
 
   # --- Fill comparison matrix ---
+  improper_pairs <- base::character(0)
+
   for (i in base::seq_along(vars)) {
     for (j in base::seq_along(vars)) {
       if (i == j) {
@@ -526,7 +542,15 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
           if (base::length(idx) > 0) {
             est <- within_theta$est.std[idx[1]]
             pval <- within_theta$pvalue[idx[1]]
-            comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            if (!base::is.finite(est) || base::abs(est) > 1) {
+              improper_pairs <- base::c(
+                improper_pairs,
+                base::paste0(vi, "-", vj, " (within)")
+              )
+              comparison_matrix[i, j] <- "NA"
+            } else {
+              comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            }
           } else {
             comparison_matrix[i, j] <- "NA"
           }
@@ -545,7 +569,15 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
           if (base::length(idx) > 0) {
             est <- between_theta$est.std[idx[1]]
             pval <- between_theta$pvalue[idx[1]]
-            comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            if (!base::is.finite(est) || base::abs(est) > 1) {
+              improper_pairs <- base::c(
+                improper_pairs,
+                base::paste0(vi, "-", vj, " (between)")
+              )
+              comparison_matrix[i, j] <- "NA"
+            } else {
+              comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            }
           } else {
             comparison_matrix[i, j] <- "NA"
           }
@@ -554,6 +586,15 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
         }
       }
     }
+  }
+
+  if (base::length(improper_pairs) > 0) {
+    n_improper <- base::length(improper_pairs)
+    cli::cli_warn(c(
+      "The two-level SEM model produced {n_improper} out-of-range standardized correlation{?s} (outside [-1, 1]) for: {.val {improper_pairs}}.",
+      "i" = "This usually indicates a non-positive-definite residual covariance matrix at that level.",
+      "i" = "Returning {.val NA} for the affected {n_improper} correlation{?s}."
+    ))
   }
 
   comparison_matrix

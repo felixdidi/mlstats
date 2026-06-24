@@ -1015,20 +1015,26 @@ test_that("mldesc method='sem' works with flip=TRUE", {
     z = rnorm(200)
   )
 
-  result_normal <- mldesc(
-    data = data,
-    group = "group",
-    vars = c("x", "y", "z"),
-    method = "sem",
-    flip = FALSE
+  result_normal <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = FALSE
+    ),
+    "out-of-range"
   )
 
-  result_flipped <- mldesc(
-    data = data,
-    group = "group",
-    vars = c("x", "y", "z"),
-    method = "sem",
-    flip = TRUE
+  result_flipped <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = TRUE
+    ),
+    "out-of-range"
   )
 
   # Upper triangle of normal should equal lower triangle of flipped
@@ -1076,11 +1082,14 @@ test_that("mldesc method='sem' handles between-only variables correctly", {
   data$x <- rnorm(500, 5, 2)
   data$y <- rnorm(500, 5, 2)
 
-  result <- mldesc(
-    data = data,
-    group = "group",
-    vars = c("trait", "x", "y"),
-    method = "sem"
+  result <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("trait", "x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
   )
 
   # Check structure

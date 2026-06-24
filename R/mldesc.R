@@ -120,7 +120,8 @@ mldesc <- function(
 ) {
   method <- base::match.arg(method)
   significance <- base::match.arg(significance)
-  
+  .validate_group_vars(data, group, vars)
+
   # Internal function to remove leading zeros from decimal strings
   remove_zero <- function(x) {
     if (!remove_leading_zero) {
