@@ -94,6 +94,26 @@ within_between_correlations(
 )
 ```
 
+### SEM-Based Estimation
+
+By default, correlations are estimated via variance decomposition
+(`method = "decomposition"`), following Pedhazur (1997). Alternatively, you
+can use a two-level structural equation model via `lavaan`:
+
+```{r correlations-sem}
+within_between_correlations(
+  data = data,
+  group = "school",
+  vars = vars,
+  method = "sem"
+)
+```
+
+The SEM method automatically detects between-only variables (those with zero
+within-cluster variance, e.g., time-invariant traits) and within-only variables
+(ICC ≈ 0). Correlations that cannot be estimated at a given level are reported
+as `NA`.
+
 ## Multilevel Descriptive Statistics
 
 The `mldesc()` function combines descriptive statistics, correlations, and ICCs

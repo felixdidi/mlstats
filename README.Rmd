@@ -61,12 +61,11 @@ You can easily center variables with the `decompose_within_between()` function. 
 
 ```{r decompose-example}
 data |>
-  rename(disco = disconnection) |>
   decompose_within_between(
     group = "person",
-    vars = "disco"
+    vars = c("procrastination", "disconnection")
   ) |>
-  select(person, matches("disco"))
+  glimpse()
 ```
 
 ## Multilevel Descriptives
@@ -97,6 +96,7 @@ There are several options to customize the output:
 - **Weight by group size**: By default, the group means, standard deviations, and between-group correlations are weighted by group size. This can be disabled by setting `weight = FALSE` (e.g., so that each person in the sample contributes equally to the overall mean and the between-person correlations).
 - **Remove leading zeros**: By default, `mldesc()` removes leading zeros from decimal numbers to comply with APA formatting guidelines. This can be disabled by setting `remove_leading_zero = FALSE`.
 - **Flip correlation matrix**: By default, within-group correlations are displayed above the diagonal and between-group correlations below the diagonal. This can be changed by setting `flip = TRUE`.
+- **Estimation method**: By default, within-group and between-group correlations are estimated via variance decomposition (`method = "decomposition"`), following Pedhazur (1997). Alternatively, correlations can be estimated using a two-level structural equation model via `lavaan` by setting `method = "sem"`, similar to the approach in `misty::multilevel.cor()`. Note that the `weight` parameter is only available for the decomposition method.
 - **Significance stars**: By default, one star is added to all correlation coefficients with *p* < .05. By setting `significance = "detailed"`, this can be changed to one star for *p* < .05, two stars for *p* < .01, and three stars for *p* < .001.
 
 ```{r no-weight-example}
@@ -233,5 +233,7 @@ Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: 
 Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sectional multilevel models: A new look at an old issue. *Psychological Methods, 12*(2), 121–138. https://doi.org/10.1037/1082-989X.12.2.121
 
 Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital disconnection as a self-regulatory strategy against procrastination. *PsyArXiv*. https://doi.org/10.31234/osf.io/3j64v_v1
+
+Pedhazur, E. J. (1997). *Multiple regression in behavioral research: Explanation and prediction* (3rd ed.). Harcourt Brace.
 
 

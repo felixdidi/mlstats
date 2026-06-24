@@ -23,12 +23,30 @@ default_footer <- base::NextMethod()
 
   significance_note <- base::paste0("\u2139 ", base::attr(x, "significance_note", exact = TRUE))
 
-  base::c(
+  # Add method note if available
+  method <- base::attr(x, "method", exact = TRUE)
+  method_note <- if (!base::is.null(method) && method == "sem") {
+    "\u2139 Correlations estimated via two-level SEM (lavaan)."
+  } else if (!base::is.null(method) && method == "decomposition") {
+    "\u2139 Correlations estimated via variance decomposition."
+  } else {
+    NULL
+  }
+
+  footer_parts <- base::c(
     default_footer,
     format_comment(correlation_note, width = setup$width),
     format_comment(significance_note, width = setup$width)
-  ) |> 
-  pillar::style_subtle()
+  )
+
+  if (!base::is.null(method_note)) {
+    footer_parts <- base::c(
+      footer_parts,
+      format_comment(method_note, width = setup$width)
+    )
+  }
+
+  footer_parts |> pillar::style_subtle()
 }
 
 #' @exportS3Method pillar::ctl_new_pillar
