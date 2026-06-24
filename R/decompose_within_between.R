@@ -76,7 +76,12 @@ decompose_within_between <- function(data, group, vars) {
   if (base::length(missing_vars) > 0) {
     base::stop("Variables not found in data: ", base::paste(missing_vars, collapse = ", "))
   }
-  
+
+  non_numeric_vars <- vars[!base::vapply(data[vars], base::is.numeric, base::logical(1))]
+  if (base::length(non_numeric_vars) > 0) {
+    base::stop("Variables must be numeric: ", base::paste(non_numeric_vars, collapse = ", "))
+  }
+
   # Step 1: Grand mean centering
   result <- 
     data |>
@@ -102,7 +107,7 @@ decompose_within_between <- function(data, group, vars) {
       # Within-group component (deviations from group means)
       dplyr::across(
         dplyr::all_of(vars),
-        ~ .x - base::get(glue::glue("{dplyr::cur_column()}_between_{.env$group}")),
+        ~ .x - dplyr::pick(dplyr::everything())[[base::paste0(dplyr::cur_column(), "_between_", .env$group)]],
         .names = "{col}_within_{group}"
       )
     ) |>

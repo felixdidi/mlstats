@@ -255,7 +255,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     dplyr::mutate(
       dplyr::across(
         dplyr::all_of(vars),
-        ~ .x - base::get(base::paste0(dplyr::cur_column(), "_between")),
+        ~ .x - dplyr::pick(dplyr::everything())[[base::paste0(dplyr::cur_column(), "_between")]],
         .names = "{col}_within"
       )
     )

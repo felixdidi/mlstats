@@ -29,7 +29,6 @@ VignetteBuilder: knitr
 Imports: 
     cli,
     dplyr,
-    glue,
     lme4,
     pillar,
     rlang,
