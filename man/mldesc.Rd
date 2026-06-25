@@ -86,6 +86,12 @@ the proportion of variance in each variable that lies between groups, with value
 close to 1 indicating a variable that barely varies within groups (e.g., a stable
 trait), and values close to 0 indicating a variable that barely varies between
 groups (e.g., a fast-changing state).
+
+The ICC is always computed from a linear (Gaussian) model, regardless of a
+variable's measurement scale. For binary, ordinal, or count variables this
+yields a linear-probability-style ICC rather than a latent-scale ICC from a
+generalized linear mixed model. A warning is emitted if any \code{vars}
+look binary, ordinal, or count-like (few, whole-number values).
 }
 \examples{
 set.seed(123)

@@ -677,8 +677,9 @@ test_that("mldesc stores default attributes for printing", {
     weight = TRUE
   )
   
-  # Check that default attributes are stored
-  expect_equal(attr(result, "table_title"), "Multilevel descriptive statistics")
+  # Check that default attributes are stored (table_title defaults to "" so
+  # that gt/tt output has no title unless the user supplies one via print())
+  expect_equal(attr(result, "table_title"), "")
   expect_equal(attr(result, "correlation_note"), 
                "Within-group correlations above, between-group correlations below the diagonal.")
   expect_match(attr(result, "note_text"), "Group-weighted")
@@ -937,6 +938,54 @@ test_that("mldesc method='sem' handles basic input correctly", {
   expect_s3_class(result, "mlstats_desc_tibble")
   expect_equal(nrow(result), 2)
   expect_true(all(c("variable", "n_obs", "m", "sd", "range", "1", "2", "icc") %in% colnames(result)))
+})
+
+test_that("mldesc method='sem' does not leak the weight-ignored message", {
+  set.seed(7001)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200, 50, 10),
+    y = rnorm(200, 50, 10)
+  )
+
+  # within_between_correlations() informs when `weight` is explicitly
+  # specified under method = "sem" (it has no effect on the correlations),
+  # but mldesc() should not surface that message: `weight` still controls
+  # the mean/SD calculation here regardless of `method`.
+  expect_no_message(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem",
+      weight = FALSE
+    )
+  )
+})
+
+test_that("mldesc method='sem' still uses weight for mean/SD with unequal group sizes", {
+  set.seed(7002)
+  data <- data.frame(
+    group = rep(1:5, times = c(2, 4, 6, 8, 10)),
+    x = rnorm(30, 50, 10)
+  )
+
+  result_weighted <- suppressWarnings(mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem",
+    weight = TRUE
+  ))
+  result_unweighted <- suppressWarnings(mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem",
+    weight = FALSE
+  ))
+
+  expect_false(identical(result_weighted$m, result_unweighted$m))
 })
 
 test_that("mldesc method='sem' stores correct method attribute", {

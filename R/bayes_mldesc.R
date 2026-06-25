@@ -1,17 +1,25 @@
 #' Compute Bayesian Multilevel Descriptive Statistics
 #'
-#' This function creates a comprehensive descriptive statistics table for multilevel data,
-#' including basic descriptives, Bayesian within-group and between-group correlations, and
-#' Bayesian intraclass correlation coefficients (ICCs).
+#' Creates a publication-ready descriptive statistics table for multilevel data
+#' (e.g., repeated measurements per person, or students nested within schools).
+#' For each variable, the table reports basic descriptives, the proportion of
+#' variance that lies between groups (the intraclass correlation, ICC), and how
+#' each pair of variables relates both within and between groups, all estimated
+#' with Bayesian inference via \code{brms} (see
+#' \code{\link{bayes_within_between_correlations}} and
+#' \code{vignette("correlation-methods")} for the statistical background on the
+#' latter). See \code{\link{mldesc}} for the frequentist equivalent.
 #'
 #' @param data A data frame containing the variables to analyze.
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to describe.
-#' @param weight Logical. If TRUE (default), statistics are weighted by group size so that
-#'   each observation contributes equally. If FALSE, statistics are unweighted by group
-#'   size (each group contributes equally).
-#' @param ci Numeric value between 0 and 1 specifying the credible interval width
-#'   (default = 0.9 for 90% CI).
+#' @param weight Logical. If TRUE (default), the mean and SD are calculated across all
+#'   observations (so larger groups contribute more), and the between-group correlation
+#'   gives more weight to larger groups. If FALSE, every group counts equally: the mean
+#'   and SD are calculated on group means, and the between-group correlation is
+#'   unweighted.
+#' @param ci Numeric value between 0 and 1 specifying the credible interval width.
+#'   Default is 0.9 (90% CI).
 #' @param folder Character string specifying the directory path where brms models
 #'   should be saved. No default; must be specified.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
@@ -29,26 +37,42 @@
 #'   \item One column per variable in \code{vars} containing correlations
 #'   \item \code{icc}: Intraclass correlation coefficient
 #' }
-#' 
+#'
 #' The tibble can be returned as a gt object using \code{print("gt")}
 #' and as a tinytable object using \code{print("tt")}.
 #'
 #' @details
 #' The function combines three types of information:
 #'
-#' \strong{Descriptive Statistics:} Basic summary statistics for each variable.
-#' When \code{weight = TRUE} (default), statistics are calculated across all observations.
-#' When \code{weight = FALSE}, the mean is the mean of group means (unweighted), and
-#' the SD is the standard deviation of group means, representing between-group variability.
+#' \strong{Descriptive statistics:} Basic summary statistics for each variable. When
+#' \code{weight = TRUE} (default), statistics are calculated across all observations.
+#' When \code{weight = FALSE}, the mean is the mean of group means, and the SD is the
+#' standard deviation of group means, representing between-group variability.
 #'
-#' \strong{Correlations:} Bayesian within-group correlations (upper triangle) and between-group
-#' correlations (lower triangle) computed using \code{\link{bayes_within_between_correlations}}.
-#' The \code{weight} parameter controls whether between-group correlations are weighted
-#' by group size (default) or unweighted. Credible correlations are marked with "*".
+#' \strong{Correlations:} Bayesian within-group correlations (upper triangle) and
+#' between-group correlations (lower triangle), computed using
+#' \code{\link{bayes_within_between_correlations}}. See that function's documentation
+#' and the package vignette for how these correlations are estimated. Correlations
+#' whose credible interval excludes zero are marked with an asterisk.
 #'
-#' \strong{ICC:} The intraclass correlation coefficient computed from an unconditional
+#' \strong{ICC:} The intraclass correlation coefficient, computed from an unconditional
 #' (intercept-only) multilevel model using \code{brms::brm}. The ICC represents
-#' the proportion of variance in each variable that exists between groups.
+#' the proportion of variance in each variable that lies between groups, with values
+#' close to 1 indicating a variable that barely varies within groups (e.g., a stable
+#' trait), and values close to 0 indicating a variable that barely varies between
+#' groups (e.g., a fast-changing state).
+#'
+#' The ICC always assumes a Gaussian \code{brms} model, regardless of a
+#' variable's measurement scale. For binary, ordinal, or count variables this
+#' yields a linear-probability-style ICC rather than a latent-scale ICC from a
+#' generalized linear mixed model. A warning is emitted if any \code{vars}
+#' look binary, ordinal, or count-like (few, whole-number values).
+#'
+#' This function fits one \code{brms} model per variable for the ICCs, plus
+#' all the models described in \code{\link{bayes_within_between_correlations}}
+#' for the correlations — for \code{p} variables, \code{p} ICC fits in
+#' addition to the within/between-group correlation fits. This can take a
+#' long time for larger numbers of variables.
 #'
 #' @examples
 #' \donttest{
@@ -118,6 +142,14 @@ bayes_mldesc <- function(
     base::dir.create(folder, recursive = TRUE)
   }
 
+  # brms::brm(file = ...) caches purely on filename, so a content hash of the
+  # relevant data is folded into the ICC cache filenames below (the
+  # correlation models get the same treatment inside
+  # bayes_within_between_correlations()). Otherwise, re-running with
+  # different data but the same `vars`/`group`/`folder` would silently
+  # reload a stale cached fit instead of refitting.
+  data_hash <- rlang::hash(data[base::c(group, vars)])
+
   # Internal function to remove leading zeros from decimal strings
   remove_zero <- function(x) {
     if (!remove_leading_zero) {
@@ -131,6 +163,8 @@ bayes_mldesc <- function(
 
   # Internal function to compute Bayesian ICC
   get_bayes_icc <- function(data, group, vars, ci, folder) {
+    .warn_discrete_icc_vars(data, vars)
+
     # Calculate quantiles for CI
     alpha <- (1 - ci) / 2
     ci_low <- alpha
@@ -139,7 +173,7 @@ bayes_mldesc <- function(
     icc_values <- base::sapply(vars, function(var) {
       # Fit intercept-only multilevel model
       formula_str <- base::paste0(var, " ~ 1 + (1 | ", group, ")")
-      model_file <- base::file.path(folder, base::paste0("icc_", var))
+      model_file <- base::file.path(folder, base::paste0("icc_", var, "_", data_hash))
 
       fit <- base::suppressWarnings(
         brms::brm(
@@ -271,7 +305,7 @@ bayes_mldesc <- function(
   
   # Store default values as attributes
   ci_percent <- base::round(ci * 100)
-  attr(result, "table_title") <- "Bayesian multilevel descriptive statistics"
+  attr(result, "table_title") <- ""
   attr(result, "flipped") <- flip
   attr(result, "correlation_note") <- if (flip) {
     "Between-group correlations above, within-group correlations below the diagonal."

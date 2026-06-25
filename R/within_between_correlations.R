@@ -126,10 +126,12 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   significance <- base::match.arg(significance)
   .validate_group_vars(data, group, vars)
 
-  # Warn if weight is specified with SEM method
-  if (method == "sem" && !base::missing(weight) && !weight) {
+  # Warn if weight is specified with SEM method. `weight` has no effect on
+  # the correlation estimates under method = "sem" regardless of whether it
+  # is TRUE or FALSE, so this fires for either explicit value.
+  if (method == "sem" && !base::missing(weight)) {
     cli::cli_inform(c(
-      "i" = "The {.arg weight} argument is ignored when {.code method = \"sem\"}.",
+      "i" = "The {.arg weight} argument has no effect on the correlation estimates when {.code method = \"sem\"}.",
       "i" = "ML estimation handles unbalanced group sizes natively."
     ))
   }
@@ -357,24 +359,45 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
 
   cluster_vec <- data[[group]]
 
+  # --- Detect (and exclude) zero-variance variables up front ---
+  # A variable that is constant across the whole sample has no variance at
+  # either level. Left unhandled, it would be classified as between-only
+  # below (every per-cluster variance is also ~0) and handed to lavaan as a
+  # guaranteed singular/zero-variance parameter at the between level.
+  is_constant <- base::vapply(vars, function(v) {
+    stats::var(data[[v]], na.rm = TRUE) < .Machine$double.eps^0.5
+  }, FUN.VALUE = base::logical(1))
+  constant_vars <- vars[is_constant]
+  if (base::length(constant_vars) > 0) {
+    cli::cli_warn(c(
+      "{cli::qty(constant_vars)}{.val {constant_vars}} {?is/are} constant (zero variance) and cannot be modeled.",
+      "i" = "{cli::qty(constant_vars)}Excluding {?it/them} from the SEM model; the corresponding correlations will be {.val NA}."
+    ))
+  }
+  classifiable_vars <- base::setdiff(vars, constant_vars)
+
   # --- Detect between-only variables (zero within-cluster variance) ---
   # These are cluster-level variables (e.g., traits) that have no within-group
-
   # variation and must be excluded from the within (level 1) model.
-  is_between_only <- base::vapply(vars, function(v) {
+  is_between_only <- base::vapply(classifiable_vars, function(v) {
     grp_var <- base::tapply(data[[v]], cluster_vec, stats::var, na.rm = TRUE)
-    base::all(grp_var < .Machine$double.eps^0.5, na.rm = TRUE)
+    grp_var_observed <- grp_var[!base::is.na(grp_var)]
+    if (base::length(grp_var_observed) == 0) {
+      # No cluster has more than one observation for this variable, so no
+      # within-cluster variance is observable at all; treat as between-only.
+      return(TRUE)
+    }
+    base::all(grp_var_observed < .Machine$double.eps^0.5)
   }, FUN.VALUE = base::logical(1))
-  between_only_vars <- vars[is_between_only]
+  between_only_vars <- classifiable_vars[is_between_only]
 
   # --- Detect within-only variables (ICC ~ 0) among remaining variables ---
   # These variables have no between-group variation and must be excluded from
   # the between (level 2) model.
-  remaining_vars <- base::setdiff(vars, between_only_vars)
+  remaining_vars <- base::setdiff(classifiable_vars, between_only_vars)
   if (base::length(remaining_vars) > 0) {
     is_within_only <- base::vapply(remaining_vars, function(v) {
       sigma2_total <- stats::var(data[[v]], na.rm = TRUE)
-      if (sigma2_total < .Machine$double.eps^0.5) return(FALSE)
       grp_means <- base::tapply(data[[v]], cluster_vec, base::mean, na.rm = TRUE)
       sigma2_between <- stats::var(grp_means, na.rm = TRUE)
       (sigma2_between / sigma2_total) < .Machine$double.eps^0.5
@@ -385,8 +408,8 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   }
 
   # --- Variable sets per level ---
-  var_within <- base::setdiff(vars, between_only_vars)
-  var_between <- base::setdiff(vars, within_only_vars)
+  var_within <- base::setdiff(vars, base::c(between_only_vars, constant_vars))
+  var_between <- base::setdiff(vars, base::c(within_only_vars, constant_vars))
 
   # --- Build lavaan model syntax (covariances only, as in misty) ---
   within_lines <- base::character(0)
@@ -416,6 +439,21 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     between_lines <- base::paste0(var_between, " ~~ ", var_between)
   }
 
+  # lavaan requires a non-empty model for *each* level when `cluster` is set
+  # (an empty `level:` block, or a single-level-only spec, is a syntax error).
+  # If every variable was classified into a single level (e.g. none has any
+  # within-group variance at all), a two-level model cannot be fit at all.
+  if (base::length(var_within) == 0 || base::length(var_between) == 0) {
+    cli::cli_warn(c(
+      "None of {.val {vars}} has variance at both the within-group and between-group level.",
+      "i" = "Returning {.val NA} for all correlations.",
+      "i" = "Try {.code method = \"decomposition\"} instead, or check whether {.arg vars} are constant or vary at only one level."
+    ))
+    comparison_matrix[] <- "NA"
+    base::diag(comparison_matrix) <- "–"
+    return(comparison_matrix)
+  }
+
   model_syntax <- base::paste0(
     "level: 1\n",
     base::paste(within_lines, collapse = "\n"),
@@ -424,17 +462,29 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   )
 
   # --- Fit the model (MLR with nlminb -> EM fallback -> ML fallback) ---
+  # Warnings from lavaan::sem() are captured (not discarded) so that real
+  # convergence/non-PD problems are still visible to the user, just routed
+  # through a single, consistently-formatted cli::cli_warn() instead of
+  # raw lavaan console output.
   .try_sem <- function(...) {
-    base::tryCatch(
-      base::suppressWarnings(lavaan::sem(...)),
+    caught <- base::character(0)
+    fit <- base::tryCatch(
+      base::withCallingHandlers(
+        lavaan::sem(...),
+        warning = function(w) {
+          caught <<- base::c(caught, base::conditionMessage(w))
+          rlang::cnd_muffle(w)
+        }
+      ),
       error = function(e) NULL
     )
+    base::list(fit = fit, warnings = base::unique(caught))
   }
   .converged <- function(fit) {
     !base::is.null(fit) && base::isTRUE(lavaan::lavInspect(fit, "converged"))
   }
 
-  fit <- .try_sem(
+  attempt <- .try_sem(
     model_syntax,
     data = data,
     cluster = group,
@@ -445,9 +495,10 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     check.post = FALSE,
     check.vcov = FALSE
   )
+  fit <- attempt$fit
 
   if (!.converged(fit)) {
-    fit <- .try_sem(
+    attempt <- .try_sem(
       model_syntax,
       data = data,
       cluster = group,
@@ -459,6 +510,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       check.post = FALSE,
       check.vcov = FALSE
     )
+    fit <- attempt$fit
   }
 
   se_ok <- base::tryCatch(
@@ -470,7 +522,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   )
 
   if (!.converged(fit) || !se_ok) {
-    fit <- .try_sem(
+    attempt <- .try_sem(
       model_syntax,
       data = data,
       cluster = group,
@@ -480,6 +532,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       check.post = FALSE,
       check.vcov = FALSE
     )
+    fit <- attempt$fit
   }
 
   if (!.converged(fit)) {
@@ -493,13 +546,27 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     return(comparison_matrix)
   }
 
-  # --- Extract results via lavMatrixRepresentation ---
-  std_sol <- lavaan::lavMatrixRepresentation(
-    lavaan::standardizedSolution(fit)
+  # --- Extract results via lavMatrixRepresentation (warnings captured too) ---
+  extraction_warnings <- base::character(0)
+  std_sol <- base::withCallingHandlers(
+    lavaan::lavMatrixRepresentation(lavaan::standardizedSolution(fit)),
+    warning = function(w) {
+      extraction_warnings <<- base::c(extraction_warnings, base::conditionMessage(w))
+      rlang::cnd_muffle(w)
+    }
   )
   param_est <- lavaan::lavMatrixRepresentation(
     lavaan::parameterEstimates(fit)
   )
+
+  fit_warnings <- base::unique(base::c(attempt$warnings, extraction_warnings))
+  if (base::length(fit_warnings) > 0) {
+    cli::cli_warn(c(
+      "!" = "The two-level SEM model for variables {.val {vars}} converged, but {.pkg lavaan} reported {base::length(fit_warnings)} warning{?s} during estimation:",
+      stats::setNames(fit_warnings, base::rep("*", base::length(fit_warnings))),
+      "i" = "These often indicate a non-positive-definite covariance matrix or a non-identified model; inspect the results carefully."
+    ))
+  }
 
   # Within: filter level 1 parameter IDs, then theta matrix off-diagonal
   within_ids <- base::unlist(

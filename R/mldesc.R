@@ -62,6 +62,12 @@
 #' trait), and values close to 0 indicating a variable that barely varies between
 #' groups (e.g., a fast-changing state).
 #'
+#' The ICC is always computed from a linear (Gaussian) model, regardless of a
+#' variable's measurement scale. For binary, ordinal, or count variables this
+#' yields a linear-probability-style ICC rather than a latent-scale ICC from a
+#' generalized linear mixed model. A warning is emitted if any \code{vars}
+#' look binary, ordinal, or count-like (few, whole-number values).
+#'
 #' @examples
 #' set.seed(123)
 #' # Create sample data
@@ -145,6 +151,8 @@ mldesc <- function(
 
   # Internal function to compute ICC
   get_icc <- function(data, group, vars) {
+    .warn_discrete_icc_vars(data, vars)
+
     icc_values <- base::sapply(vars, function(var) {
       # Fit intercept-only multilevel model
       formula_str <- base::paste0(var, " ~ 1 + (1 | ", group, ")")
@@ -164,9 +172,13 @@ mldesc <- function(
         )
       )
 
-      # Extract variance components
+      # Extract variance components, matching on `grp` rather than relying on
+      # row order (the random-intercept variance is always the row where
+      # `grp` equals the grouping variable, the residual is always "Residual").
       variance <- base::as.data.frame(lme4::VarCorr(m0))
-      icc <- variance$vcov[1] / (variance$vcov[1] + variance$vcov[2])
+      var_between <- variance$vcov[variance$grp == group]
+      var_residual <- variance$vcov[variance$grp == "Residual"]
+      icc <- var_between / (var_between + var_residual)
 
       return(icc)
     })
@@ -220,15 +232,20 @@ mldesc <- function(
   # Compute descriptive statistics
   desc_stats <- get_desc(data, vars, group)
 
-  # Compute within-between correlations
-  corr_matrix <- within_between_correlations(
-    data, 
-    group, 
-    vars, 
-    method = method,
-    weight = weight, 
-    flip = flip, 
-    significance = significance
+  # Compute within-between correlations. The "weight is ignored under
+  # method = 'sem'" message from within_between_correlations() is suppressed
+  # here because, unlike there, `weight` is not a no-op in mldesc(): it still
+  # controls the mean/SD calculation above regardless of `method`.
+  corr_matrix <- base::suppressMessages(
+    within_between_correlations(
+      data,
+      group,
+      vars,
+      method = method,
+      weight = weight,
+      flip = flip,
+      significance = significance
+    )
   )
 
   # Remove first column (variable names) from correlation matrix
@@ -267,7 +284,7 @@ mldesc <- function(
   class(result) <- c("mlstats_desc_tibble", class(result))
   
   # Store default values as attributes
-  attr(result, "table_title") <- "Multilevel descriptive statistics"
+  attr(result, "table_title") <- ""
   attr(result, "flipped") <- flip
   attr(result, "correlation_note") <- if (flip) {
     "Between-group correlations above, within-group correlations below the diagonal."

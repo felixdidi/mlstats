@@ -689,6 +689,26 @@ test_that("method='sem' ignores weight with message", {
   )
 })
 
+test_that("method='sem' ignores weight with message even when weight = TRUE", {
+  set.seed(2006)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  expect_message(
+    within_between_correlations(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem",
+      weight = TRUE
+    ),
+    "weight"
+  )
+})
+
 test_that("method='sem' flip works correctly", {
   set.seed(2007)
   data <- data.frame(

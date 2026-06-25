@@ -21,11 +21,12 @@ bayes_within_between_correlations(
 
 \item{vars}{A character vector specifying the names of variables to correlate.}
 
-\item{weight}{Logical. If TRUE (default), between-group correlations are weighted by group size.
-If FALSE, each group contributes equally (unweighted group means).}
+\item{weight}{Logical. If TRUE (default), the between-group correlation gives
+more weight to larger groups. If FALSE, every group counts equally
+regardless of size. See Details.}
 
-\item{ci}{Numeric value between 0 and 1 specifying the credible interval width
-(default = 0.9 for 90\% CI).}
+\item{ci}{Numeric value between 0 and 1 specifying the credible interval width.
+Default is 0.9 (90\% CI).}
 
 \item{folder}{Character string specifying the directory path where brms models
 should be saved. No default; must be specified.}
@@ -39,36 +40,56 @@ A tibble containing a correlation matrix where:
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
 \item Diagonal elements are marked with "-"
-\item Credible correlations (CI excludes zero) are marked with "*"
+\item Correlations whose credible interval excludes zero are marked with an asterisk
 }
 }
 \description{
-This function decomposes observed correlations between variables into within-group
-and between-group components using Bayesian estimation via brms. Similar to
-\code{\link{within_between_correlations}}, but uses Bayesian inference with
-credible intervals instead of frequentist p-values.
+In data with a grouping structure (e.g., repeated measurements per person, or
+students nested within schools), a single correlation between two variables can
+be misleading, because it mixes two different relationships: how the variables
+relate \emph{within} each group (e.g., do a person's good days also tend to be
+their productive days?), and how they relate \emph{between} groups (e.g., do
+people who are generally happier also tend to be generally more productive?).
+This function estimates both relationships separately using Bayesian
+multivariate models fit via \code{brms}, reporting credible intervals instead
+of p-values. See \code{\link{within_between_correlations}} for the frequentist
+equivalent, and Details and \code{vignette("correlation-methods")} for the
+statistical background shared by both.
 }
 \details{
-This function uses brms to estimate correlations via multivariate models with
-\code{set_rescor(TRUE)}. For each pair of variables:
+This function computes the within-group correlation by first subtracting each
+group's mean from every observation, then correlating the resulting deviation
+scores via a Bayesian multivariate model (\code{brms::brm()} with
+\code{set_rescor(TRUE)}); this mirrors \code{method = "decomposition"} in
+\code{\link{within_between_correlations}}, but with credible intervals
+(whether they exclude zero) in place of p-values.
 
-\strong{Within-group correlations} are computed on deviation scores (individual values
-minus group means).
-
-\strong{Between-group correlations} are handled differently based on the \code{weight} parameter:
+The between-group correlation is handled differently depending on
+\code{weight}:
 \itemize{
-\item If \code{weight = TRUE}: The correlation point estimate (median) is obtained
-from a model fitted on group means replicated for each observation (implicitly
-weighting by group size). However, the credible interval is always obtained from
-a model fitted on unique group means only, ensuring that uncertainty reflects
-the actual number of groups rather than the total sample size.
-\item If \code{weight = FALSE}: Both the correlation estimate and credible interval
-are obtained from a model fitted on unique group means. Each group contributes
-equally regardless of size.
+\item If \code{weight = TRUE} (default): the correlation point estimate
+(posterior median) is obtained from a model fit on group means replicated
+for each observation (implicitly weighting by group size). The credible
+interval, however, is always obtained from a model fit on unique group
+means only, so that uncertainty reflects the actual number of groups
+rather than the total sample size.
+\item If \code{weight = FALSE}: both the correlation estimate and the
+credible interval are obtained from a model fit on unique group means.
+Each group contributes equally regardless of size.
 }
 
-Models are saved to the specified folder for caching. Significance is determined
-by whether the specified credible interval excludes zero.
+Unlike \code{method = "sem"} in \code{\link{within_between_correlations}},
+this function has no automatic variable classification: every variable in
+\code{vars} is modeled at both levels.
+
+Models are saved to \code{folder} for caching. Each pair of variables
+requires its own \code{brms::brm} fit, and when \code{weight = TRUE} each
+between-group pair requires two fits (one for the point estimate, one for
+the credible interval). For \code{p} variables this means
+\code{p * (p - 1) / 2} within-group fits plus \code{p * (p - 1)} (or
+\code{p * (p - 1) / 2} if \code{weight = FALSE}) between-group fits — e.g.
+4 variables means 6 within-group and 12 (or 6) between-group fits. This can
+take a long time for larger numbers of variables.
 }
 \examples{
 \donttest{
