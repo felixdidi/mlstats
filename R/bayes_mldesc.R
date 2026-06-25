@@ -143,12 +143,14 @@ bayes_mldesc <- function(
   }
 
   # brms::brm(file = ...) caches purely on filename, so a content hash of the
-  # relevant data is folded into the ICC cache filenames below (the
-  # correlation models get the same treatment inside
-  # bayes_within_between_correlations()). Otherwise, re-running with
-  # different data but the same `vars`/`group`/`folder` would silently
-  # reload a stale cached fit instead of refitting.
-  data_hash <- rlang::hash(data[base::c(group, vars)])
+  # relevant data (plus the sampling settings, which also affect the fit) is
+  # folded into the ICC cache filenames below (the correlation models get
+  # the same treatment inside bayes_within_between_correlations()).
+  # Otherwise, re-running with different data, or different
+  # options(mlstats.brms_iter/chains = ...), but the same
+  # `vars`/`group`/`folder` would silently reload a stale cached fit
+  # instead of refitting.
+  data_hash <- rlang::hash(base::list(data[base::c(group, vars)], .brms_iter(), .brms_chains()))
 
   # Internal function to remove leading zeros from decimal strings
   remove_zero <- function(x) {
@@ -180,7 +182,8 @@ bayes_mldesc <- function(
           stats::as.formula(formula_str),
           data = data,
           seed = 42,
-          iter = 5000,
+          iter = .brms_iter(),
+          chains = .brms_chains(),
           file = model_file,
           silent = 2,
           refresh = 0

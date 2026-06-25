@@ -24,10 +24,22 @@ setup_test_data <- function() {
 skip_on_cran()
 skip_if_not_installed("brms")
 
-# Use a fresh temp folder so models are refit every test run
-brms_folder <- file.path(tempdir(), "mlstats_test_bayes_mldesc")
-if (dir.exists(brms_folder)) unlink(brms_folder, recursive = TRUE)
-dir.create(brms_folder, recursive = TRUE)
+# Persistent cache across test runs, *not* inside the package/check
+# directory: R CMD check flags unexpected new files left in the check tree,
+# so a folder under tests/testthat/ (or tempdir(), which is wiped per-run
+# anyway) is the wrong place for this. tools::R_user_dir() is the
+# CRAN-sanctioned location for this kind of cache. Models are keyed by a
+# hash of the data and sampling settings (see bayes_mldesc()'s
+# `data_hash`), so stale fits are never silently reused.
+brms_folder <- file.path(tools::R_user_dir("mlstats", "cache"), "testthat", "bayes_mldesc")
+dir.create(brms_folder, recursive = TRUE, showWarnings = FALSE)
+
+# Much shorter chains than the package default (iter = 5000, chains = 4):
+# these tests only check output structure/formatting, not posterior
+# precision, and the cache key above means raising this later (e.g. for a
+# test that does check numeric output more closely) will trigger a refit
+# rather than reusing a too-short cached fit.
+options(mlstats.brms_iter = 1000, mlstats.brms_chains = 1)
 
 # Setup: Create test data once for all tests
 test_data <- setup_test_data()

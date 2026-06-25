@@ -128,10 +128,12 @@ bayes_within_between_correlations <- function(
   }
 
   # brms::brm(file = ...) caches purely on filename, so a content hash of the
-  # relevant data is folded into every cache filename below. Otherwise,
-  # re-running with different data but the same `vars`/`group`/`folder` would
-  # silently reload a stale cached fit instead of refitting.
-  data_hash <- rlang::hash(data[base::c(group, vars)])
+  # relevant data (plus the sampling settings, which also affect the fit) is
+  # folded into every cache filename below. Otherwise, re-running with
+  # different data, or different options(mlstats.brms_iter/chains = ...),
+  # but the same `vars`/`group`/`folder` would silently reload a stale
+  # cached fit instead of refitting.
+  data_hash <- rlang::hash(base::list(data[base::c(group, vars)], .brms_iter(), .brms_chains()))
 
   # Calculate quantiles for CI
   alpha <- (1 - ci) / 2
@@ -218,7 +220,8 @@ bayes_within_between_correlations <- function(
               ))) +
                 brms::set_rescor(rescor = TRUE),
               seed = 42,
-              iter = 5000,
+              iter = .brms_iter(),
+              chains = .brms_chains(),
               data = d_centered,
               file = model_file,
               silent = 2,
@@ -283,7 +286,8 @@ bayes_within_between_correlations <- function(
                 ))) +
                   brms::set_rescor(rescor = TRUE),
                 seed = 42,
-                iter = 5000,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
                 data = d_between_unweighted,
                 file = model_file_unweighted,
                 silent = 2,
@@ -321,7 +325,8 @@ bayes_within_between_correlations <- function(
                 ))) +
                   brms::set_rescor(rescor = TRUE),
                 seed = 42,
-                iter = 5000,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
                 data = d_centered,
                 file = model_file_weighted,
                 silent = 2,
@@ -364,7 +369,8 @@ bayes_within_between_correlations <- function(
                 ))) +
                   brms::set_rescor(rescor = TRUE),
                 seed = 42,
-                iter = 5000,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
                 data = d_between_unweighted,
                 file = model_file,
                 silent = 2,
