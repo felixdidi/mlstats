@@ -4,6 +4,7 @@
 ^brms_models$
 ^README\.Rmd$
 ^\.github$
+^\.claude$
 ^cran-comments\.md$
 ^doc$
 ^Meta$
