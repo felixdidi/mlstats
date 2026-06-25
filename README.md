@@ -6,6 +6,8 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/felixdidi/mlstats/graph/badge.svg)](https://app.codecov.io/gh/felixdidi/mlstats)
 <!-- badges: end -->
 
 The **mlstats** package provides tools for conducting multilevel
@@ -85,7 +87,7 @@ data |>
     group = "person",
     vars = vars
   )
-#> # Multilevel descriptive statistics
+#> # Multilevel Descriptive Statistics
 #>   =============== ====== ===== ===== ===== ===== ===== ===== ===== =====
 #>   variable         n_obs     m    sd range   `1`   `2`   `3`   `4`   icc
 #>   --------------- ------ ----- ----- ----- ----- ----- ----- ----- -----
@@ -97,6 +99,7 @@ data |>
 #> # ℹ Within-group correlations above, between-group correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
 
@@ -137,7 +140,7 @@ data |>
     flip = TRUE,
     significance = "detailed"
   )
-#> # Multilevel descriptive statistics
+#> # Multilevel Descriptive Statistics
 #>   =============== ====== ===== ===== ===== ===== ======== ======== ========
 #>   variable         n_obs     m    sd range   `1`      `2`      `3`      `4`
 #>   --------------- ------ ----- ----- ----- ----- -------- -------- --------
@@ -151,6 +154,7 @@ data |>
 #> #   diagonal.
 #> # ℹ Correlations marked with * are significant at p < .05, ** at p < .01, and
 #> #   *** at p < .001.
+#> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Unweighted multilevel descriptive statistics computed with mlstats.
 ```
 

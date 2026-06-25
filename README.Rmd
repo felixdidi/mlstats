@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/felixdidi/mlstats/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/felixdidi/mlstats/graph/badge.svg)](https://app.codecov.io/gh/felixdidi/mlstats)
 <!-- badges: end -->
 
 The **mlstats** package provides tools for conducting multilevel analyses, such as centering variables to compute random effects within-between (REWB) models or creating publication-ready descriptive tables, including within-group and between-group correlations, as well as intraclass correlation coefficients (ICCs). The package supports frequentist (using `lme4`) and Bayesian (using `brms`) estimation.
@@ -74,7 +75,7 @@ data |>
 
 You can also easily compute descriptive statistics for multilevel data. `mldesc()` outputs basic descriptives, ICCs, as well as within-group and between-group correlations for a set of variables, given a grouping variable (e.g., person ID). If desired, the `within_between_correlations()` function computes only a correlation matrix without additional descriptives.
 
-```{r example}
+```{r example, warning = FALSE}
 vars <- c(
   "self_control",
   "goal_conflict",
@@ -99,7 +100,7 @@ There are several options to customize the output:
 - **Estimation method**: By default, within-group and between-group correlations are estimated via variance decomposition (`method = "decomposition"`), following Pedhazur (1997). Alternatively, correlations can be estimated using a two-level structural equation model via `lavaan` by setting `method = "sem"`, similar to the approach in `misty::multilevel.cor()`. Note that the `weight` parameter is only available for the decomposition method.
 - **Significance stars**: By default, one star is added to all correlation coefficients with *p* < .05. By setting `significance = "detailed"`, this can be changed to one star for *p* < .05, two stars for *p* < .01, and three stars for *p* < .001.
 
-```{r no-weight-example}
+```{r no-weight-example, warning = FALSE}
 data |>
   mldesc(
     group = "person",
@@ -153,7 +154,7 @@ data |>
   gt::fmt_markdown(columns = variable)
 ```
 
-```{r gt-example-rendered, echo = FALSE, message = FALSE}
+```{r gt-example-rendered, echo = FALSE, message = FALSE, warning = FALSE}
 data |>
   mldesc(
     group = "person",
