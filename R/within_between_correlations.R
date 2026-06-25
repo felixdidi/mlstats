@@ -450,7 +450,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       "i" = "Try {.code method = \"decomposition\"} instead, or check whether {.arg vars} are constant or vary at only one level."
     ))
     comparison_matrix[] <- "NA"
-    base::diag(comparison_matrix) <- "–"
+    base::diag(comparison_matrix) <- "\u2013"
     return(comparison_matrix)
   }
 
@@ -542,7 +542,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       "i" = "Try {.code method = \"decomposition\"} instead, or check your data for collinearity or small group sizes."
     ))
     comparison_matrix[] <- "NA"
-    base::diag(comparison_matrix) <- "–"
+    base::diag(comparison_matrix) <- "\u2013"
     return(comparison_matrix)
   }
 

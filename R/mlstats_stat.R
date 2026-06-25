@@ -9,7 +9,7 @@ vec_ptype_abbr.mlstats_stat <- function(x) {
 pillar_shaft.mlstats_stat <- function(x, ...) {
   values <- vctrs::vec_data(x)
   
-  # Apply subtle style to "–" characters
+  # Apply subtle style to "\u2013" characters
   styled_values <- ifelse(
     values == "\u2013",
     pillar::style_subtle(values),
@@ -31,7 +31,7 @@ pillar_shaft.mlstats_stat <- function(x, ...) {
     base::as.character() |>
     stringr::str_remove_all("\\*") |>
     stringr::str_remove_all(",")
-  base::ifelse(cleaned %in% base::c("–", "NA"), NA_character_, cleaned)
+  base::ifelse(cleaned %in% base::c("\u2013", "NA"), NA_character_, cleaned)
 }
 
 # Method for as.numeric()

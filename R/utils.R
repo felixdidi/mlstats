@@ -45,6 +45,19 @@ utils::globalVariables("variable")
   }
 }
 
+# Sampling settings for every brms::brm() fit in bayes_mldesc()/
+# bayes_within_between_correlations(). Overridable via
+# options(mlstats.brms_iter = ..., mlstats.brms_chains = ...) so tests (or
+# advanced users) can fit much shorter chains; defaults match brms::brm()'s
+# own defaults for chains, and the iter the package has always used.
+.brms_iter <- function() {
+  base::getOption("mlstats.brms_iter", 5000)
+}
+
+.brms_chains <- function() {
+  base::getOption("mlstats.brms_chains", 4)
+}
+
 # Shared footer-note builder for tbl_format_footer.mlstats_wb_tibble and
 # tbl_format_footer.mlstats_desc_tibble: the correlation-note, significance-
 # note, and method-note lines are identical for both classes.
@@ -58,15 +71,15 @@ utils::globalVariables("variable")
       "Within-group correlations above, between-group correlations below the diagonal."
     }
   }
-  correlation_note <- base::paste0("ℹ ", correlation_note)
+  correlation_note <- base::paste0("\u2139 ", correlation_note)
 
-  significance_note <- base::paste0("ℹ ", base::attr(x, "significance_note", exact = TRUE))
+  significance_note <- base::paste0("\u2139 ", base::attr(x, "significance_note", exact = TRUE))
 
   method <- base::attr(x, "method", exact = TRUE)
   method_note <- if (!base::is.null(method) && method == "sem") {
-    "ℹ Correlations estimated via two-level SEM (lavaan)."
+    "\u2139 Correlations estimated via two-level SEM (lavaan)."
   } else if (!base::is.null(method) && method == "decomposition") {
-    "ℹ Correlations estimated via variance decomposition."
+    "\u2139 Correlations estimated via variance decomposition."
   } else {
     NULL
   }
