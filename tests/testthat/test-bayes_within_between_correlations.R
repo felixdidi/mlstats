@@ -33,6 +33,7 @@ skip_if_not_installed("brms")
 # correlations()'s `data_hash`), so stale fits are never silently reused.
 brms_folder <- file.path(tools::R_user_dir("mlstats", "cache"), "testthat", "bayes_wb_corr")
 dir.create(brms_folder, recursive = TRUE, showWarnings = FALSE)
+prune_old_brms_cache(brms_folder, days = 7)
 
 # Much shorter chains than the package default (iter = 5000, chains = 4):
 # these tests only check output structure/formatting, not posterior
