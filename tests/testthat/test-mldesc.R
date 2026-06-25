@@ -1157,3 +1157,58 @@ test_that("mldesc method='sem' handles between-only variables correctly", {
   icc_trait <- as.numeric(paste0("0", vctrs::vec_data(result$icc)[1]))
   expect_gt(icc_trait, 0.9)
 })
+
+test_that("mldesc errors on unknown group variable", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    mldesc(data, group = "nope", vars = "x"),
+    "not found"
+  )
+})
+
+test_that("mldesc errors on unknown vars", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    mldesc(data, group = "group", vars = c("x", "missing")),
+    "not found"
+  )
+})
+
+test_that("mldesc does not warn about discreteness for non-numeric variables", {
+  set.seed(11)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    flag = sample(c(TRUE, FALSE), 50, replace = TRUE)
+  )
+
+  expect_no_warning(mldesc(data, "group", c("x", "flag")))
+})
+
+test_that("mldesc default print method dispatches to pillar formatting", {
+  set.seed(12)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  result <- mldesc(data, "group", c("x", "y"))
+
+  output <- capture.output(print(result))
+  expect_true(any(grepl("Multilevel Descriptive Statistics", output)))
+  expect_true(any(grepl("Within-group correlations", output)))
+  expect_true(any(grepl("variance decomposition", output)))
+})
+
+test_that("mldesc print accepts a custom significance_note", {
+  set.seed(13)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  result <- mldesc(data, "group", c("x", "y"))
+
+  output <- capture.output(print(result, significance_note = "Custom significance note."))
+  expect_true(any(grepl("Custom significance note", output)))
+})

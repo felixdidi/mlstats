@@ -928,3 +928,151 @@ test_that("method='sem' between-only variable correlations do not distort other 
   val_without <- as.numeric(gsub("\\*+$", "", vctrs::vec_data(result_without$`2`)[1]))
   expect_equal(val_with, val_without, tolerance = 0.05)
 })
+
+test_that("within_between_correlations errors on unknown group variable", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    within_between_correlations(data, group = "nope", vars = "x"),
+    "not found"
+  )
+})
+
+test_that("within_between_correlations errors on unknown vars", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    within_between_correlations(data, group = "group", vars = c("x", "missing")),
+    "not found"
+  )
+})
+
+test_that("within_between_correlations returns NA for non-finite correlation estimate", {
+  # x and y never have a non-missing value in the same row, so the
+  # within-group pairwise correlation is undefined (NaN) even though both
+  # variables individually have nonzero variance.
+  data <- data.frame(
+    g = rep(1:4, each = 4),
+    x = c(1, 2, 3, 4, NA, NA, NA, NA, 5, 6, 7, 8, NA, NA, NA, NA),
+    y = c(NA, NA, NA, NA, 1, 2, 3, 4, NA, NA, NA, NA, 5, 6, 7, 8)
+  )
+
+  result <- suppressWarnings(within_between_correlations(data, "g", c("x", "y")))
+
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")
+})
+
+test_that("within_between_correlations significance='detailed' marks all three star levels", {
+  set.seed(7)
+  n_groups <- 8
+  n_per <- 15
+  g <- rep(1:n_groups, each = n_per)
+  n <- length(g)
+  x <- rnorm(n)
+  data <- data.frame(
+    g = g,
+    x = x,
+    y_strong = x + rnorm(n, 0, 0.05),
+    y_mod = x + rnorm(n, 0, 3.8),
+    y_weak = x + rnorm(n, 0, 4.6)
+  )
+
+  result <- within_between_correlations(
+    data, "g", c("x", "y_strong", "y_mod", "y_weak"),
+    significance = "detailed"
+  )
+
+  vals <- as.character(unlist(result[, -1]))
+  expect_true(any(grepl("\\*\\*\\*", vals)))
+  expect_true(any(grepl("(?<!\\*)\\*\\*(?!\\*)", vals, perl = TRUE)))
+  expect_true(any(grepl("(?<!\\*)\\*(?!\\*)", vals, perl = TRUE)))
+})
+
+test_that("method='sem' excludes constant variables and warns", {
+  set.seed(99)
+  data <- data.frame(group = rep(1:10, each = 10))
+  data$const <- 5
+  data$x <- rnorm(100)
+  data$y <- rnorm(100)
+
+  result <- expect_warning_value(
+    within_between_correlations(data, "group", c("const", "x", "y"), method = "sem"),
+    "constant"
+  )
+
+  # const is var 1; its within- and between-group correlations with x and y
+  # must be NA since it was excluded from the model.
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")
+  expect_equal(vctrs::vec_data(result$`3`)[1], "NA")
+})
+
+test_that("method='sem' returns all NA when no variable has variance at both levels", {
+  set.seed(99)
+  data <- data.frame(group = rep(1:10, each = 10))
+  data$a <- rep(rnorm(10), each = 10)
+  data$b <- rep(rnorm(10), each = 10)
+
+  result <- expect_warning_value(
+    within_between_correlations(data, "group", c("a", "b"), method = "sem"),
+    "Returning .NA. for all correlations"
+  )
+
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")
+  expect_equal(vctrs::vec_data(result$`1`)[2], "NA")
+})
+
+test_that("method='sem' excludes within-only variables from the between-group model", {
+  set.seed(55)
+  data <- data.frame(group = rep(1:10, each = 20))
+  data$wi <- rnorm(200)
+  data$x <- rnorm(200)
+
+  result <- suppressWarnings(
+    within_between_correlations(data, "group", c("wi", "x"), method = "sem")
+  )
+
+  # Between-group correlation involving the within-only variable is NA
+  expect_equal(vctrs::vec_data(result$`1`)[2], "NA")
+})
+
+test_that("method='sem' treats a variable with at most one observation per cluster as between-only", {
+  # `sparse` has exactly one non-missing value per group, so var() within
+  # each group is NA (undefined, not just zero): no within-cluster variance
+  # is even *observable*, which is a different code path from a variable
+  # that is observably constant within every group.
+  set.seed(77)
+  n_groups <- 5
+  n_per <- 10
+  g <- rep(1:n_groups, each = n_per)
+  n <- length(g)
+  sparse <- rep(NA_real_, n)
+  sparse[match(unique(g), g)] <- rnorm(n_groups, 10, 3)
+  data <- data.frame(group = g, sparse = sparse, x = rnorm(n))
+
+  # The classification itself doesn't depend on the model fit succeeding;
+  # the model regardless fails to converge here because listwise deletion
+  # collapses every cluster to a single row once `sparse` enters the model.
+  result <- expect_warning_value(
+    within_between_correlations(data, "group", c("sparse", "x"), method = "sem"),
+    "could not be fit"
+  )
+
+  expect_s3_class(result, "mlstats_wb_tibble")
+  expect_equal(nrow(result), 2)
+})
+
+test_that("method='sem' handles exactly one within-only and one between-only variable", {
+  set.seed(56)
+  # trait: constant within each group (between-only).
+  # wi: no between-group variance at all (within-only).
+  # With only one variable left per level, the model syntax uses a bare
+  # variance line ("var ~~ var") rather than a covariance combination.
+  data <- data.frame(group = rep(1:10, each = 20))
+  data$trait <- rep(rnorm(10, 10, 3), each = 20)
+  data$wi <- rnorm(200)
+
+  result <- suppressWarnings(
+    within_between_correlations(data, "group", c("trait", "wi"), method = "sem")
+  )
+
+  expect_s3_class(result, "mlstats_wb_tibble")
+  expect_equal(nrow(result), 2)
+})
