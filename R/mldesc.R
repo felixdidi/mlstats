@@ -1,26 +1,29 @@
 #' Compute Multilevel Descriptive Statistics
 #'
-#' This function creates a comprehensive descriptive statistics table for multilevel data,
-#' including basic descriptives, within-group and between-group correlations, and
-#' intraclass correlation coefficients (ICCs).
+#' Creates a publication-ready descriptive statistics table for multilevel data
+#' (e.g., repeated measurements per person, or students nested within schools).
+#' For each variable, the table reports basic descriptives, the proportion of
+#' variance that lies between groups (the intraclass correlation, ICC), and how
+#' each pair of variables relates both within and between groups (see
+#' \code{\link{within_between_correlations}} and \code{vignette("correlation-methods")} 
+#' for the statistical background on the latter).
 #'
 #' @param data A data frame containing the variables to analyze.
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to describe.
-#' @param method Character string specifying the estimation method for correlations.
-#'   Either \code{"decomposition"} (default) for explicit variance decomposition
-#'   following Pedhazur (1997), or \code{"sem"} for a two-level structural equation
-#'   model estimated via \code{lavaan::sem}. See
+#' @param method Character string specifying the estimation method for correlations:
+#'   \code{"decomposition"} (default) or \code{"sem"}. See
 #'   \code{\link{within_between_correlations}} for details.
-#' @param weight Logical. If TRUE (default), statistics are weighted by group size so that
-#'   each observation contributes equally. If FALSE, statistics are unweighted by group
-#'   size (each group contributes equally).
-#'   For correlations, this is only used when \code{method = "decomposition"}.
+#' @param weight Logical. If TRUE (default), the mean and SD are calculated across all
+#'   observations (so larger groups contribute more), and the between-group correlation
+#'   gives more weight to larger groups. If FALSE, every group counts equally: the mean
+#'   and SD are calculated on group means, and the between-group correlation is
+#'   unweighted. For correlations, this is only used when \code{method = "decomposition"}.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param significance Character string specifying the significance marking style.
 #'   Either "basic" (default) or "detailed". If "basic", correlations with p < .05
-#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars 
+#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars
 #'   for p < .05, p < .01, or p < .001, respectively.
 #' @param remove_leading_zero Logical. If TRUE (default), removes leading zeros from
 #'   decimal values in correlation and ICC columns according to APA standards.
@@ -42,23 +45,22 @@
 #' @details
 #' The function combines three types of information:
 #'
-#' \strong{Descriptive Statistics:} Basic summary statistics for each variable.
-#' When \code{weight = TRUE} (default), statistics are calculated across all observations.
-#' When \code{weight = FALSE}, the mean is the mean of group means (unweighted), and
-#' the SD is the standard deviation of group means, representing between-group variability.
+#' \strong{Descriptive statistics:} Basic summary statistics for each variable. When
+#' \code{weight = TRUE} (default), statistics are calculated across all observations.
+#' When \code{weight = FALSE}, the mean is the mean of group means, and the SD is the
+#' standard deviation of group means, representing between-group variability.
 #'
 #' \strong{Correlations:} Within-group correlations (upper triangle) and between-group
-#' correlations (lower triangle) computed using \code{\link{within_between_correlations}}.
-#' The estimation method is controlled by the \code{method} parameter.
-#' When \code{method = "decomposition"}, the \code{weight} parameter controls whether
-#' between-group correlations are weighted by group size (default) or unweighted.
-#' When \code{method = "sem"}, the \code{weight} parameter does not affect correlations
-#' (ML estimation handles unbalanced groups natively), but still affects descriptive
-#' statistics (M, SD).
+#' correlations (lower triangle), computed using \code{\link{within_between_correlations}}.
+#' See that function's documentation and the package vignette for how each method
+#' estimates these correlations and tests them for significance.
 #'
-#' \strong{ICC:} The intraclass correlation coefficient computed from an unconditional
+#' \strong{ICC:} The intraclass correlation coefficient, computed from an unconditional
 #' (intercept-only) multilevel model using \code{lme4::lmer}. The ICC represents
-#' the proportion of variance in each variable that exists between groups.
+#' the proportion of variance in each variable that lies between groups, with values
+#' close to 1 indicating a variable that barely varies within groups (e.g., a stable
+#' trait), and values close to 0 indicating a variable that barely varies between
+#' groups (e.g., a fast-changing state).
 #'
 #' @examples
 #' set.seed(123)
@@ -105,7 +107,15 @@
 #'   significance = "detailed"
 #' )
 #'
-#' @seealso \code{\link{within_between_correlations}}
+#' @references
+#' Pedhazur, E. J. (1997). \emph{Multiple regression in behavioral research:
+#' Explanation and prediction}. Harcourt Brace.
+#'
+#' Snijders, T. A. B., & Bosker, R. J. (2012). \emph{Multilevel analysis: An
+#' introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishers.
+#'
+#' @seealso \code{\link{within_between_correlations}} for details on how within-group
+#'   and between-group correlations are estimated and tested.
 #'
 #' @export
 mldesc <- function(

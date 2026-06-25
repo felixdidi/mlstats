@@ -1,29 +1,30 @@
 #' Compute Within-Group and Between-Group Correlations
 #'
-#' This function computes within-group and between-group correlations using one of
-#' two estimation methods. The \code{"decomposition"} method (default) follows the
-#' approach of Pedhazur (1997) as originally implemented in \code{psych::statsBy},
-#' explicitly decomposing scores into within and between components. The \code{"sem"}
-#' method uses a two-level structural equation model via \code{lavaan::sem} to
-#' simultaneously estimate within-group and between-group covariance matrices, similar
-#' to the approach in \code{misty::multilevel.cor}.
+#' In data with a grouping structure (e.g., repeated measurements per person, or
+#' students nested within schools), a single correlation between two variables can
+#' be misleading, because it mixes two different relationships: how the variables
+#' relate \emph{within} each group (e.g., do a person's good days also tend to be
+#' their productive days?), and how they relate \emph{between} groups (e.g., do
+#' people who are generally happier also tend to be generally more productive?).
+#' This function estimates both relationships separately, using either of two
+#' methods (see Details and \code{vignette("correlation-methods")} for the full
+#' statistical background).
 #'
 #' @param data A data frame containing the variables to analyze.
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to correlate.
-#' @param method Character string specifying the estimation method. Either
-#'   \code{"decomposition"} (default) for explicit variance decomposition following
-#'   Pedhazur (1997), or \code{"sem"} for a two-level structural equation model
-#'   estimated via \code{lavaan::sem}.
-#' @param weight Logical. If TRUE (default), between-group correlations are weighted by group size.
-#'   If FALSE, each group contributes equally (unweighted group means).
-#'   Only used when \code{method = "decomposition"}; ignored (with a message) when
-#'   \code{method = "sem"} because ML estimation handles unbalanced groups natively.
+#' @param method Character string specifying the estimation method: \code{"decomposition"}
+#'   (default) or \code{"sem"}. See Details.
+#' @param weight Logical. Only used when \code{method = "decomposition"}. If TRUE
+#'   (default), the between-group correlation gives more weight to larger groups.
+#'   If FALSE, every group counts equally regardless of size. Ignored (with a
+#'   message) when \code{method = "sem"}, because that method handles unequal
+#'   group sizes automatically.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param significance Character string specifying the significance marking style.
 #'   Either "basic" (default) or "detailed". If "basic", correlations with p < .05
-#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars 
+#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars
 #'   for p < .05, p < .01, or p < .001, respectively.
 #'
 #' @return A tibble containing a correlation matrix where:
@@ -35,53 +36,32 @@
 #' }
 #'
 #' @details
-#' \strong{Method \code{"decomposition"} (Pedhazur, 1997):}
+#' \strong{Method \code{"decomposition"}} (the default) computes the within-group
+#' correlation by first subtracting each group's mean from every observation, then
+#' correlating the resulting deviation scores. It computes the between-group
+#' correlation by correlating the group means with one another (optionally weighted
+#' by group size; see \code{weight}). This approach follows Pedhazur (1997, ch.
+#' 16), and the significance tests account for the fact that subtracting group
+#' means uses up degrees of freedom, following the general testing principle in
+#' Snijders and Bosker (2012, sec. 6.1). This method is fast and easy to interpret,
+#' and works well for most data sets, but is less suited to data with very unequal
+#' group sizes.
 #'
-#' \strong{Within-group correlations} are computed on deviation scores (individual values
-#' minus group means).
+#' \strong{Method \code{"sem"}} fits a two-level structural equation model (via
+#' \code{lavaan::sem()}) that estimates the within-group and between-group
+#' covariance matrices simultaneously using maximum likelihood. Significance is
+#' based on the resulting z-tests. Because groups are weighted implicitly through
+#' maximum likelihood estimation rather than through the \code{weight} argument,
+#' this method is the more principled choice for data with very unequal group
+#' sizes or a moderate amount of missing data. It is slower than
+#' \code{"decomposition"} and can occasionally fail to converge for small or
+#' collinear data sets.
 #'
-#' \strong{Between-group correlations} can be computed in two ways:
-#' \itemize{
-#'   \item If \code{weight = TRUE}: Computed on group means replicated for each observation.
-#'     This implicitly weights groups by their sample size and matches the variance
-#'     decomposition formula.
-#'   \item If \code{weight = FALSE}: Computed on unique group means only. Each group
-#'     contributes equally regardless of size.
-#' }
-#'
-#' The significance tests account for the effective sample size:
-#' \itemize{
-#'   \item Within-group p-values use the total number of observations
-#'   \item Between-group p-values use the number of groups
-#' }
-#'
-#' \strong{Method \code{"sem"} (two-level SEM):}
-#'
-#' This method fits a two-level structural equation model using \code{lavaan::sem} with
-#' \code{cluster = group}. Within-group and between-group covariance matrices are
-#' estimated simultaneously via maximum likelihood. The standardized solution provides
-#' correlations at each level, and significance is based on z-tests from lavaan's
-#' parameter estimates (using MLR for robust standard errors). The \code{weight}
-#' parameter is not applicable for this method because ML estimation naturally handles
-#' unbalanced group sizes.
-#'
-#' The function automatically classifies variables by their level of variation,
-#' following the same approach as \code{misty::multilevel.cor}:
-#' \itemize{
-#'   \item \strong{Between-only variables} have zero variance within all clusters
-#'     (e.g., time-invariant traits). These are modeled only at the between level
-#'     (level 2), and within-group correlations involving these variables are reported
-#'     as \code{NA}.
-#'   \item \strong{Within-only variables} have an ICC of approximately zero, meaning
-#'     virtually all variance is within clusters. These are modeled only at the within
-#'     level (level 1), and between-group correlations involving these variables are
-#'     reported as \code{NA}.
-#'   \item All other variables are modeled at both levels.
-#' }
-#'
-#' The optimizer follows a fallback chain: the quasi-Newton method (\code{nlminb}) is
-#' tried first, then the EM algorithm if \code{nlminb} does not converge, and finally
-#' \code{estimator = "ML"} if robust standard errors (MLR) cannot be computed.
+#' For \code{method = "sem"}, variables that never vary within a group (e.g.,
+#' time-invariant traits) are modeled only at the between-group level, and
+#' variables with almost no between-group variance (intraclass correlation near
+#' zero) are modeled only at the within-group level; the corresponding cells of the
+#' unused level are reported as \code{NA}.
 #'
 #' @examples
 #' set.seed(123)
@@ -135,8 +115,10 @@
 #' Snijders, T. A. B., & Bosker, R. J. (2012). \emph{Multilevel analysis: An
 #' introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishers.
 #'
-#' @seealso \code{\link[psych]{statsBy}} for the decomposition approach,
-#'   \code{\link[misty]{multilevel.cor}} for the SEM-based approach
+#' @seealso \code{\link{mldesc}}, which combines this function's output with
+#'   descriptive statistics and ICCs in a single table. See
+#'   \code{vignette("correlation-methods")} for a detailed statistical description
+#'   of both methods.
 #'
 #' @export
 within_between_correlations <- function(data, group, vars, method = c("decomposition", "sem"), weight = TRUE, flip = FALSE, significance = c("basic", "detailed")) {
@@ -292,11 +274,23 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
         ) {
           comparison_matrix[i, j] <- "NA"
         } else {
-          cor_within <- base::suppressWarnings(
-            stats::cor.test(within_x, within_y)
-          )
-          est <- base::as.numeric(cor_within$estimate)
-          pval <- cor_within$p.value
+          est <- stats::cor(within_x, within_y, use = "pairwise.complete.obs")
+
+          # Group-mean centering removes n_groups degrees of freedom (one per
+          # group, for the subtracted group mean) in addition to the 1 df lost
+          # to the estimated slope itself; see Snijders & Bosker (2012, eq. 6.1)
+          # for the general rule (df = M - r - 1) applied to a level-one
+          # coefficient estimated alongside n_groups - 1 group dummies.
+          n_pairs <- base::sum(stats::complete.cases(within_x, within_y))
+          df_wg <- n_pairs - n_groups - 1
+
+          if (df_wg > 0) {
+            t_stat <- est * base::sqrt(df_wg) / base::sqrt(1 - est^2)
+            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = df_wg))
+          } else {
+            pval <- NA
+          }
+
           comparison_matrix[i, j] <- add_stars(est, pval, significance)
         }
       } else {
@@ -311,21 +305,35 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
         ) {
           comparison_matrix[i, j] <- "NA"
         } else {
-          r_bg <- stats::cor(
+          est <- stats::cor(
             between_x,
             between_y,
             use = "pairwise.complete.obs"
           )
-          # Compute p-value using number of groups (only if df > 0)
-          if (n_groups > 2) {
-            t_stat <- (r_bg * base::sqrt(n_groups - 2)) / base::sqrt(1 - r_bg^2)
+
+          # The significance test always uses the unweighted correlation of
+          # the n_groups group means (one independent observation per group),
+          # even when `weight = TRUE` and the displayed estimate is the
+          # group-size-weighted correlation. The weighting changes how much
+          # each group contributes to the point estimate, but does not change
+          # the number of independent group-level units the data provide, so
+          # testing the weighted estimate against df = n_groups - 2 would
+          # overstate precision when group sizes are unequal.
+          r_bg_unweighted <- stats::cor(
+            group_means[[vars[i]]],
+            group_means[[vars[j]]],
+            use = "pairwise.complete.obs"
+          )
+
+          if (n_groups > 2 && !base::is.na(r_bg_unweighted)) {
+            t_stat <- (r_bg_unweighted * base::sqrt(n_groups - 2)) /
+              base::sqrt(1 - r_bg_unweighted^2)
             pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = n_groups - 2))
           } else {
             # With 2 or fewer groups, p-value is undefined
             pval <- NA
           }
 
-          est <- r_bg
           comparison_matrix[i, j] <- add_stars(est, pval, significance)
         }
       }
