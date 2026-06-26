@@ -16,13 +16,27 @@
 #' @param data A data frame containing the variables to decompose.
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to decompose.
+#' @param components A character vector specifying which components to compute.
+#'   Any subset of \code{c("gmc", "between", "within")} (default: all three).
+#'   \code{"gmc"} = grand mean centering, \code{"between"} = group means,
+#'   \code{"within"} = within-group deviations. If \code{"within"} is requested
+#'   without \code{"between"}, the between component is computed internally as an
+#'   intermediate step and not included in the output.
+#' @param gmc_pattern A glue-style naming pattern for grand-mean-centered columns.
+#'   Use \code{{col}} for the variable name. Default: \code{"{col}_grand_mean_centered"}.
+#' @param between_pattern A glue-style naming pattern for between-group (group mean)
+#'   columns. Use \code{{col}} for the variable name and \code{{group}} for the
+#'   grouping variable name. Default: \code{"{col}_between_{group}"}.
+#' @param within_pattern A glue-style naming pattern for within-group deviation
+#'   columns. Use \code{{col}} for the variable name and \code{{group}} for the
+#'   grouping variable name. Default: \code{"{col}_within_{group}"}.
 #'
 #' @return A data frame containing:
 #' \itemize{
 #'   \item All original variables from \code{data}
-#'   \item Grand mean centered versions (suffix: \code{_grand_mean_centered})
-#'   \item Between-group means (suffix: \code{_between_[group]})
-#'   \item Within-group deviations (suffix: \code{_within_[group]})
+#'   \item Grand mean centered versions (named by \code{gmc_pattern}), if \code{"gmc"} in \code{components}
+#'   \item Between-group means (named by \code{between_pattern}), if \code{"between"} in \code{components}
+#'   \item Within-group deviations (named by \code{within_pattern}), if \code{"within"} in \code{components}
 #' }
 #'
 #' @details
@@ -48,70 +62,121 @@
 #'   mood = rnorm(50, 50, 10)
 #' )
 #'
-#' # Decompose variables for REWB modeling
+#' # Decompose all three components (default)
 #' result <- decompose_within_between(
 #'   data = data,
 #'   group = "participant",
 #'   vars = c("stress", "mood")
 #' )
 #'
+#' # Only between and within (no grand mean centering)
+#' result_wb <- decompose_within_between(
+#'   data = data,
+#'   group = "participant",
+#'   vars = c("stress", "mood"),
+#'   components = c("between", "within")
+#' )
+#'
+#' # Custom column naming: flat suffixes without the group name
+#' result_flat <- decompose_within_between(
+#'   data = data,
+#'   group = "participant",
+#'   vars = c("stress", "mood"),
+#'   components = c("between", "within"),
+#'   between_pattern = "{col}_between",
+#'   within_pattern = "{col}_within"
+#' )
+#'
 #' @references
-#' Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models: 
+#' Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models:
 #' making an informed choice. \emph{Quality & Quantity}, 53(2), 1051-1074.
-#' 
+#'
 #' Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sectional
 #' multilevel models: A new look at an old issue. \emph{Psychological Methods}, 12(2), 121-138.
 #'
-#' @seealso \code{\link{within_between_correlations}} for computing correlations on decomposed components
+#' @seealso \code{\link{within_between_correlations}} and
+#'   \code{\link{bayes_within_between_correlations}}, which use this function
+#'   internally to perform the within/between decomposition.
 #'
 #' @export
-decompose_within_between <- function(data, group, vars) {
-  
+decompose_within_between <- function(
+  data,
+  group,
+  vars,
+  components = c("gmc", "between", "within"),
+  gmc_pattern = "{col}_grand_mean_centered",
+  between_pattern = "{col}_between_{group}",
+  within_pattern = "{col}_within_{group}"
+) {
+  components <- base::match.arg(components, several.ok = TRUE)
+
   # Validate inputs
-  if (!group %in% base::names(data)) {
-    base::stop("Group variable '", group, "' not found in data")
-  }
-  
-  missing_vars <- base::setdiff(vars, base::names(data))
-  if (base::length(missing_vars) > 0) {
-    base::stop("Variables not found in data: ", base::paste(missing_vars, collapse = ", "))
-  }
+  .validate_group_vars(data, group, vars)
 
   non_numeric_vars <- vars[!base::vapply(data[vars], base::is.numeric, base::logical(1))]
   if (base::length(non_numeric_vars) > 0) {
-    base::stop("Variables must be numeric: ", base::paste(non_numeric_vars, collapse = ", "))
+    cli::cli_abort(c(
+      "Variable{?s} {.val {non_numeric_vars}} must be numeric.",
+      "i" = "All variables passed to {.arg vars} must be numeric columns."
+    ))
   }
 
-  # Step 1: Grand mean centering
-  result <- 
-    data |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ .x - base::mean(.x, na.rm = TRUE),
-        .names = "{col}_grand_mean_centered"
+  result <- data
+
+  # Grand mean centering
+  if ("gmc" %in% components) {
+    result <- result |>
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::all_of(vars),
+          ~ .x - base::mean(.x, na.rm = TRUE),
+          .names = gmc_pattern
+        )
       )
-    )
-  
-  # Step 2: Compute between-group means and within-group deviations
-  result <- 
-    result |>
-    dplyr::group_by(!!rlang::sym(group)) |>
-    dplyr::mutate(
-      # Between-group component (group means)
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ base::mean(.x, na.rm = TRUE),
-        .names = "{col}_between_{group}"
-      ),
-      # Within-group component (deviations from group means)
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ .x - dplyr::pick(dplyr::everything())[[base::paste0(dplyr::cur_column(), "_between_", .env$group)]],
-        .names = "{col}_within_{group}"
+  }
+
+  # Between and/or within components
+  if ("between" %in% components || "within" %in% components) {
+    # Between: group means (always needed when within is requested, even if not
+    # in final output, because within is defined as x - group_mean)
+    result <- result |>
+      dplyr::group_by(!!rlang::sym(group)) |>
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::all_of(vars),
+          ~ base::mean(.x, na.rm = TRUE),
+          .names = between_pattern
+        )
+      ) |>
+      dplyr::ungroup()
+
+    # Within: deviations from group means
+    if ("within" %in% components) {
+      grp <- group  # capture for use inside the across lambda
+      result <- result |>
+        dplyr::mutate(
+          dplyr::across(
+            dplyr::all_of(vars),
+            function(x) {
+              between_col <- .eval_name_pattern(between_pattern, dplyr::cur_column(), grp)
+              x - dplyr::pick(dplyr::everything())[[between_col]]
+            },
+            .names = within_pattern
+          )
+        )
+    }
+
+    # Drop the intermediate between columns if they were only needed to
+    # compute within and were not requested in the output
+    if (!"between" %in% components) {
+      between_col_names <- base::vapply(
+        vars,
+        function(v) .eval_name_pattern(between_pattern, v, group),
+        base::character(1)
       )
-    ) |>
-    dplyr::ungroup()
-  
+      result <- dplyr::select(result, -dplyr::all_of(between_col_names))
+    }
+  }
+
   return(result)
 }

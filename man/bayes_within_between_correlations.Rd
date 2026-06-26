@@ -25,8 +25,8 @@ bayes_within_between_correlations(
 more weight to larger groups. If FALSE, every group counts equally
 regardless of size. See Details.}
 
-\item{ci}{Numeric value between 0 and 1 specifying the credible interval width.
-Default is 0.9 (90\% CI).}
+\item{ci}{Numeric value strictly between 0 and 1 specifying the credible
+interval width. Default is 0.9 (90\% CI).}
 
 \item{folder}{Character string specifying the directory path where brms models
 should be saved. No default; must be specified.}
@@ -39,7 +39,7 @@ A tibble containing a correlation matrix where:
 \itemize{
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
-\item Diagonal elements are marked with "-"
+\item Diagonal elements are marked with "–"
 \item Correlations whose credible interval excludes zero are marked with an asterisk
 }
 }

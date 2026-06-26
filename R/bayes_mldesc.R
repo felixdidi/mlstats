@@ -18,8 +18,10 @@
 #'   gives more weight to larger groups. If FALSE, every group counts equally: the mean
 #'   and SD are calculated on group means, and the between-group correlation is
 #'   unweighted.
-#' @param ci Numeric value between 0 and 1 specifying the credible interval width.
-#'   Default is 0.9 (90% CI).
+#' @param ci Numeric value strictly between 0 and 1 specifying the credible
+#'   interval width used for the within-group and between-group correlations.
+#'   Default is 0.9 (90% CI). The ICC always reports the posterior median only
+#'   and is not affected by this argument.
 #' @param folder Character string specifying the directory path where brms models
 #'   should be saved. No default; must be specified.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
@@ -38,8 +40,8 @@
 #'   \item \code{icc}: Intraclass correlation coefficient
 #' }
 #'
-#' The tibble can be returned as a gt object using \code{print("gt")}
-#' and as a tinytable object using \code{print("tt")}.
+#' The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+#' and as a tinytable object using \code{print(result, format = "tt")}.
 #'
 #' @details
 #' The function combines three types of information:
@@ -135,6 +137,9 @@ bayes_mldesc <- function(
 
   # Validate inputs
   .validate_group_vars(data, group, vars)
+  if (ci <= 0 || ci >= 1) {
+    cli::cli_abort("{.arg ci} must be between 0 and 1.")
+  }
   if (base::missing(folder)) {
     base::stop("Argument 'folder' must be specified to save brms models.")
   }
@@ -164,13 +169,8 @@ bayes_mldesc <- function(
   }
 
   # Internal function to compute Bayesian ICC
-  get_bayes_icc <- function(data, group, vars, ci, folder) {
+  get_bayes_icc <- function(data, group, vars, folder) {
     .warn_discrete_icc_vars(data, vars)
-
-    # Calculate quantiles for CI
-    alpha <- (1 - ci) / 2
-    ci_low <- alpha
-    ci_high <- 1 - alpha
 
     icc_values <- base::sapply(vars, function(var) {
       # Fit intercept-only multilevel model
@@ -189,9 +189,6 @@ bayes_mldesc <- function(
           refresh = 0
         )
       )
-
-      # Extract variance components
-      vc <- brms::VarCorr(fit)
 
       # Get posterior draws of variance components
       draws <- brms::as_draws_df(fit)
@@ -248,7 +245,7 @@ bayes_mldesc <- function(
         sd = base::sprintf("%.2f", sd_val),
         range = base::paste0(
           base::sprintf("%.0f", base::min(var_data_clean, na.rm = TRUE)),
-          "-",
+          "\u2013",
           base::sprintf("%.0f", base::max(var_data_clean, na.rm = TRUE))
         )
       )
@@ -283,7 +280,7 @@ bayes_mldesc <- function(
   }
 
   # Compute Bayesian ICCs
-  icc_stats <- get_bayes_icc(data, group, vars, ci, folder)
+  icc_stats <- get_bayes_icc(data, group, vars, folder)
 
   # Combine all components
   result <- dplyr::bind_cols(

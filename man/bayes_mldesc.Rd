@@ -28,8 +28,10 @@ gives more weight to larger groups. If FALSE, every group counts equally: the me
 and SD are calculated on group means, and the between-group correlation is
 unweighted.}
 
-\item{ci}{Numeric value between 0 and 1 specifying the credible interval width.
-Default is 0.9 (90\% CI).}
+\item{ci}{Numeric value strictly between 0 and 1 specifying the credible
+interval width used for the within-group and between-group correlations.
+Default is 0.9 (90\% CI). The ICC always reports the posterior median only
+and is not affected by this argument.}
 
 \item{folder}{Character string specifying the directory path where brms models
 should be saved. No default; must be specified.}
@@ -52,8 +54,8 @@ A tibble of class \code{mlstats_desc_tibble} containing:
 \item \code{icc}: Intraclass correlation coefficient
 }
 
-The tibble can be returned as a gt object using \code{print("gt")}
-and as a tinytable object using \code{print("tt")}.
+The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+and as a tinytable object using \code{print(result, format = "tt")}.
 }
 \description{
 Creates a publication-ready descriptive statistics table for multilevel data

@@ -1,6 +1,14 @@
 # export "variable" as global variable
 utils::globalVariables("variable")
 
+# Evaluate a naming pattern by substituting {col} and {group} placeholders.
+# Mirrors the two tokens that dplyr's .names argument resolves via glue.
+.eval_name_pattern <- function(pattern, col, group) {
+  result <- base::gsub("{col}", col, pattern, fixed = TRUE)
+  result <- base::gsub("{group}", group, result, fixed = TRUE)
+  result
+}
+
 # Validate that `group` and `vars` are present in `data`, with helpful errors.
 .validate_group_vars <- function(data, group, vars) {
   if (!group %in% base::names(data)) {
@@ -73,7 +81,12 @@ utils::globalVariables("variable")
   }
   correlation_note <- base::paste0("\u2139 ", correlation_note)
 
-  significance_note <- base::paste0("\u2139 ", base::attr(x, "significance_note", exact = TRUE))
+  significance_note_val <- base::attr(x, "significance_note", exact = TRUE)
+  significance_note <- if (base::is.null(significance_note_val)) {
+    NULL
+  } else {
+    base::paste0("\u2139 ", significance_note_val)
+  }
 
   method <- base::attr(x, "method", exact = TRUE)
   method_note <- if (!base::is.null(method) && method == "sem") {

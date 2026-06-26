@@ -18,8 +18,8 @@
 #' @param weight Logical. If TRUE (default), the between-group correlation gives
 #'   more weight to larger groups. If FALSE, every group counts equally
 #'   regardless of size. See Details.
-#' @param ci Numeric value between 0 and 1 specifying the credible interval width.
-#'   Default is 0.9 (90% CI).
+#' @param ci Numeric value strictly between 0 and 1 specifying the credible
+#'   interval width. Default is 0.9 (90% CI).
 #' @param folder Character string specifying the directory path where brms models
 #'   should be saved. No default; must be specified.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
@@ -29,7 +29,7 @@
 #' \itemize{
 #'   \item The upper triangle contains within-group correlations
 #'   \item The lower triangle contains between-group correlations
-#'   \item Diagonal elements are marked with "-"
+#'   \item Diagonal elements are marked with "–"
 #'   \item Correlations whose credible interval excludes zero are marked with an asterisk
 #' }
 #'
@@ -140,48 +140,21 @@ bayes_within_between_correlations <- function(
   ci_low <- alpha
   ci_high <- 1 - alpha
 
-  # Compute group means
-  group_means <-
-    data |>
-    dplyr::group_by(!!rlang::sym(group)) |>
-    dplyr::summarise(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ base::mean(.x, na.rm = TRUE)
-      ),
-      .groups = "drop"
-    )
+  d_centered <- decompose_within_between(
+    dplyr::select(data, dplyr::all_of(base::c(group, vars))),
+    group = group,
+    vars = vars,
+    components = base::c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
 
-  # Merge group means back to original data
-  d_with_means <-
-    data |>
-    dplyr::select(dplyr::all_of(base::c(group, vars))) |>
-    dplyr::left_join(
-      group_means,
-      by = group,
-      suffix = base::c("", "_between")
-    )
+  # One row per group — used for unweighted CI and for the significance test
+  d_between_unweighted <- d_centered |>
+    dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
 
-  # Compute within-group deviations
-  d_centered <-
-    d_with_means |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ .x - dplyr::pick(dplyr::everything())[[base::paste0(dplyr::cur_column(), "_between")]],
-        .names = "{col}_within"
-      )
-    )
-
-  # Prepare data for between-group correlations
-  if (weight) {
-    # Use all observations (variance-weighted)
-    d_between <- d_centered
-  } else {
-    # Use only one observation per group (unweighted)
-    d_between <- d_centered |>
-      dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
-  }
+  # Prepare data for between-group point estimates
+  d_between <- if (weight) d_centered else d_between_unweighted
 
   # Initialize comparison matrix
   n <- base::length(vars)
@@ -256,10 +229,6 @@ bayes_within_between_correlations <- function(
         # Between-group correlation
         between_x <- base::paste0(vars[i], "_between")
         between_y <- base::paste0(vars[j], "_between")
-
-        # Always prepare unweighted data for credible intervals
-        d_between_unweighted <- d_centered |>
-          dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
 
         # Check for zero variance
         if (

@@ -43,7 +43,7 @@ A tibble containing a correlation matrix where:
 \itemize{
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
-\item Diagonal elements are marked with "-"
+\item Diagonal elements are marked with "–"
 \item Significant correlations are marked with asterisks (see \code{significance} parameter)
 }
 }

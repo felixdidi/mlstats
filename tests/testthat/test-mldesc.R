@@ -41,7 +41,7 @@ test_that("mldesc computes descriptive statistics correctly", {
   expect_equal(vctrs::vec_data(result$m)[1], "20.00")
   
   # Check range format - extract underlying value
-  expect_match(vctrs::vec_data(result$range)[1], "^[0-9]+-[0-9]+$")
+  expect_match(vctrs::vec_data(result$range)[1], "^-?[0-9]+–-?[0-9]+$")
 })
 
 test_that("mldesc handles multiple variables", {
@@ -274,7 +274,7 @@ test_that("mldesc formats numbers correctly", {
   expect_match(sd_val, "^[0-9]+\\.[0-9]{2}$")
   
   # Range should be integers
-  expect_match(range_val, "^[0-9]+-[0-9]+$")
+  expect_match(range_val, "^-?[0-9]+–-?[0-9]+$")
   
   # ICC should have 2 decimal places
   expect_match(icc_val, "^\\.[0-9]{2}$")
@@ -855,20 +855,20 @@ test_that("mldesc flip doesn't affect descriptives or ICC", {
   )
 })
 
-test_that("bayes_mldesc print method accepts format parameter", {
+test_that("mldesc print method accepts format parameter", {
   set.seed(6000)
   data <- data.frame(
     group = rep(1:3, each = 10),
     x = rnorm(30),
     y = rnorm(30)
   )
-  
+
   result <- mldesc(
     data = data,
     group = "group",
     vars = c("x", "y")
   )
-  
+
   result_gt <- print(result, "gt")
   # Should return a gt table
   expect_s3_class(result_gt, "gt_tbl")
@@ -878,7 +878,7 @@ test_that("bayes_mldesc print method accepts format parameter", {
   expect_s4_class(result_tt, "tinytable")
 })
 
-test_that("bayes_mldesc print method accepts custom parameters", {
+test_that("mldesc print method accepts custom parameters", {
   set.seed(6000)
   data <- data.frame(
     group = rep(1:3, each = 10),
@@ -1174,7 +1174,7 @@ test_that("mldesc errors on unknown vars", {
   )
 })
 
-test_that("mldesc does not warn about discreteness for non-numeric variables", {
+test_that("mldesc errors for non-numeric variables", {
   set.seed(11)
   data <- data.frame(
     group = rep(1:5, each = 10),
@@ -1182,7 +1182,7 @@ test_that("mldesc does not warn about discreteness for non-numeric variables", {
     flag = sample(c(TRUE, FALSE), 50, replace = TRUE)
   )
 
-  expect_no_warning(mldesc(data, "group", c("x", "flag")))
+  expect_error(mldesc(data, "group", c("x", "flag")), "numeric")
 })
 
 test_that("mldesc default print method dispatches to pillar formatting", {

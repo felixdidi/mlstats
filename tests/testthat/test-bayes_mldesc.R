@@ -75,7 +75,7 @@ test_that("bayes_mldesc handles basic input correctly", {
   expect_match(result$n_obs, "^[0-9]+$")
   expect_match(result$m, "^[0-9]+\\.[0-9]{2}$")
   expect_match(result$sd, "^[0-9]+\\.[0-9]{2}$")
-  expect_match(result$range, "^[0-9]+-[0-9]+$")
+  expect_match(result$range, "^-?[0-9]+–-?[0-9]+$")
   expect_match(result$icc, "^\\.[0-9]{2}$")
   expect_equal(as.character(result$`1`[1]), "–")
 
@@ -253,4 +253,41 @@ test_that("bayes_mldesc print method accepts custom title and notes", {
     note_text = "Custom footer note"
   )
   expect_s3_class(result_gt, "gt_tbl")
+})
+
+test_that("bayes_mldesc flip = TRUE forwards correctly", {
+  result_normal <- bayes_mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    folder = bayes_cache_folder,
+    flip = FALSE
+  )
+
+  result_flipped <- bayes_mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    folder = bayes_cache_folder,
+    flip = TRUE
+  )
+
+  expect_false(attr(result_normal, "flipped"))
+  expect_true(attr(result_flipped, "flipped"))
+
+  # Upper triangle of normal = lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+
+  # Descriptive columns and ICC should be identical
+  expect_equal(
+    vctrs::vec_data(result_normal$n_obs),
+    vctrs::vec_data(result_flipped$n_obs)
+  )
+  expect_equal(
+    vctrs::vec_data(result_normal$icc),
+    vctrs::vec_data(result_flipped$icc)
+  )
 })

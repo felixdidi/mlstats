@@ -39,8 +39,8 @@
 #'   \item \code{icc}: Intraclass correlation coefficient
 #' }
 #'
-#' The tibble can be returned as a gt object using \code{print("gt")}
-#' and as a tinytable object using \code{print("tt")}.
+#' The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+#' and as a tinytable object using \code{print(result, format = "tt")}.
 #'
 #' @details
 #' The function combines three types of information:
@@ -220,7 +220,7 @@ mldesc <- function(
         sd = base::sprintf("%.2f", sd_val),
         range = base::paste0(
           base::sprintf("%.0f", base::min(var_data_clean, na.rm = TRUE)),
-          "-",
+          "\u2013",
           base::sprintf("%.0f", base::max(var_data_clean, na.rm = TRUE))
         )
       )

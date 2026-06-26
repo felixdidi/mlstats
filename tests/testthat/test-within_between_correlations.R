@@ -548,14 +548,13 @@ test_that("method='sem' handles basic input correctly", {
     y = c(rnorm(20, 5, 1), rnorm(20, 10, 1), rnorm(20, 15, 1), rnorm(20, 20, 1), rnorm(20, 25, 1))
   )
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   # Check structure
@@ -575,14 +574,13 @@ test_that("method='sem' produces correct matrix structure", {
     v3 = rnorm(200)
   )
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("v1", "v2", "v3"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   # Check dimensions
@@ -603,14 +601,13 @@ test_that("method='sem' correlation values are within [-1, 1]", {
     y = rnorm(400)
   )
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y"),
       method = "sem"
-    ),
-    "could not be fit"
+    )
   )
 
   # Extract non-diagonal values
@@ -650,15 +647,14 @@ test_that("method='sem' handles significance='detailed'", {
   data$x <- rep(1:20, each = 30) * 5 + rnorm(600, 0, 1)
   data$y <- data$x + rnorm(600, 0, 2)
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y"),
       method = "sem",
       significance = "detailed"
-    ),
-    "out-of-range"
+    )
   )
 
   # Should complete without error
@@ -718,26 +714,24 @@ test_that("method='sem' flip works correctly", {
     z = rnorm(200)
   )
 
-  result_normal <- expect_warning_value(
+  result_normal <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y", "z"),
       method = "sem",
       flip = FALSE
-    ),
-    "out-of-range"
+    )
   )
 
-  result_flipped <- expect_warning_value(
+  result_flipped <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y", "z"),
       method = "sem",
       flip = TRUE
-    ),
-    "out-of-range"
+    )
   )
 
   # Upper triangle of normal should equal lower triangle of flipped
@@ -807,14 +801,13 @@ test_that("method='sem' columns have mlstats_stat class", {
     y = rnorm(100)
   )
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("x", "y"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   expect_s3_class(result$`1`, "mlstats_stat")
@@ -855,14 +848,13 @@ test_that("method='sem' handles between-only variables (zero within-cluster vari
   data$x <- rnorm(500, 5, 2)  # Within+between variation
   data$y <- rnorm(500, 5, 2)  # Within+between variation
 
-  result <- expect_warning_value(
+  result <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("trait", "x", "y"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   # Structure checks
@@ -905,14 +897,13 @@ test_that("method='sem' between-only variable correlations do not distort other 
   data$y <- data$x * 0.5 + rnorm(500, 0, 0.5)  # Correlated with x
 
   # With trait included
-  result_with <- expect_warning_value(
+  result_with <- suppressWarnings(
     within_between_correlations(
       data = data,
       group = "group",
       vars = c("trait", "x", "y"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   # Without trait

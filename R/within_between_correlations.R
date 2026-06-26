@@ -31,7 +31,7 @@
 #' \itemize{
 #'   \item The upper triangle contains within-group correlations
 #'   \item The lower triangle contains between-group correlations
-#'   \item Diagonal elements are marked with "-"
+#'   \item Diagonal elements are marked with "–"
 #'   \item Significant correlations are marked with asterisks (see \code{significance} parameter)
 #' }
 #'
@@ -211,51 +211,26 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
 
 # --- Internal: decomposition method (Pedhazur, 1997) ---
 .wb_cor_decomposition <- function(data, group, vars, weight, significance, add_stars) {
-  # Compute group means
-  group_means <-
-    data |>
-    dplyr::group_by(!!rlang::sym(group)) |>
-    dplyr::summarise(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ base::mean(.x, na.rm = TRUE)
-      ),
-      .groups = "drop"
-    )
+  d_centered <- decompose_within_between(
+    dplyr::select(data, dplyr::all_of(base::c(group, vars))),
+    group = group,
+    vars = vars,
+    components = base::c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
 
-  # Merge group means back to original data
-  d_with_means <-
-    data |>
-    dplyr::select(dplyr::all_of(c(group, vars))) |>
-    dplyr::left_join(
-      group_means,
-      by = group,
-      suffix = c("", "_between")
-    )
+  n_groups <- base::length(base::unique(data[[group]]))
 
-  # Compute within-group deviations
-  d_centered <-
-    d_with_means |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ .x - dplyr::pick(dplyr::everything())[[base::paste0(dplyr::cur_column(), "_between")]],
-        .names = "{col}_within"
-      )
-    )
+  # One row per group — used for unweighted between correlation and for the
+  # significance test (df = n_groups - 2, regardless of weight)
+  d_between_unweighted <- d_centered |>
+    dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
 
-  # Prepare data for between-group correlations
-  if (weight) {
-    # Use all observations (variance-weighted)
-    d_between <- d_centered
-  } else {
-    # Use only one observation per group (unweighted)
-    d_between <- d_centered |>
-      dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
-  }
+  # Prepare data for between-group point estimates
+  d_between <- if (weight) d_centered else d_between_unweighted
 
   # Initialize comparison matrix
-  n_groups <- base::nrow(group_means)
   n <- base::length(vars)
   comparison_matrix <- base::matrix("", nrow = n, ncol = n)
 
@@ -322,8 +297,8 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
           # testing the weighted estimate against df = n_groups - 2 would
           # overstate precision when group sizes are unequal.
           r_bg_unweighted <- stats::cor(
-            group_means[[vars[i]]],
-            group_means[[vars[j]]],
+            d_between_unweighted[[base::paste0(vars[i], "_between")]],
+            d_between_unweighted[[base::paste0(vars[j], "_between")]],
             use = "pairwise.complete.obs"
           )
 
