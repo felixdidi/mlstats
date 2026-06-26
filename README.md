@@ -10,12 +10,17 @@
 coverage](https://codecov.io/gh/felixdidi/mlstats/graph/badge.svg)](https://app.codecov.io/gh/felixdidi/mlstats)
 <!-- badges: end -->
 
-The **mlstats** package provides tools for conducting multilevel
-analyses, such as centering variables to compute random effects
-within-between (REWB) models or creating publication-ready descriptive
-tables, including within-group and between-group correlations, as well
-as intraclass correlation coefficients (ICCs). The package supports
-frequentist (using `lme4`) and Bayesian (using `brms`) estimation.
+The **mlstats** package provides tools for multilevel descriptive
+statistics and data preparation. It computes within-group and
+between-group correlations (via variance decomposition or two-level
+structural equation modeling), intraclass correlation coefficients
+(ICCs), and descriptive statistics for nested data (e.g., repeated
+measurements per person), supporting both frequentist (via `lme4` or
+`lavaan`) and Bayesian (via `brms`) estimation. Results are formatted
+according to APA standards and can be exported as tables using `gt` or
+`tinytable`. The package also includes functions for decomposing
+variables into within-group and between-group components for use in
+Random Effects Within-Between (REWB) models.
 
 ## Installation
 
@@ -39,7 +44,11 @@ function. This centering approach is commonly used in multilevel
 modeling (Enders & Tofighi, 2007). The decomposed variables are
 particularly useful for Random Effects Within-Between (REWB) models
 (Bell et al., 2019), which allow the estimation of distinct within-group
-and between-group effects.
+and between-group effects. By default, all three components are computed
+— grand mean centering (`gmc`), group means (`between`), and
+within-group deviations (`within`) — but any subset can be selected via
+the `components` argument. The names of the resulting columns can be
+customized using `gmc_pattern`, `between_pattern`, and `within_pattern`.
 
 ``` r
 data |>
@@ -91,10 +100,10 @@ data |>
 #>   =============== ====== ===== ===== ===== ===== ===== ===== ===== =====
 #>   variable         n_obs     m    sd range   `1`   `2`   `3`   `4`   icc
 #>   --------------- ------ ----- ----- ----- ----- ----- ----- ----- -----
-#> 1 Self control    12,408  3.78  1.15   2-7     –    NA    NA    NA  1.00
-#> 2 Goal conflict   12,408  3.19  2.13   1-7 -.22*     –  .13*  .31*   .47
-#> 3 Disconnection   12,408  0.59  0.49   0-1  .14*  .36*     – -.09*   .40
-#> 4 Procrastination 12,408  2.27  1.76   1-7 -.37*  .56*   .05     –   .25
+#> 1 Self control    12,408  3.78  1.15   2–7     –    NA    NA    NA  1.00
+#> 2 Goal conflict   12,408  3.19  2.13   1–7 -.22*     –  .13*  .31*   .47
+#> 3 Disconnection   12,408  0.59  0.49   0–1  .14*  .36*     – -.09*   .40
+#> 4 Procrastination 12,408  2.27  1.76   1–7 -.37*  .56*   .05     –   .25
 #>   =============== ====== ===== ===== ===== ===== ===== ===== ===== =====
 #> # ℹ Within-group correlations above, between-group correlations below the
 #> #   diagonal.
@@ -103,28 +112,32 @@ data |>
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
 
+### Estimation Method and Weighting
+
+Two estimation methods are available via the `method` argument. The
+default `method = "decomposition"` uses a fast, closed-form
+variance-decomposition approach (Pedhazur, 1997): within-group
+correlations are computed from group-mean-centered residuals and
+between-group correlations from the group means. Alternatively,
+`method = "sem"` fits a two-level structural equation model via `lavaan`
+using robust maximum likelihood, which handles very unequal group sizes
+more rigorously for significance testing. By default (`weight = TRUE`),
+between-group correlations and descriptives are weighted by group size;
+set `weight = FALSE` to give every group equal influence regardless of
+size. Note that `weight` is only available for
+`method = "decomposition"`. See `vignette("correlation-methods")` for a
+detailed comparison.
+
 ### Customizable Options
 
-There are several options to customize the output:
+Further options to customize the output:
 
-- **Weight by group size**: By default, the group means, standard
-  deviations, and between-group correlations are weighted by group size.
-  This can be disabled by setting `weight = FALSE` (e.g., so that each
-  person in the sample contributes equally to the overall mean and the
-  between-person correlations).
 - **Remove leading zeros**: By default, `mldesc()` removes leading zeros
   from decimal numbers to comply with APA formatting guidelines. This
   can be disabled by setting `remove_leading_zero = FALSE`.
 - **Flip correlation matrix**: By default, within-group correlations are
   displayed above the diagonal and between-group correlations below the
   diagonal. This can be changed by setting `flip = TRUE`.
-- **Estimation method**: By default, within-group and between-group
-  correlations are estimated via variance decomposition
-  (`method = "decomposition"`), following Pedhazur (1997).
-  Alternatively, correlations can be estimated using a two-level
-  structural equation model via `lavaan` by setting `method = "sem"`,
-  similar to the approach in `misty::multilevel.cor()`. Note that the
-  `weight` parameter is only available for the decomposition method.
 - **Significance stars**: By default, one star is added to all
   correlation coefficients with *p* \< .05. By setting
   `significance = "detailed"`, this can be changed to one star for *p*
@@ -144,10 +157,10 @@ data |>
 #>   =============== ====== ===== ===== ===== ===== ======== ======== ========
 #>   variable         n_obs     m    sd range   `1`      `2`      `3`      `4`
 #>   --------------- ------ ----- ----- ----- ----- -------- -------- --------
-#> 1 Self control    12,408  3.78  1.16   2-7     – -0.22***    0.13* -0.36***
-#> 2 Goal conflict   12,408  3.22  1.48   1-7    NA        –  0.37***  0.56***
-#> 3 Disconnection   12,408  0.60  0.32   0-1    NA  0.13***        –     0.06
-#> 4 Procrastination 12,408  2.29  0.90   1-7    NA  0.31*** -0.09***        –
+#> 1 Self control    12,408  3.78  1.16   2–7     – -0.22***    0.13* -0.36***
+#> 2 Goal conflict   12,408  3.22  1.48   1–7    NA        –  0.37***  0.56***
+#> 3 Disconnection   12,408  0.60  0.32   0–1    NA  0.13***        –     0.06
+#> 4 Procrastination 12,408  2.29  0.90   1–7    NA  0.31*** -0.09***        –
 #>   =============== ====== ===== ===== ===== ===== ======== ======== ========
 #> # ℹ 1 more variable: icc <mls>
 #> # ℹ Between-group correlations above, within-group correlations below the
@@ -198,7 +211,7 @@ further customize the output by modifying the resulting `tibble`, `gt`,
 or `tt` object (for customization of `gt` tables, see the documentation
 [here](https://gt.rstudio.com/); for tinytable, see
 [here](https://vincentarelbundock.github.io/tinytable/)). For example,
-to reproduce Table 1 from Klingelhoefer et al. (2025), we can adjust the
+to reproduce Table 1 from Klingelhoefer et al. (2026), we can adjust the
 output by selecting relevant columns, replacing `NA`s with dashes, and
 adding footnotes:
 
@@ -263,12 +276,15 @@ If desired, the package also supports Bayesian estimation via `brms`,
 providing credible intervals instead of *p*-values through
 `bayes_mldesc()` and `bayes_within_between_correlations()`. In addition
 to the parameters available in the frequentist functions, users must
-specify the credible interval width (`ci`) and a folder to save the
-fitted models (`folder`).
+specify a folder to save the fitted models (`folder`). The credible
+interval width can be set via `ci` (default: 0.9 for a 90% CI).
 
 Note that the Bayesian functions may take a considerable amount of time
 to run (and use a considerable amount of disc space for model files)
-because they fit one `brms`-model per correlation coefficient.
+because they fit one `brms`-model per correlation coefficient. Sampling
+settings can be adjusted globally via
+`options(mlstats.brms_iter = ..., mlstats.brms_chains = ...)`, with
+defaults of 5000 iterations and 4 chains.
 
 ## References
 
@@ -281,9 +297,10 @@ cross-sectional multilevel models: A new look at an old issue.
 *Psychological Methods, 12*(2), 121–138.
 <https://doi.org/10.1037/1082-989X.12.2.121>
 
-Klingelhoefer, J., Gilbert, A., & Meier, A. (2025). Digital
+Klingelhoefer, J., Gilbert, A., & Meier, A. (2026). Digital
 disconnection as a self-regulatory strategy against procrastination.
-*PsyArXiv*. <https://doi.org/10.31234/osf.io/3j64v_v1>
+*Scientific Reports, 16*, 17133.
+<https://doi.org/10.1038/s41598-026-46218-1>
 
 Pedhazur, E. J. (1997). *Multiple regression in behavioral research:
 Explanation and prediction* (3rd ed.). Harcourt Brace.

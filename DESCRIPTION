@@ -4,11 +4,14 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Felix", "Dietrich", , "mail@felix-dietrich.de", role = c("aut", "cre", "cph"))
 Description: Provides tools for multilevel descriptive statistics and data preparation.
-    Computes within-group and between-group correlations, intraclass correlation 
-    coefficients (ICCs), and comprehensive descriptive statistics tables for nested data. 
-    Supports both frequentist (via 'lme4') and Bayesian (via 'brms') estimation approaches.
-    Includes functions for decomposing variables into within-group and between-group 
-    components for use in Random Effects Within-Between (REWB) models.
+    Computes within-group and between-group correlations (via variance decomposition or
+    two-level structural equation modeling), intraclass correlation coefficients (ICCs),
+    and descriptive statistics for nested data (e.g., repeated measurements per person),
+    supporting both frequentist (via 'lme4' or 'lavaan') and Bayesian (via 'brms')
+    estimation. Results are formatted according to APA standards and can be exported as
+    tables using 'gt' or 'tinytable'. Also includes functions for decomposing variables
+    into within-group and between-group components for use in Random Effects
+    Within-Between (REWB) models.
 License: MIT + file LICENSE
 URL: https://github.com/felixdidi/mlstats
 BugReports: https://github.com/felixdidi/mlstats/issues
