@@ -16,10 +16,11 @@
 #' @param method Character string specifying the estimation method: \code{"decomposition"}
 #'   (default) or \code{"sem"}. See Details.
 #' @param weight Logical. Only used when \code{method = "decomposition"}. If TRUE
-#'   (default), the between-group correlation gives more weight to larger groups.
-#'   If FALSE, every group counts equally regardless of size. Ignored (with a
-#'   message) when \code{method = "sem"}, because that method handles unequal
-#'   group sizes automatically.
+#'   (default), the between-group correlation gives more weight to larger groups;
+#'   significance, however, is always tested using the unweighted correlation of
+#'   group means. If FALSE, every group counts equally regardless of size. Ignored
+#'   (with a message) when \code{method = "sem"}, because that method handles
+#'   unequal group sizes automatically.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param significance Character string specifying the significance marking style.
@@ -253,13 +254,16 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
         } else {
           est <- stats::cor(within_x, within_y, use = "pairwise.complete.obs")
 
-          # Group-mean centering removes n_groups degrees of freedom (one per
-          # group, for the subtracted group mean) in addition to the 1 df lost
-          # to the estimated slope itself; see Snijders & Bosker (2012, eq. 6.1)
-          # for the general rule (df = M - r - 1) applied to a level-one
-          # coefficient estimated alongside n_groups - 1 group dummies.
-          n_pairs <- base::sum(stats::complete.cases(within_x, within_y))
-          df_wg <- n_pairs - n_groups - 1
+          # Group-mean centering removes one df per group that contributed at
+          # least one complete (x, y) pair — only those groups' means were
+          # actually subtracted from observations entering the correlation.
+          # See Snijders & Bosker (2012, eq. 6.1) for the general rule.
+          complete_rows <- stats::complete.cases(within_x, within_y)
+          n_pairs <- base::sum(complete_rows)
+          n_groups_with_pairs <- base::length(
+            base::unique(d_centered[[group]][complete_rows])
+          )
+          df_wg <- n_pairs - n_groups_with_pairs - 1
 
           if (df_wg > 0) {
             t_stat <- est * base::sqrt(df_wg) / base::sqrt(1 - est^2)
@@ -289,25 +293,29 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
           )
 
           # The significance test always uses the unweighted correlation of
-          # the n_groups group means (one independent observation per group),
-          # even when `weight = TRUE` and the displayed estimate is the
-          # group-size-weighted correlation. The weighting changes how much
-          # each group contributes to the point estimate, but does not change
-          # the number of independent group-level units the data provide, so
-          # testing the weighted estimate against df = n_groups - 2 would
-          # overstate precision when group sizes are unequal.
+          # group means (one independent observation per group), even when
+          # `weight = TRUE` and the displayed estimate is the group-size-
+          # weighted correlation. df is based on the number of groups that
+          # contributed a non-NA mean for both variables, since groups with
+          # all-NA observations on either variable are excluded by
+          # pairwise.complete.obs and should not consume a degree of freedom.
           r_bg_unweighted <- stats::cor(
             d_between_unweighted[[base::paste0(vars[i], "_between")]],
             d_between_unweighted[[base::paste0(vars[j], "_between")]],
             use = "pairwise.complete.obs"
           )
 
-          if (n_groups > 2 && !base::is.na(r_bg_unweighted)) {
-            t_stat <- (r_bg_unweighted * base::sqrt(n_groups - 2)) /
+          n_groups_complete <- base::sum(stats::complete.cases(
+            d_between_unweighted[[base::paste0(vars[i], "_between")]],
+            d_between_unweighted[[base::paste0(vars[j], "_between")]]
+          ))
+
+          if (n_groups_complete > 2 && !base::is.na(r_bg_unweighted)) {
+            t_stat <- (r_bg_unweighted * base::sqrt(n_groups_complete - 2)) /
               base::sqrt(1 - r_bg_unweighted^2)
-            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = n_groups - 2))
+            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = n_groups_complete - 2))
           } else {
-            # With 2 or fewer groups, p-value is undefined
+            # With 2 or fewer complete groups, p-value is undefined
             pval <- NA
           }
 
@@ -491,7 +499,7 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   se_ok <- base::tryCatch(
     {
       pe <- lavaan::parameterEstimates(fit)
-      !base::all(base::is.na(pe$se))
+      base::all(!base::is.na(pe$se))
     },
     error = function(e) FALSE
   )

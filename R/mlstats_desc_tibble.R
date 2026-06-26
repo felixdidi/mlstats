@@ -53,6 +53,9 @@ print.mlstats_desc_tibble <- function(
   }
 
   table_title <- attr(x, "table_title", exact = TRUE)
+  if (base::is.null(table_title) || !base::nzchar(table_title)) {
+    table_title <- "Multilevel Descriptive Statistics"
+  }
   correlation_note <- attr(x, "correlation_note", exact = TRUE)
   significance_note <- attr(x, "significance_note", exact = TRUE)
   note_text <- attr(x, "note_text", exact = TRUE)

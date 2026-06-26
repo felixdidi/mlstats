@@ -232,11 +232,13 @@ mldesc <- function(
   # Compute descriptive statistics
   desc_stats <- get_desc(data, vars, group)
 
-  # Compute within-between correlations. The "weight is ignored under
-  # method = 'sem'" message from within_between_correlations() is suppressed
-  # here because, unlike there, `weight` is not a no-op in mldesc(): it still
-  # controls the mean/SD calculation above regardless of `method`.
-  corr_matrix <- base::suppressMessages(
+  # Compute within-between correlations. The "weight has no effect on
+  # correlation estimates under method = 'sem'" cli_inform() is suppressed
+  # because, unlike in within_between_correlations(), `weight` is NOT a no-op
+  # in mldesc(): it still controls the mean/SD calculation above. Only that
+  # specific message is caught; cli_warn() calls (convergence issues, etc.)
+  # pass through unaffected.
+  corr_matrix <- base::withCallingHandlers(
     within_between_correlations(
       data,
       group,
@@ -245,7 +247,12 @@ mldesc <- function(
       weight = weight,
       flip = flip,
       significance = significance
-    )
+    ),
+    message = function(m) {
+      if (base::grepl("weight.*no effect", base::conditionMessage(m), ignore.case = TRUE)) {
+        rlang::cnd_muffle(m)
+      }
+    }
   )
 
   # Remove first column (variable names) from correlation matrix

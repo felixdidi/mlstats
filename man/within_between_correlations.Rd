@@ -25,10 +25,11 @@ within_between_correlations(
 (default) or \code{"sem"}. See Details.}
 
 \item{weight}{Logical. Only used when \code{method = "decomposition"}. If TRUE
-(default), the between-group correlation gives more weight to larger groups.
-If FALSE, every group counts equally regardless of size. Ignored (with a
-message) when \code{method = "sem"}, because that method handles unequal
-group sizes automatically.}
+(default), the between-group correlation gives more weight to larger groups;
+significance, however, is always tested using the unweighted correlation of
+group means. If FALSE, every group counts equally regardless of size. Ignored
+(with a message) when \code{method = "sem"}, because that method handles
+unequal group sizes automatically.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
