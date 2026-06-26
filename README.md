@@ -143,34 +143,6 @@ Further options to customize the output:
   `significance = "detailed"`, this can be changed to one star for *p*
   \< .05, two stars for *p* \< .01, and three stars for *p* \< .001.
 
-``` r
-data |>
-  mldesc(
-    group = "person",
-    vars = vars,
-    weight = FALSE,
-    remove_leading_zero = FALSE,
-    flip = TRUE,
-    significance = "detailed"
-  )
-#> # Multilevel Descriptive Statistics
-#>   =============== ====== ===== ===== ===== ===== ======== ======== ========
-#>   variable         n_obs     m    sd range   `1`      `2`      `3`      `4`
-#>   --------------- ------ ----- ----- ----- ----- -------- -------- --------
-#> 1 Self control    12,408  3.78  1.16   2–7     – -0.22***    0.13* -0.36***
-#> 2 Goal conflict   12,408  3.22  1.48   1–7    NA        –  0.37***  0.56***
-#> 3 Disconnection   12,408  0.60  0.32   0–1    NA  0.13***        –     0.06
-#> 4 Procrastination 12,408  2.29  0.90   1–7    NA  0.31*** -0.09***        –
-#>   =============== ====== ===== ===== ===== ===== ======== ======== ========
-#> # ℹ 1 more variable: icc <mls>
-#> # ℹ Between-group correlations above, within-group correlations below the
-#> #   diagonal.
-#> # ℹ Correlations marked with * are significant at p < .05, ** at p < .01, and
-#> #   *** at p < .001.
-#> # ℹ Correlations estimated via variance decomposition.
-#> # ℹ Unweighted multilevel descriptive statistics computed with mlstats.
-```
-
 ### Pretty Printing
 
 The `mldesc()` function supports various print-methods that can be
@@ -243,32 +215,6 @@ the underlying `within_between_correlations()` are tibbles with vectors
 of class `mlstats_stat` (or short, `mls`). These tibbles can be used for
 subsequent calculations by casting the contents to useful types such as
 `numeric` (this will remove significance stars and other formatting).
-For example, the output of `within_between_correlations()` can be used
-to identify the largest within-person correlation in the dataset:
-
-``` r
-cors <-
-  data |>
-  within_between_correlations(
-    group = "person",
-    vars = vars
-  )
-
-cors |>
-  mutate(across(-variable, as.numeric)) |> 
-  rename_with(~ cors$variable, .cols = -variable) |>
-  pivot_longer(-variable) |>
-  rename(v1 = variable, v2 = name) |>
-  group_by(v1) |>
-  mutate(type = if_else(row_number() > which(is.na(value)), "wp", "bp")) |>
-  ungroup() |>
-  filter(type == "wp") |> 
-  filter(value == max(value))
-#> # A tibble: 1 × 4
-#>   v1            v2              value type 
-#>   <chr>         <chr>           <dbl> <chr>
-#> 1 goal_conflict procrastination  0.31 wp
-```
 
 ## Bayesian Estimation
 

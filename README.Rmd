@@ -102,19 +102,6 @@ Further options to customize the output:
 - **Flip correlation matrix**: By default, within-group correlations are displayed above the diagonal and between-group correlations below the diagonal. This can be changed by setting `flip = TRUE`.
 - **Significance stars**: By default, one star is added to all correlation coefficients with *p* < .05. By setting `significance = "detailed"`, this can be changed to one star for *p* < .05, two stars for *p* < .01, and three stars for *p* < .001.
 
-```{r no-weight-example, warning = FALSE}
-data |>
-  mldesc(
-    group = "person",
-    vars = vars,
-    weight = FALSE,
-    remove_leading_zero = FALSE,
-    flip = TRUE,
-    significance = "detailed"
-  )
-```
-
-
 ### Pretty Printing
 
 The `mldesc()` function supports various print-methods that can be accessed by passing its output to `print()`. All printing methods allow customization of the `table_title`, `correlation_note`, `significance_note`, and `note_text`. Whereas the default print method prints to the console, a `tinytable` object is returned when setting `format = "tt"` and a `gt` object is returned when setting `format = "gt"`. Please note that the `gt` package is rather large and therefore not installed together with `mlstats` by default. It must be installed separately by calling `install.packages("gt")`.
@@ -201,27 +188,7 @@ data |>
 
 ### Pipe-Friendly Output
 
-Although the main purpose of the package is to enable user-friendly creation of publication-ready tables, the output of both `mldesc()` and the underlying `within_between_correlations()` are tibbles with vectors of class `mlstats_stat` (or short, `mls`). These tibbles can be used for subsequent calculations by casting the contents to useful types such as `numeric` (this will remove significance stars and other formatting). For example, the output of `within_between_correlations()` can be used to identify the largest within-person correlation in the dataset:
-
-```{r extract-example, warning = FALSE}
-cors <-
-  data |>
-  within_between_correlations(
-    group = "person",
-    vars = vars
-  )
-
-cors |>
-  mutate(across(-variable, as.numeric)) |> 
-  rename_with(~ cors$variable, .cols = -variable) |>
-  pivot_longer(-variable) |>
-  rename(v1 = variable, v2 = name) |>
-  group_by(v1) |>
-  mutate(type = if_else(row_number() > which(is.na(value)), "wp", "bp")) |>
-  ungroup() |>
-  filter(type == "wp") |> 
-  filter(value == max(value))
-```
+Although the main purpose of the package is to enable user-friendly creation of publication-ready tables, the output of both `mldesc()` and the underlying `within_between_correlations()` are tibbles with vectors of class `mlstats_stat` (or short, `mls`). These tibbles can be used for subsequent calculations by casting the contents to useful types such as `numeric` (this will remove significance stars and other formatting).
 
 ## Bayesian Estimation
 
