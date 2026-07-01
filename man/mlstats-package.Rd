@@ -23,6 +23,7 @@ Random Effects Within-Between (REWB) models
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://felixdidi.github.io/mlstats/}
   \item \url{https://github.com/felixdidi/mlstats}
   \item Report bugs at \url{https://github.com/felixdidi/mlstats/issues}
 }

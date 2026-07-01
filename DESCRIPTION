@@ -13,18 +13,20 @@ Description: Provides tools for multilevel descriptive statistics and data prepa
     into within-group and between-group components for use in Random Effects
     Within-Between (REWB) models.
 License: MIT + file LICENSE
-URL: https://github.com/felixdidi/mlstats
+URL: https://felixdidi.github.io/mlstats/, https://github.com/felixdidi/mlstats
 BugReports: https://github.com/felixdidi/mlstats/issues
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.1.0)
-Suggests: 
+Suggests:
     brms,
     gt,
     knitr,
     lavaan,
+    lmerTest,
     rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

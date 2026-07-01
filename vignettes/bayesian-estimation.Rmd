@@ -1,0 +1,200 @@
+---
+title: "Bayesian Estimation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bayesian Estimation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup, eval = TRUE}
+library(mlstats)
+```
+
+The frequentist functions `mldesc()` and `within_between_correlations()` rely on
+null-hypothesis tests: exact t-tests (under normality) for the default
+`method = "decomposition"`, or asymptotic z-tests for `method = "sem"` (see
+`vignette("correlation-methods")` for details on both). Their Bayesian counterparts,
+`bayes_mldesc()` and `bayes_within_between_correlations()`, instead report
+**posterior medians** with **credible intervals** (CIs): a correlation is
+flagged with a star when its CI excludes zero. The output format is otherwise
+identical, so you can switch between the two approaches without changing your
+downstream code.
+
+The Bayesian functions require the **brms** package, which is not installed
+with **mlstats** by default:
+
+```{r install-brms}
+install.packages("brms")
+```
+
+## When to choose Bayesian over frequentist
+
+The frequentist decomposition method works well for most data sets, but the
+Bayesian approach has advantages in specific situations:
+
+- **Few groups.** When the number of groups is small (e.g., fewer than 30
+  persons in a diary study), the significance test for the between-group
+  correlation becomes harder to trust either way: the decomposition method's
+  exact t-test assumes the group means are bivariate normal, an assumption
+  that is difficult to verify with only a handful of groups, and `method =
+  "sem"`'s asymptotic MLR standard errors can also become unreliable with few
+  clusters. Bayesian posteriors do not rely on either assumption.
+- **Uncertainty quantification.** CIs convey the precision of each estimate
+  directly, without requiring a separate look at standard errors or effect sizes.
+
+When group sizes are large and you have many groups, the frequentist functions
+are faster and the results will be nearly identical.
+
+## The `folder` argument and model caching
+
+Every call to a Bayesian function requires a `folder` argument specifying where
+fitted `brms` models should be saved. Models are cached on disk, so re-running
+the same call with the same data and settings is instant — the saved file is
+reloaded instead of refitting. A content hash of the data and sampling settings
+is folded into every filename, so changing either the data or
+`options(mlstats.brms_iter = ...)` automatically triggers a refit rather than
+silently loading a stale result.
+
+```{r folder-setup}
+brms_dir <- "brms_models"
+```
+
+## Basic usage
+
+The examples below use `media_diary`, the simulated daily diary dataset included
+with **mlstats** (100 participants over 14 days; *N* = 100 persons, *T* =
+1,400 daily observations; see `?media_diary` and `vignette("mlstats")` for
+details).
+
+```{r data}
+data("media_diary")
+vars <- c("self_control", "wellbeing", "screen_time", "stress")
+```
+
+`bayes_within_between_correlations()` has the same interface as
+`within_between_correlations()`, plus the `folder` and `ci` arguments. `method`
+and `significance` are not applicable here: estimation is always via `brms`,
+and significance marking is always based on whether the credible interval
+excludes zero (controlled by `ci`).
+
+```{r basic-correlations}
+bayes_within_between_correlations(
+  data = media_diary,
+  group = "person",
+  vars = vars,
+  folder = brms_dir
+)
+```
+
+`bayes_mldesc()` adds descriptive statistics and ICCs:
+
+```{r basic-mldesc}
+result <- bayes_mldesc(
+  data   = media_diary,
+  group  = "person",
+  vars   = vars,
+  folder = brms_dir
+)
+
+result
+```
+
+## Credible interval width
+
+The `ci` argument controls the width of the credible interval used to determine
+whether a correlation is marked with a star. The default is `0.9` (90% CI). A
+correlation is starred when the CI excludes zero.
+
+```{r ci}
+bayes_mldesc(
+  data   = media_diary,
+  group  = "person",
+  vars   = vars,
+  ci     = 0.95,
+  folder = brms_dir
+)
+```
+
+The ICC in the rightmost column always reports the posterior median and is
+not affected by `ci`.
+
+## Adjusting sampling settings
+
+`brms` uses Markov chain Monte Carlo (MCMC) sampling. The defaults (5,000
+iterations, 4 chains) are conservative and usually sufficient, but you can
+change them globally for the session:
+
+```{r options}
+options(
+  mlstats.brms_iter   = 2000,
+  mlstats.brms_chains = 2
+)
+```
+
+Reducing iterations speeds up exploration runs; increase them when you need
+more stable posterior estimates or when `brms` reports convergence warnings
+(R-hat > 1.01, low effective sample sizes).
+
+## Number of models fitted
+
+For `p` variables, `bayes_within_between_correlations()` fits:
+
+- `p * (p - 1) / 2` within-group models (one per pair)
+- `p * (p - 1)` between-group models when `weight = TRUE` (two per pair:
+  one weighted for the point estimate, one unweighted for the CI), or
+  `p * (p - 1) / 2` when `weight = FALSE`
+
+`bayes_mldesc()` additionally fits `p` intercept-only models for the ICCs.
+For 4 variables with default settings, this is 6 within-group + 12
+between-group + 4 ICC = **22 models**. Plan accordingly.
+
+## Formatted output
+
+The result object is a `mlstats_desc_tibble` with the same print methods as
+`mldesc()`:
+
+```{r formatted-output}
+# tinytable (included with mlstats)
+print(result, format = "tt",
+      table_title = "Bayesian multilevel descriptive statistics")
+
+# gt table (requires the gt package)
+print(result,
+  format           = "gt",
+  table_title      = "Bayesian multilevel descriptive statistics",
+  correlation_note = "Within-person correlations above, between-person below the diagonal.",
+  note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 1,400 daily observations. 90% credible intervals."
+)
+```
+
+See `vignette("tables")` for a full guide to table customisation.
+
+## Comparison with the frequentist output
+
+The only differences between `bayes_mldesc()` and `mldesc()` output are:
+
+| Feature | Frequentist | Bayesian |
+|---|---|---|
+| Significance criterion | *p* < .05 | CI excludes zero |
+| CI width | — | Controlled by `ci` |
+| Speed | Fast (seconds) | Slow (minutes) |
+| Minimum group requirement | ~30+ for reliable between CIs | Works with fewer groups |
+
+For large, well-powered studies with many groups, the two approaches give nearly
+identical results. For small studies or when communicating uncertainty is a
+priority, the Bayesian route is preferable.
+
+## References
+
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. *Journal of Statistical Software, 80*(1), 1–28.
+https://doi.org/10.18637/jss.v080.i01

@@ -3,9 +3,13 @@
 ^LICENSE\.md$
 ^brms_models$
 ^README\.Rmd$
+^data-raw$
 ^\.github$
 ^\.claude$
 ^cran-comments\.md$
 ^doc$
 ^Meta$
 ^dev$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

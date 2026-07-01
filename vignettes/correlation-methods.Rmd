@@ -1,5 +1,5 @@
 ---
-title: "Statistical Details: Within- and Between-Group Correlation Methods"
+title: "Within- and Between-Group Correlation Methods"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Statistical Details: Within- and Between-Group Correlation Methods}
@@ -14,28 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(mlstats)
-```
-
 This vignette documents, in more detail, how `within_between_correlations()`
 (and, through it, `mldesc()`) estimates within-group and between-group correlations
 and tests them for significance, and how to decide which method and settings are
 appropriate for a given data set. It assumes you are already familiar with the
 basic idea of within-group and between-group relationships;
 see the "Getting Started" vignette for an introduction.
-
-## Why two correlations instead of one
-
-When observations are nested within groups (repeated measurements per person,
-students within classrooms, employees within teams, ...), a variable can vary
-both *within* a group (e.g., a person's happiness fluctuating from day to day) and
-*between* groups (e.g., some people being generally happier than others on
-average). A single correlation computed while ignoring the grouping structure
-mixes these two sources of variation together, and can differ in size --- or
-even in sign --- from either the within-group or the between-group
-relationship. `within_between_correlations()` separates the two, using one of
-two methods described below.
 
 ## The decomposition method
 

@@ -14,182 +14,163 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **mlstats** package provides tools for multilevel descriptive statistics
-and data preparation. It supports:
-
-- Decomposing variables into within-group and between-group components for
-  Random Effects Within-Between (REWB) models
-- Computing within-group and between-group correlations
-- Creating publication-ready descriptive statistics tables with ICCs
-- Both frequentist (via lme4) and Bayesian (via brms) estimation
-
-## Setup
-
-```{r setup}
+```{r setup, message = FALSE}
 library(mlstats)
+library(dplyr)
 ```
+
+The **mlstats** package provides tools for multilevel descriptive statistics
+and data preparation. It is designed for data where observations are nested
+within groups — for example, repeated daily measurements per person, students
+within classrooms, or employees within teams.
 
 ## Example Data
 
-We use simulated data from 50 students nested within 10 schools, where both
-school-level and student-level variation exist in math scores, reading scores,
-and motivation.
+To demonstrate, we use `media_diary`, a simulated daily diary dataset included
+with **mlstats**. It mimics a study in which 100 participants completed brief
+daily surveys for 14 consecutive days (*N* = 100 persons, *T* = 1,400 daily
+observations). The variables are:
+
+- **`person`**: person identifier
+- **`self_control`**: trait self-control, measured once at study entry (stable,
+  between-person characteristic; ICC ≈ 1)
+- **`wellbeing`**: daily positive wellbeing (1–7)
+- **`screen_time`**: minutes of entertainment media consumed that day
+- **`stress`**: daily perceived stress (1–7)
+- **`enjoyment`**: enjoyment of the media watched that day (1–7)
 
 ```{r data}
-set.seed(42)
-n_schools <- 10
-n_per_school <- 5
-
-school_math <- rep(rnorm(n_schools, 50, 8), each = n_per_school)
-school_read <- rep(rnorm(n_schools, 50, 8), each = n_per_school)
-school_motiv <- rep(rnorm(n_schools, 5, 1.5), each = n_per_school)
-
-data <- data.frame(
-  school = rep(1:n_schools, each = n_per_school),
-  math_score = school_math + rnorm(n_schools * n_per_school, 0, 5),
-  reading_score = school_read + rnorm(n_schools * n_per_school, 0, 5),
-  motivation = school_motiv + rnorm(n_schools * n_per_school, 0, 1)
-)
-
-head(data)
+data("media_diary")
+media_diary
 ```
 
-## Decomposing Variables
-
-The `decompose_within_between()` function splits each variable into:
-
-- **Grand mean centered** values (deviation from overall mean)
-- **Between-group** component (group means)
-- **Within-group** component (deviation from group mean)
-
-These components are useful for fitting Random Effects Within-Between (REWB)
-models (Bell et al., 2019), which separate within-group from between-group
-effects.
-
-```{r decompose}
-decomposed <- decompose_within_between(
-  data = data,
-  group = "school",
-  vars = c("math_score", "motivation")
-)
-
-# View the decomposed math_score columns
-math_cols <- grep("school|math_score", names(decomposed))
-head(decomposed[, math_cols], 10)
-```
-
-## Within-Group and Between-Group Correlations
-
-The `within_between_correlations()` function computes a correlation matrix with
-within-group correlations in the upper triangle and between-group correlations
-in the lower triangle:
-
-```{r correlations}
-vars <- c("math_score", "reading_score", "motivation")
-
-within_between_correlations(
-  data = data,
-  group = "school",
-  vars = vars
-)
-```
-
-### SEM-Based Estimation
-
-By default, correlations are estimated via variance decomposition
-(`method = "decomposition"`), following Pedhazur (1997). Alternatively, you
-can use a two-level structural equation model via `lavaan`:
-
-```{r correlations-sem}
-within_between_correlations(
-  data = data,
-  group = "school",
-  vars = vars,
-  method = "sem"
-)
-```
-
-The SEM method automatically detects between-only variables (those with zero
-within-cluster variance, e.g., time-invariant traits) and within-only variables
-(ICC ≈ 0). Correlations that cannot be estimated at a given level are reported
-as `NA`.
+The data are in long format: each row is one diary entry (one person on one
+day). The `person` column identifies which person a row belongs to.
 
 ## Multilevel Descriptive Statistics
 
-The `mldesc()` function combines descriptive statistics, correlations, and ICCs
-into a single publication-ready table:
+`mldesc()` produces a publication-ready descriptive statistics table that
+combines means, standard deviations, ranges, ICCs, and a within-/between-group
+correlation matrix in a single object:
 
 ```{r mldesc, warning = FALSE}
+vars <- c("self_control", "wellbeing", "screen_time", "stress")
+
 result <- mldesc(
-  data = data,
-  group = "school",
-  vars = vars
+  data  = media_diary,
+  group = "person",
+  vars  = vars
 )
 
 result
 ```
 
-### Customization Options
+### Estimation Method
 
-Control weighting, significance marking, and formatting:
+Two estimation methods are available via the `method` argument:
 
-```{r mldesc-options, warning = FALSE}
-mldesc(
-  data = data,
-  group = "school",
-  vars = vars,
-  weight = FALSE,
-  significance = "detailed",
-  flip = TRUE,
-  remove_leading_zero = FALSE
-)
-```
+- **`method = "decomposition"`** (default): Uses the variance-decomposition
+  approach to estimate within- and between-group correlations. Between-group
+  correlations and descriptive statistics are weighted by group size when `weight = TRUE`
+  (the default). Set `weight = FALSE` to give every group equal influence.
+- **`method = "sem"`**: Fits a two-level structural equation model via `lavaan`
+  using robust maximum likelihood. This handles very unequal group sizes more
+  rigorously.
+- See `vignette("correlation-methods")` for a detailed comparison.
 
-### Table Output Formats
+### Customising the Output
 
-The output can be rendered as a `tinytable` table for use in documents:
+Several options control the appearance of the output:
+
+- **`significance = "detailed"`**: Adds stars for *p* < .05, *p* < .01, and *p* < .001.
+  The default (`"basic"`) marks only *p* < .05.
+- **`flip = TRUE`**: Swaps the correlation matrix (between above, within below).
+- **`remove_leading_zero = FALSE`**: Keeps the leading zero in decimal numbers.
+  The default removes it for APA formatting (`.45` instead of `0.45`).
+
+### Pretty Printing
+
+The result can be formatted for publication via `print()`. All print methods
+accept optional arguments `table_title`, `correlation_note`,
+`significance_note`, and `note_text`.
+
+**tinytable** is included with **mlstats** (no extra installation needed):
 
 ```{r tt-output, warning = FALSE}
 result |>
   print(format = "tt")
 ```
 
-For `gt` table output (requires the **gt** package), use
-`print(result, format = "gt")`. See the
-[package README](https://github.com/felixdidi/mlstats) for detailed examples
-of formatted table output.
+If more customization is needed, **gt** produces richly formatted HTML tables.
+It must be installed separately:
 
-### Pipe-Friendly Output
-
-The output tibbles contain vectors of class `mlstats_stat` (abbreviated `mls`).
-These can be cast to numeric for subsequent calculations:
-
-```{r pipe-friendly}
-# Extract correlations
-cors <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = vars
-)
-
-# Convert to numeric (removes significance stars)
-cors_numeric <- cors
-cors_numeric[-1] <- lapply(cors[-1], as.numeric)
-cors_numeric
+```{r gt-install, eval = FALSE}
+install.packages("gt")
 ```
 
-## Bayesian Estimation
+```{r gt-basic}
+result |>
+  print(format = "gt")
+```
 
-For Bayesian estimation with credible intervals instead of *p*-values, use
-`bayes_mldesc()` and `bayes_within_between_correlations()`. These functions
-require the **brms** package and may take considerable time to run. See
-`?bayes_mldesc` for details.
+Both `tt` and `gt` smoothly render to HTML, PDF, or Word via R Markdown or Quarto.
+
+For details on customising printed tables — including custom titles, notes,
+variable labels, and column selection — see `vignette("tables")`.
+
+For detailed coverage of all `mldesc()` options and `within_between_correlations()`
+(the underlying function), including ICC and correlation matrix interpretation,
+see `vignette("multilevel-descriptives")`.
+
+## Decomposing Variables into Within- and Between-Person Components
+
+Before fitting multilevel models, time-varying predictors are typically
+decomposed into their within-group and between-group components.
+`decompose_within_between()` makes this easy by adding three new columns per variable:
+
+- **`_grand_mean_centered`**: grand-mean-centered value
+- **`_between_{group}`**: group mean (stable between-group component)
+- **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
+
+```{r decompose}
+media_diary |>
+  decompose_within_between(
+    group = "person",
+    vars  = c("stress", "screen_time")
+  ) |>
+  select(starts_with("stress"))
+```
+
+The within and between components serve as separate predictors in Random
+Effects Within-Between (REWB) models, which estimate distinct within-group
+and between-group effects. See `vignette("rewb-models")` for a full guide to
+data preparation and REWB model fitting with mlstats, including all options
+of `decompose_within_between()`.
+
+## Further Vignettes
+
+- `vignette("multilevel-descriptives")`: detailed guide to `mldesc()` and
+  `within_between_correlations()`, including ICC interpretation, reading the
+  correlation matrix, and all function options.
+- `vignette("rewb-models")`: preparing data for and fitting REWB models with
+  `decompose_within_between()`, covering all decomposition options.
+- `vignette("tables")`: publication-ready table customisation with `tinytable`
+  and `gt`, including custom titles, notes, variable labels, and column selection.
+- `vignette("bayesian-estimation")`: Bayesian equivalents of `mldesc()` and
+  `within_between_correlations()` via `brms`.
+- `vignette("correlation-methods")`: statistical details on the decomposition
+  and SEM methods for within- and between-group correlations.
 
 ## References
 
-Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects
-models: making an informed choice. *Quality & Quantity*, 53(2), 1051--1074.
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models:
+Making an informed choice. *Quality & Quantity, 53*(2), 1051–1074.
+https://doi.org/10.1007/s11135-018-0802-x
 
 Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
 cross-sectional multilevel models: A new look at an old issue.
-*Psychological Methods*, 12(2), 121--138.
+*Psychological Methods, 12*(2), 121–138.
+https://doi.org/10.1037/1082-989X.12.2.121
+
+Pedhazur, E. J. (1997). *Multiple regression in behavioral research: Explanation
+and prediction* (3rd ed.). Harcourt Brace.

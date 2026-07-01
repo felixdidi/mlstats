@@ -1,0 +1,236 @@
+---
+title: "Publication-Ready Tables"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Publication-Ready Tables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(mlstats)
+library(dplyr)
+library(stringr)
+```
+
+`mldesc()` and `bayes_mldesc()` return a tibble that can be printed in three
+formats: a console-friendly default, a **tinytable** object, and a **gt**
+object. This vignette shows how to move from the default output to a
+fully-customised, journal-ready table.
+
+## Example data
+
+We use `media_diary`, a simulated daily diary dataset included with **mlstats**
+(100 participants over 14 days; *N* = 100 persons, *T* = 1,400 daily observations). See `?media_diary` for details.
+
+```{r data}
+data("media_diary")
+vars <- c("self_control", "wellbeing", "screen_time", "stress", "enjoyment")
+```
+
+```{r compute, warning = FALSE}
+result <- mldesc(data = media_diary, group = "person", vars = vars)
+```
+
+## Default console output
+
+Simply printing the result gives a compact console-friendly view:
+
+```{r console}
+result
+```
+
+## tinytable format
+
+`tinytable` is a lightweight table package included with **mlstats** (no extra
+installation needed). Pass `format = "tt"` to `print()`:
+
+```{r tt, warning = FALSE}
+print(result, format = "tt")
+```
+
+The result is a `tinytable` object that renders to HTML, PDF, or Word via Quarto/R Markdown (see below).
+
+### Custom title and notes
+
+All print methods accept `table_title`, `correlation_note`,
+`significance_note`, and `note_text`:
+
+```{r tt-custom, warning = FALSE}
+print(result,
+  format           = "tt",
+  table_title      = "Daily diary study: descriptive statistics and multilevel correlations",
+  correlation_note = "Within-person correlations above, between-person below the diagonal.",
+  note_text        = "N = 100 persons, 14 daily observations each. Simulated data."
+)
+```
+
+## gt format
+
+`gt` produces richly formatted HTML tables and supports markdown in cells,
+footnotes, and fine typographic control. It must be installed separately:
+
+```{r gt-install, eval = FALSE}
+install.packages("gt")
+```
+
+```{r gt-basic}
+print(result, format = "gt")
+```
+
+`gt` tables support further customisation via the `gt` package API after the
+initial `print()` call — see the [gt documentation](https://gt.rstudio.com/)
+for details.
+
+## Manipulating the result before printing
+
+Because `mldesc()` returns a tibble, standard `dplyr` operations work on it
+before printing.
+
+### Removing columns
+
+Drop columns you don't need in the final table:
+
+```{r drop-cols, warning = FALSE}
+result |>
+  select(-n_obs, -range) |>
+  print(format = "tt")
+```
+
+### Replacing NA with a dash
+
+`self_control` is a between-person-only trait: its within-person correlations
+are `NA`. Replace these with an em dash for cleaner output:
+
+```{r replace-na, warning = FALSE}
+result |>
+  mutate(across(everything(), ~ str_replace(as.character(.x), "^NA$", "–"))) |>
+  print(format = "tt")
+```
+
+### Renaming variables
+
+Variable names are auto-formatted as sentence case. To customise them:
+
+```{r rename, warning = FALSE}
+result |>
+  mutate(variable = case_when(
+    variable == "Self control" ~ "Trait self-control",
+    variable == "Wellbeing"    ~ "Daily wellbeing",
+    variable == "Screen time"  ~ "Screen time (min)",
+    variable == "Stress"       ~ "Perceived stress",
+    variable == "Enjoyment"    ~ "Media enjoyment"
+  )) |>
+  print(format = "tt", table_title = "Study variables: descriptive statistics")
+```
+
+### Combining manipulations
+
+All of the above can be chained. Here is an example of a polished table
+combining several customisations:
+
+```{r combined, warning = FALSE}
+result |>
+  select(-n_obs, -range) |>
+  mutate(across(everything(), ~ str_replace(as.character(.x), "^NA$", "–"))) |>
+  mutate(variable = case_when(
+    variable == "Self control" ~ "Trait self-control",
+    variable == "Wellbeing"    ~ "Daily wellbeing",
+    variable == "Screen time"  ~ "Screen time (min)",
+    variable == "Stress"       ~ "Perceived stress",
+    variable == "Enjoyment"    ~ "Media enjoyment"
+  )) |>
+  print(
+    format           = "tt",
+    table_title      = "Descriptive statistics and multilevel correlations",
+    correlation_note = "Within-person correlations above, between-person below the diagonal.",
+    note_text        = "N = 100, T = 1,400 daily observations. Self-control was measured as a trait (between-person only)."
+  )
+```
+
+For the equivalent using `gt` (which additionally supports footnotes and
+markdown-formatted cell content):
+
+```{r combined-gt}
+result |>
+  select(-n_obs, -range) |>
+  mutate(across(everything(), ~ str_replace(as.character(.x), "^NA$", "–"))) |>
+  mutate(
+    variable = case_when(
+      variable == "Self control" ~ "Trait self-control<sup>c</sup>",
+      variable == "Wellbeing"    ~ "Daily wellbeing",
+      variable == "Screen time"  ~ "Screen time (min)",
+      variable == "Stress"       ~ "Perceived stress",
+      variable == "Enjoyment"    ~ "Media enjoyment"
+    )
+  ) |>
+  print(
+    format           = "gt",
+    table_title      = "Descriptive statistics and multilevel correlations",
+    correlation_note = "Within-person correlations above, between-person below the diagonal.",
+    note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 1,400 daily observations."
+  ) |>
+  gt::tab_source_note(
+    source_note = gt::html(
+      "<sup>c</sup> Self-control was measured as a stable trait; no within-person correlations are available."
+    )
+  ) |>
+  gt::fmt_markdown(columns = variable)
+```
+
+## Embedding in Quarto documents
+
+### Word / DOCX output
+
+Wrap the `print()` call in a Quarto code chunk with `format: docx`:
+
+````{verbatim, eval = FALSE}
+---
+format: docx
+---
+
+```{r}
+library(mlstats)
+data("media_diary")
+
+mldesc(
+  data  = media_diary,
+  group = "person",
+  vars  = c("self_control", "wellbeing", "screen_time", "stress")
+) |>
+  print(format = "tt")
+```
+````
+
+`tinytable` automatically converts to the appropriate format based on the output
+Quarto is rendering to.
+
+### HTML / PDF
+
+Both `tinytable` and `gt` render natively to HTML and LaTeX. No extra setup is
+needed:
+
+````{verbatim, eval = FALSE}
+---
+format: html   # or pdf
+---
+
+```{r}
+library(mlstats)
+data("media_diary")
+
+mldesc(
+  data  = media_diary,
+  group = "person",
+  vars  = c("self_control", "wellbeing", "screen_time", "stress")
+) |>
+  print(format = "tt")
+```
+````
