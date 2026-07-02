@@ -8,10 +8,12 @@ mldesc(
   data,
   group,
   vars,
-  method = c("decomposition", "sem"),
+  method = c("decomposition", "sem", "bayes"),
   weight = TRUE,
   flip = FALSE,
   significance = c("basic", "detailed"),
+  ci = 0.9,
+  folder = NULL,
   remove_leading_zero = TRUE
 )
 }
@@ -22,15 +24,19 @@ mldesc(
 
 \item{vars}{A character vector specifying the names of variables to describe.}
 
-\item{method}{Character string specifying the estimation method for correlations:
-\code{"decomposition"} (default) or \code{"sem"}. See
-\code{\link{within_between_correlations}} for details.}
+\item{method}{Character string specifying the estimation method for correlations
+and the ICC: \code{"decomposition"} (default), \code{"sem"}, or \code{"bayes"}.
+See \code{\link{within_between_correlations}} for details on the correlation
+methods. With \code{method = "bayes"}, the ICC is also estimated with a
+Bayesian intercept-only model (via \code{brms::brm}) instead of
+\code{lme4::lmer}, reporting the posterior median.}
 
 \item{weight}{Logical. If TRUE (default), the mean and SD are calculated across all
 observations (so larger groups contribute more), and the between-group correlation
 gives more weight to larger groups. If FALSE, every group counts equally: the mean
 and SD are calculated on group means, and the between-group correlation is
-unweighted. For correlations, this is only used when \code{method = "decomposition"}.}
+unweighted. For correlations, this is only used when \code{method = "decomposition"}
+or \code{method = "bayes"}.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
@@ -38,7 +44,19 @@ triangle and within-group correlations in the lower triangle. Default is FALSE.}
 \item{significance}{Character string specifying the significance marking style.
 Either "basic" (default) or "detailed". If "basic", correlations with p < .05
 are marked with a star. If "detailed", correlations are marked with 1-3 stars
-for p < .05, p < .01, or p < .001, respectively.}
+for p < .05, p < .01, or p < .001, respectively. Ignored (with a message) when
+\code{method = "bayes"}, which always marks correlations whose credible interval
+excludes zero with a single star.}
+
+\item{ci}{Numeric value strictly between 0 and 1 specifying the credible interval
+width used for the within-group and between-group correlations when \code{method
+  = "bayes"}. Default is 0.9 (90\% CI). The ICC always reports the posterior median
+only and is not affected by this argument. Ignored (with a message) for other
+methods.}
+
+\item{folder}{Character string specifying the directory path where \code{brms}
+models should be saved. Required when \code{method = "bayes"}; ignored (with a
+message) otherwise. Default is \code{NULL}.}
 
 \item{remove_leading_zero}{Logical. If TRUE (default), removes leading zeros from
 decimal values in correlation and ICC columns according to APA standards.}
@@ -81,17 +99,25 @@ See that function's documentation and the package vignette for how each method
 estimates these correlations and tests them for significance.
 
 \strong{ICC:} The intraclass correlation coefficient, computed from an unconditional
-(intercept-only) multilevel model using \code{lme4::lmer}. The ICC represents
-the proportion of variance in each variable that lies between groups, with values
-close to 1 indicating a variable that barely varies within groups (e.g., a stable
-trait), and values close to 0 indicating a variable that barely varies between
-groups (e.g., a fast-changing state).
+(intercept-only) multilevel model using \code{lme4::lmer} (or \code{brms::brm} when
+\code{method = "bayes"}). The ICC represents the proportion of variance in each
+variable that lies between groups, with values close to 1 indicating a variable
+that barely varies within groups (e.g., a stable trait), and values close to 0
+indicating a variable that barely varies between groups (e.g., a fast-changing
+state).
 
 The ICC is always computed from a linear (Gaussian) model, regardless of a
 variable's measurement scale. For binary, ordinal, or count variables this
 yields a linear-probability-style ICC rather than a latent-scale ICC from a
 generalized linear mixed model. A warning is emitted if any \code{vars}
 look binary, ordinal, or count-like (few, whole-number values).
+
+With \code{method = "bayes"}, the function fits one \code{brms} model per variable
+for the ICCs, plus all the models described in
+\code{\link{within_between_correlations}} for the correlations — for \code{p}
+variables, \code{p} ICC fits in addition to the within/between-group correlation
+fits. This can take a long time for larger numbers of variables; see
+\code{vignette("correlation-methods")} for details.
 }
 \examples{
 data("media_diary")
@@ -133,8 +159,23 @@ result_detailed <- mldesc(
   significance = "detailed"
 )
 
+# Use Bayesian estimation for correlations and the ICC (requires brms)
+\donttest{
+result_bayes <- mldesc(
+  data = media_diary,
+  group = "person",
+  vars = c("self_control", "wellbeing", "screen_time"),
+  method = "bayes",
+  folder = tempdir()
+)
+}
+
 }
 \references{
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. \emph{Journal of Statistical Software, 80}(1), 1–28.
+\doi{10.18637/jss.v080.i01}
+
 Pedhazur, E. J. (1997). \emph{Multiple regression in behavioral research:
 Explanation and prediction}. Harcourt Brace.
 

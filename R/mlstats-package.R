@@ -11,8 +11,9 @@
 #'   ([within_between_correlations()])
 #' * Creating publication-ready descriptive statistics tables with ICCs
 #'   ([mldesc()])
-#' * Both frequentist (via lme4) and Bayesian (via brms) estimation
-#'   ([bayes_mldesc()], [bayes_within_between_correlations()])
+#' * Frequentist (via lme4 or lavaan) and Bayesian (via brms) estimation,
+#'   selectable via the `method` argument of [mldesc()] and
+#'   [within_between_correlations()]
 #'
 "_PACKAGE"
 

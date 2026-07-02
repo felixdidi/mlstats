@@ -16,8 +16,9 @@ Random Effects Within-Between (REWB) models
 (\code{\link[=within_between_correlations]{within_between_correlations()}})
 \item Creating publication-ready descriptive statistics tables with ICCs
 (\code{\link[=mldesc]{mldesc()}})
-\item Both frequentist (via lme4) and Bayesian (via brms) estimation
-(\code{\link[=bayes_mldesc]{bayes_mldesc()}}, \code{\link[=bayes_within_between_correlations]{bayes_within_between_correlations()}})
+\item Frequentist (via lme4 or lavaan) and Bayesian (via brms) estimation,
+selectable via the \code{method} argument of \code{\link[=mldesc]{mldesc()}} and
+\code{\link[=within_between_correlations]{within_between_correlations()}}
 }
 }
 \seealso{

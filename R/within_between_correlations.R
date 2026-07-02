@@ -6,7 +6,7 @@
 #' relate \emph{within} each group (e.g., do a person's good days also tend to be
 #' their productive days?), and how they relate \emph{between} groups (e.g., do
 #' people who are generally happier also tend to be generally more productive?).
-#' This function estimates both relationships separately, using either of two
+#' This function estimates both relationships separately, using one of three
 #' methods (see Details and \code{vignette("correlation-methods")} for the full
 #' statistical background).
 #'
@@ -14,26 +14,36 @@
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to correlate.
 #' @param method Character string specifying the estimation method: \code{"decomposition"}
-#'   (default) or \code{"sem"}. See Details.
-#' @param weight Logical. Only used when \code{method = "decomposition"}. If TRUE
-#'   (default), the between-group correlation gives more weight to larger groups;
-#'   significance, however, is always tested using the unweighted correlation of
-#'   group means. If FALSE, every group counts equally regardless of size. Ignored
-#'   (with a message) when \code{method = "sem"}, because that method handles
-#'   unequal group sizes automatically.
+#'   (default), \code{"sem"}, or \code{"bayes"}. See Details.
+#' @param weight Logical. Used when \code{method = "decomposition"} or \code{method =
+#'   "bayes"}. If TRUE (default), the between-group correlation gives more weight to
+#'   larger groups; significance/credible intervals, however, are always based on the
+#'   unweighted correlation of group means. If FALSE, every group counts equally
+#'   regardless of size. Ignored (with a message) when \code{method = "sem"}, because
+#'   that method handles unequal group sizes automatically.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param significance Character string specifying the significance marking style.
 #'   Either "basic" (default) or "detailed". If "basic", correlations with p < .05
 #'   are marked with a star. If "detailed", correlations are marked with 1-3 stars
-#'   for p < .05, p < .01, or p < .001, respectively.
+#'   for p < .05, p < .01, or p < .001, respectively. Ignored (with a message) when
+#'   \code{method = "bayes"}, which always marks correlations whose credible interval
+#'   (see \code{ci}) excludes zero with a single star.
+#' @param ci Numeric value strictly between 0 and 1 specifying the credible interval
+#'   width used to decide whether a correlation is starred. Only applicable when
+#'   \code{method = "bayes"}; default is 0.9 (90% CI). Ignored (with a message) for
+#'   other methods.
+#' @param folder Character string specifying the directory path where \code{brms}
+#'   models should be saved. Required when \code{method = "bayes"}; ignored (with a
+#'   message) otherwise. Default is \code{NULL}.
 #'
 #' @return A tibble containing a correlation matrix where:
 #' \itemize{
 #'   \item The upper triangle contains within-group correlations
 #'   \item The lower triangle contains between-group correlations
 #'   \item Diagonal elements are marked with "–"
-#'   \item Significant correlations are marked with asterisks (see \code{significance} parameter)
+#'   \item Significant correlations are marked with asterisks (see \code{significance}
+#'     parameter, or \code{ci} when \code{method = "bayes"})
 #' }
 #'
 #' @details
@@ -63,6 +73,16 @@
 #' variables with almost no between-group variance (intraclass correlation near
 #' zero) are modeled only at the within-group level; the corresponding cells of the
 #' unused level are reported as \code{NA}.
+#'
+#' \strong{Method \code{"bayes"}} mirrors \code{"decomposition"}, but estimates
+#' both correlations via Bayesian multivariate models fit with \code{brms::brm()}
+#' (requires the \pkg{brms} package) instead of closed-form formulas, reporting
+#' posterior medians and credible intervals (via \code{ci}) in place of point
+#' estimates and p-values. It requires a \code{folder} argument to cache fitted
+#' models, can take considerably longer than the other two methods, and is most
+#' useful when the number of groups is small or when communicating uncertainty
+#' via credible intervals is a priority. See \code{vignette("correlation-methods")}
+#' for details on the number of models fit and caching behavior.
 #'
 #' @examples
 #' data("media_diary")
@@ -101,7 +121,22 @@
 #'   significance = "detailed"
 #' )
 #'
+#' # Use Bayesian estimation (requires the brms package)
+#' \donttest{
+#' result_bayes <- within_between_correlations(
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
+#'   method = "bayes",
+#'   folder = tempdir()
+#' )
+#' }
+#'
 #' @references
+#' Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+#' Stan. \emph{Journal of Statistical Software, 80}(1), 1–28.
+#' \doi{10.18637/jss.v080.i01}
+#'
 #' Hox, J., Moerbeek, M., & van de Schoot, R. (2018). \emph{Multilevel analysis:
 #' Techniques and applications} (3rd ed.). Routledge.
 #'
@@ -114,10 +149,25 @@
 #' @seealso \code{\link{mldesc}}, which combines this function's output with
 #'   descriptive statistics and ICCs in a single table. See
 #'   \code{vignette("correlation-methods")} for a detailed statistical description
-#'   of both methods.
+#'   of all three methods.
 #'
 #' @export
-within_between_correlations <- function(data, group, vars, method = c("decomposition", "sem"), weight = TRUE, flip = FALSE, significance = c("basic", "detailed")) {
+within_between_correlations <- function(
+  data,
+  group,
+  vars,
+  method = c("decomposition", "sem", "bayes"),
+  weight = TRUE,
+  flip = FALSE,
+  significance = c("basic", "detailed"),
+  ci = 0.9,
+  folder = NULL
+) {
+  # Captured before match.arg() reassigns `significance` below: once a
+  # formal argument has been assigned to, missing() unconditionally returns
+  # FALSE for it, regardless of whether the caller actually supplied it.
+  significance_missing <- base::missing(significance)
+
   method <- base::match.arg(method)
   significance <- base::match.arg(significance)
   .validate_group_vars(data, group, vars)
@@ -131,7 +181,29 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       "i" = "ML estimation handles unbalanced group sizes natively."
     ))
   }
-  
+
+  # `ci`/`folder` only matter for method = "bayes"; `significance` only
+  # matters for the other two methods (bayes marks credible intervals
+  # instead of p-values). Only fire when the caller explicitly supplied the
+  # inapplicable argument, mirroring the `weight`/`sem` message above.
+  if (method != "bayes") {
+    if (!base::missing(ci)) {
+      cli::cli_inform(c(
+        "i" = "The {.arg ci} argument has no effect unless {.code method = \"bayes\"}."
+      ))
+    }
+    if (!base::is.null(folder)) {
+      cli::cli_inform(c(
+        "i" = "The {.arg folder} argument has no effect unless {.code method = \"bayes\"}."
+      ))
+    }
+  } else if (!significance_missing) {
+    cli::cli_inform(c(
+      "i" = "The {.arg significance} argument has no effect when {.code method = \"bayes\"}.",
+      "i" = "Credible-interval-based marking is controlled by {.arg ci} instead."
+    ))
+  }
+
   # Helper function to add significance stars
   add_stars <- function(est, pval, style) {
     if (!base::is.finite(est)) {
@@ -154,11 +226,26 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
         }
       }
     }
-    
+
     return(label)
   }
 
-  if (method == "sem") {
+  if (method == "bayes") {
+    rlang::check_installed(
+      "brms",
+      reason = "to fit Bayesian within- and between-group correlations."
+    )
+    if (base::is.null(folder)) {
+      base::stop("Argument 'folder' must be specified to save brms models when method = \"bayes\".")
+    }
+    if (!base::dir.exists(folder)) {
+      base::dir.create(folder, recursive = TRUE)
+    }
+    if (ci <= 0 || ci >= 1) {
+      base::stop("Argument 'ci' must be between 0 and 1.")
+    }
+    comparison_matrix <- .wb_cor_bayes(data, group, vars, weight, ci, folder)
+  } else if (method == "sem") {
     comparison_matrix <- .wb_cor_sem(data, group, vars, significance, add_stars)
   } else {
     comparison_matrix <- .wb_cor_decomposition(data, group, vars, weight, significance, add_stars)
@@ -192,7 +279,14 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
     )
 
   # Set significance note based on style
-  if (significance == "detailed") {
+  if (method == "bayes") {
+    ci_percent <- base::round(ci * 100)
+    significance_note <- base::paste0(
+      "Correlations marked with a star have ",
+      ci_percent,
+      "% credible intervals that exclude zero."
+    )
+  } else if (significance == "detailed") {
     significance_note <- "Correlations marked with * are significant at p < .05, ** at p < .01, and *** at p < .001."
   } else {
     significance_note <- "All correlations marked with a star are significant at p < .05."
@@ -202,6 +296,9 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
   base::attr(result_tibble, "flipped") <- flip
   base::attr(result_tibble, "significance_note") <- significance_note
   base::attr(result_tibble, "method") <- method
+  if (method == "bayes") {
+    base::attr(result_tibble, "bayesian") <- TRUE
+  }
   return(result_tibble)
 }
 
@@ -648,6 +745,255 @@ within_between_correlations <- function(data, group, vars, method = c("decomposi
       "i" = "This usually indicates a non-positive-definite residual covariance matrix at that level.",
       "i" = "Returning {.val NA} for the affected {n_improper} correlation{?s}."
     ))
+  }
+
+  comparison_matrix
+}
+
+# --- Internal: Bayesian method (multivariate brms models) ---
+.wb_cor_bayes <- function(data, group, vars, weight, ci, folder) {
+  # brms::brm(file = ...) caches purely on filename, so a content hash of the
+  # relevant data (plus the sampling settings, which also affect the fit) is
+  # folded into every cache filename below. Otherwise, re-running with
+  # different data, or different options(mlstats.brms_iter/chains = ...),
+  # but the same `vars`/`group`/`folder` would silently reload a stale
+  # cached fit instead of refitting.
+  data_hash <- rlang::hash(base::list(data[base::c(group, vars)], .brms_iter(), .brms_chains()))
+
+  # Calculate quantiles for CI
+  alpha <- (1 - ci) / 2
+  ci_low <- alpha
+  ci_high <- 1 - alpha
+
+  d_centered <- decompose_within_between(
+    dplyr::select(data, dplyr::all_of(base::c(group, vars))),
+    group = group,
+    vars = vars,
+    components = base::c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
+
+  # One row per group — used for unweighted CI and for the significance test
+  d_between_unweighted <- d_centered |>
+    dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
+
+  # Initialize comparison matrix
+  n <- base::length(vars)
+  comparison_matrix <- base::matrix("", nrow = n, ncol = n)
+
+  # Compute correlations
+  for (i in base::seq_along(vars)) {
+    for (j in base::seq_along(vars)) {
+      if (i == j) {
+        comparison_matrix[i, j] <- "\u2013"
+      } else if (i < j) {
+        # Within-group correlation
+        within_x <- base::paste0(vars[i], "_within")
+        within_y <- base::paste0(vars[j], "_within")
+
+        # Check for zero variance
+        if (
+          stats::sd(d_centered[[within_x]], na.rm = TRUE) == 0 ||
+            stats::sd(d_centered[[within_y]], na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          model_file <- base::file.path(
+            folder,
+            base::paste0("within_", vars[i], "__", vars[j], "_", data_hash)
+          )
+
+          fit <- base::suppressWarnings(
+            brms::brm(
+              brms::bf(stats::as.formula(base::paste0(
+                "brms::mvbind(",
+                within_x,
+                ", ",
+                within_y,
+                ") ~ 1"
+              ))) +
+                brms::set_rescor(rescor = TRUE),
+              seed = 42,
+              iter = .brms_iter(),
+              chains = .brms_chains(),
+              data = d_centered,
+              file = model_file,
+              silent = 2,
+              refresh = 0
+            )
+          )
+
+          draws <- fit |>
+            brms::as_draws_df() |>
+            dplyr::summarise(
+              dplyr::across(
+                dplyr::starts_with("rescor"),
+                base::list(
+                  Median = ~ stats::median(.x, na.rm = TRUE),
+                  CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                  CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                ),
+                .names = "{.fn}"
+              )
+            )
+
+          # Check if CI excludes zero
+          is_credible <- base::sign(draws$CI_high) + base::sign(draws$CI_low) != 0
+
+          label <- base::sprintf("%.2f", draws$Median)
+          if (is_credible) {
+            label <- base::paste0(label, "*")
+          }
+          comparison_matrix[i, j] <- label
+        }
+      } else {
+        # Between-group correlation
+        between_x <- base::paste0(vars[i], "_between")
+        between_y <- base::paste0(vars[j], "_between")
+
+        # Check for zero variance
+        if (
+          stats::sd(d_between_unweighted[[between_x]], na.rm = TRUE) == 0 ||
+            stats::sd(d_between_unweighted[[between_y]], na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          if (weight) {
+            # Fit unweighted model for credible intervals
+            model_file_unweighted <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_unweighted_", data_hash)
+            )
+
+            fit_unweighted <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_between_unweighted,
+                file = model_file_unweighted,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws_unweighted <- fit_unweighted |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                    CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            # Fit weighted model for point estimate
+            model_file_weighted <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_weighted_", data_hash)
+            )
+
+            fit_weighted <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_centered,
+                file = model_file_weighted,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws_weighted <- fit_weighted |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    Median = ~ stats::median(.x, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            # Use weighted estimate but unweighted CI
+            is_credible <- base::sign(draws_unweighted$CI_high) +
+              base::sign(draws_unweighted$CI_low) !=
+              0
+            label <- base::sprintf("%.2f", draws_weighted$Median)
+          } else {
+            # For unweighted, both estimate and CI from unweighted model
+            model_file <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_unweighted_", data_hash)
+            )
+
+            fit <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_between_unweighted,
+                file = model_file,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws <- fit |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    Median = ~ stats::median(.x, na.rm = TRUE),
+                    CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                    CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            is_credible <- base::sign(draws$CI_high) + base::sign(draws$CI_low) != 0
+            label <- base::sprintf("%.2f", draws$Median)
+          }
+
+          if (is_credible) {
+            label <- base::paste0(label, "*")
+          }
+          comparison_matrix[i, j] <- label
+        }
+      }
+    }
   }
 
   comparison_matrix

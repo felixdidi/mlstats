@@ -1067,3 +1067,241 @@ test_that("method='sem' handles exactly one within-only and one between-only var
   expect_s3_class(result, "mlstats_wb_tibble")
   expect_equal(nrow(result), 2)
 })
+
+# ---- Tests for `ci`/`folder` being no-ops outside method = "bayes" ----
+
+test_that("ci argument is ignored with a message unless method = 'bayes'", {
+  set.seed(3010)
+  data <- data.frame(group = rep(1:3, each = 10), x = rnorm(30), y = rnorm(30))
+
+  expect_message(
+    within_between_correlations(data, "group", c("x", "y"), ci = 0.8),
+    "no effect"
+  )
+})
+
+test_that("folder argument is ignored with a message unless method = 'bayes'", {
+  set.seed(3011)
+  data <- data.frame(group = rep(1:3, each = 10), x = rnorm(30), y = rnorm(30))
+
+  expect_message(
+    within_between_correlations(data, "group", c("x", "y"), folder = tempdir()),
+    "no effect"
+  )
+})
+
+# ---- Tests for method = "bayes" ----
+# See helper-bayes-fixtures.R for the shared cache folder/fixture data/
+# skip_if_no_bayes() and why these tests are structured to reuse cached brms
+# fits as much as possible.
+
+test_that("method='bayes' requires folder argument", {
+  skip_if_no_bayes()
+  expect_error(
+    within_between_correlations(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes"
+    ),
+    "folder.*must be specified"
+  )
+})
+
+test_that("method='bayes' validates ci argument", {
+  skip_if_no_bayes()
+  expect_error(
+    within_between_correlations(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes",
+      ci = 0,
+      folder = bayes_cache_folder
+    ),
+    "ci.*must be between 0 and 1"
+  )
+
+  expect_error(
+    within_between_correlations(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes",
+      ci = 1.5,
+      folder = bayes_cache_folder
+    ),
+    "ci.*must be between 0 and 1"
+  )
+})
+
+test_that("method='bayes' creates folder if it doesn't exist", {
+  skip_if_no_bayes()
+  # A single variable needs no brms fit at all (the comparison matrix is
+  # diagonal-only), so this only exercises folder creation.
+  temp_folder <- file.path(tempdir(), "test_brms_wb_folder")
+  on.exit(unlink(temp_folder, recursive = TRUE), add = TRUE)
+
+  expect_false(dir.exists(temp_folder))
+
+  result <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = "x",
+    method = "bayes",
+    folder = temp_folder
+  )
+
+  expect_true(dir.exists(temp_folder))
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+})
+
+test_that("method='bayes' returns NA for zero-variance pairs without fitting", {
+  skip_if_no_bayes()
+  result <- within_between_correlations(
+    data = bayes_fixture_zero_variance,
+    group = "group",
+    vars = c("constant", "x"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  expect_equal(as.character(result$`2`[1]), "NA")
+  expect_equal(as.character(result$`1`[2]), "NA")
+})
+
+test_that("method='bayes' handles basic input correctly", {
+  skip_if_no_bayes()
+  result <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  expect_s3_class(result, "tbl_df")
+  expect_s3_class(result, "mlstats_wb_tibble")
+  expect_equal(nrow(result), 2)
+  expect_equal(ncol(result), 3)
+  expect_equal(result$variable, c("x", "y"))
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+  expect_equal(as.character(result$`2`[2]), "\u2013")
+
+  cor_vals <- unlist(result[, -1])
+  cor_vals <- cor_vals[cor_vals != "\u2013"]
+  expect_true(all(grepl("^-?[0-9]\\.[0-9]{2}\\*?$|^NA$", cor_vals)))
+
+  expect_true(all(sapply(result[, -1], function(col) inherits(col, "mlstats_stat"))))
+
+  expect_equal(attr(result, "method"), "bayes")
+  expect_true(attr(result, "bayesian"))
+})
+
+test_that("method='bayes' weight = FALSE uses unweighted correlations", {
+  skip_if_no_bayes()
+  result_unweighted <- within_between_correlations(
+    data = bayes_fixture_unbalanced,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    weight = FALSE,
+    folder = bayes_cache_folder
+  )
+
+  expect_s3_class(result_unweighted, "tbl_df")
+  expect_equal(nrow(result_unweighted), 2)
+
+  between_val <- as.character(result_unweighted$`1`[2])
+  expect_true(nchar(between_val) > 0)
+})
+
+test_that("method='bayes' handles different ci levels without refitting", {
+  skip_if_no_bayes()
+  result_90 <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    ci = 0.9,
+    folder = bayes_cache_folder
+  )
+
+  result_95 <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    ci = 0.95,
+    folder = bayes_cache_folder
+  )
+
+  expect_equal(dim(result_90), dim(result_95))
+})
+
+test_that("method='bayes' reuses cached models", {
+  skip_if_no_bayes()
+  result1 <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  result2 <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  expect_identical(result1, result2)
+})
+
+test_that("method='bayes' flip=TRUE swaps which triangle holds within- vs between-group correlations", {
+  skip_if_no_bayes()
+  result <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    flip = TRUE,
+    folder = bayes_cache_folder
+  )
+
+  expect_true(attr(result, "flipped"))
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+})
+
+test_that("method='bayes' default print dispatches pillar formatting", {
+  skip_if_no_bayes()
+  result <- within_between_correlations(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  output <- capture.output(print(result))
+  expect_true(any(grepl("Within- and Between-Group Correlations", output)))
+  expect_true(any(grepl("credible intervals", output)))
+  expect_true(any(grepl("Bayesian multilevel models", output)))
+})
+
+test_that("method='bayes' ignores significance with a message", {
+  skip_if_no_bayes()
+  expect_message(
+    within_between_correlations(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes",
+      significance = "detailed",
+      folder = bayes_cache_folder
+    ),
+    "no effect"
+  )
+})

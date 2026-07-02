@@ -118,7 +118,7 @@ between-person association that point in opposite directions.
 
 ### Estimation Method and Weighting
 
-Two estimation methods for within- and between-group correlations are available via
+Three estimation methods for within- and between-group correlations are available via
 the `method` argument:
 
 - **`method = "decomposition"` (default)**: A fast, closed-form
@@ -127,14 +127,17 @@ the `method` argument:
   are computed from the group means.
 - **`method = "sem"`**: Fits a two-level structural equation model using robust
 maximum likelihood. This handles very unequal group sizes more rigorously for significance testing.
+- **`method = "bayes"`**: Fits Bayesian multivariate models via `brms`,
+  reporting credible intervals instead of p-values. See
+  `vignette("correlation-methods")` for the statistical rationale and
+  "Bayesian Estimation" below for the additional arguments it requires.
 
 ```{r method-options-1, warning = FALSE, eval = FALSE}
-# setting method to "sem"
 within_between_correlations(
   data   = media_diary,
   group  = "person",
   vars   = vars,
-  method = "sem"
+  method = "sem" # or "bayes"
 )
 ```
 
@@ -151,7 +154,6 @@ unweighted group means regardless of the `weight` setting — see
 `vignette("correlation-methods")` for the statistical rationale.
 
 ```{r method-options-2, warning = FALSE, eval = FALSE}
-# setting weight to FALSE
 within_between_correlations(
   data   = media_diary,
   group  = "person",
@@ -215,7 +217,40 @@ result_num[-1] <- lapply(result[6:10], as.numeric)
 as_tibble(result_num)
 ```
 
+## Bayesian Estimation
+
+`method = "bayes"` (available for both `within_between_correlations()` and
+`mldesc()`) requires the **brms** package, which is not installed with
+**mlstats** by default (`install.packages("brms")`), and two additional
+arguments:
+
+- **`folder`**: a directory where fitted `brms` models are cached. Re-running
+  the same call with the same data and settings reloads the cached model
+  instead of refitting.
+- **`ci`**: the width of the credible interval used to mark correlations
+  (default `0.9`).
+
+```{r bayes-example, warning = FALSE, eval = FALSE}
+mldesc(
+  data   = media_diary,
+  group  = "person",
+  vars   = vars,
+  method = "bayes",
+  folder = "brms_models"
+)
+```
+
+MCMC sampling settings (iterations, chains) can be adjusted globally via
+`options(mlstats.brms_iter = ..., mlstats.brms_chains = ...)`. See
+`vignette("correlation-methods")` for the statistical rationale, the
+weighting/credible-interval mechanics, and how many models a given call
+fits.
+
 ## References
+
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. *Journal of Statistical Software, 80*(1), 1–28.
+https://doi.org/10.18637/jss.v080.i01
 
 Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
 cross-sectional multilevel models: A new look at an old issue.

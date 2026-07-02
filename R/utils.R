@@ -40,9 +40,9 @@ utils::globalVariables("variable")
   is_whole && n_unique <= 10
 }
 
-# Warn once if any of `vars` look discrete; shared by mldesc()/bayes_mldesc()
-# so the ICC's Gaussian-only limitation isn't silently applied to non-
-# continuous variables.
+# Warn once if any of `vars` look discrete; used by mldesc() (for every
+# `method`, including "bayes") so the ICC's Gaussian-only limitation isn't
+# silently applied to non-continuous variables.
 .warn_discrete_icc_vars <- function(data, vars) {
   discrete_vars <- vars[base::vapply(vars, function(v) .is_discrete_like(data[[v]]), base::logical(1))]
   if (base::length(discrete_vars) > 0) {
@@ -53,8 +53,8 @@ utils::globalVariables("variable")
   }
 }
 
-# Sampling settings for every brms::brm() fit in bayes_mldesc()/
-# bayes_within_between_correlations(). Overridable via
+# Sampling settings for every brms::brm() fit under method = "bayes" in
+# mldesc()/within_between_correlations(). Overridable via
 # options(mlstats.brms_iter = ..., mlstats.brms_chains = ...) so tests (or
 # advanced users) can fit much shorter chains; defaults match brms::brm()'s
 # own defaults for chains, and the iter the package has always used.
@@ -93,6 +93,8 @@ utils::globalVariables("variable")
     "\u2139 Correlations estimated via two-level SEM (lavaan)."
   } else if (!base::is.null(method) && method == "decomposition") {
     "\u2139 Correlations estimated via variance decomposition."
+  } else if (!base::is.null(method) && method == "bayes") {
+    "\u2139 Correlations estimated via Bayesian multilevel models (brms)."
   } else {
     NULL
   }

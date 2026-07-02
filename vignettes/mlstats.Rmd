@@ -67,7 +67,7 @@ result
 
 ### Estimation Method
 
-Two estimation methods are available via the `method` argument:
+Three estimation methods are available via the `method` argument:
 
 - **`method = "decomposition"`** (default): Uses the variance-decomposition
   approach to estimate within- and between-group correlations. Between-group
@@ -76,6 +76,9 @@ Two estimation methods are available via the `method` argument:
 - **`method = "sem"`**: Fits a two-level structural equation model via `lavaan`
   using robust maximum likelihood. This handles very unequal group sizes more
   rigorously.
+- **`method = "bayes"`**: Fits Bayesian multilevel models via `brms`,
+  reporting credible intervals instead of p-values. Requires the additional
+  `ci` and `folder` arguments; see `vignette("multilevel-descriptives")`.
 - See `vignette("correlation-methods")` for a detailed comparison.
 
 ### Customising the Output
@@ -146,20 +149,6 @@ Effects Within-Between (REWB) models, which estimate distinct within-group
 and between-group effects. See `vignette("rewb-models")` for a full guide to
 data preparation and REWB model fitting with mlstats, including all options
 of `decompose_within_between()`.
-
-## Further Vignettes
-
-- `vignette("multilevel-descriptives")`: detailed guide to `mldesc()` and
-  `within_between_correlations()`, including ICC interpretation, reading the
-  correlation matrix, and all function options.
-- `vignette("rewb-models")`: preparing data for and fitting REWB models with
-  `decompose_within_between()`, covering all decomposition options.
-- `vignette("tables")`: publication-ready table customisation with `tinytable`
-  and `gt`, including custom titles, notes, variable labels, and column selection.
-- `vignette("bayesian-estimation")`: Bayesian equivalents of `mldesc()` and
-  `within_between_correlations()` via `brms`.
-- `vignette("correlation-methods")`: statistical details on the decomposition
-  and SEM methods for within- and between-group correlations.
 
 ## References
 

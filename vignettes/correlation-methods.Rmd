@@ -21,6 +21,9 @@ appropriate for a given data set. It assumes you are already familiar with the
 basic idea of within-group and between-group relationships;
 see the "Getting Started" vignette for an introduction.
 
+Three methods are available via the `method` argument: `"decomposition"`
+(the default), `"sem"`, and `"bayes"`.
+
 ## The decomposition method
 
 `method = "decomposition"` (the default) follows the variance-decomposition
@@ -119,24 +122,55 @@ variables with an intraclass correlation near zero are modeled only at the
 within-group level. Correlations that cannot be estimated at a given level are
 reported as `NA`.
 
+## The Bayesian method
+
+`method = "bayes"` mirrors `method = "decomposition"` conceptually --- the
+within-group correlation is estimated from group-mean-centered deviation
+scores, and the between-group correlation from group means --- but estimates
+both via Bayesian multivariate models fit with `brms::brm()` (Bürkner, 2017)
+instead of closed-form formulas. Rather than a point estimate and a p-value,
+each correlation is reported as a posterior median together with a credible
+interval (CI): a correlation is starred when its CI excludes zero. This
+requires the **brms** package, which is not installed with **mlstats** by
+default.
+
+The `weight` argument works as it does under `method = "decomposition"`: with
+`weight = TRUE` (default), the between-group point estimate comes from a
+model fit on group means replicated once per observation in that group
+(implicitly weighting by group size). Unlike the point estimate, the credible
+interval is always computed from a model fit on unique group means only, so
+that uncertainty reflects the actual number of groups rather than the total
+sample size --- mirroring how the decomposition method's significance test
+always uses the unweighted group means (see above). With `weight = FALSE`,
+both the point estimate and the CI come from the unweighted model. The width
+of the credible interval is controlled by the `ci` argument (default `0.9`,
+a 90% CI).
+
 ## Choosing a method
 
-| | `method = "decomposition"` | `method = "sem"` |
-|---|---|---|
-| **Speed** | Fast; closed-form | Slower; iterative MLR estimation |
-| **Balanced group sizes** | Works well | Works well |
-| **Very unequal group sizes** | `weight = TRUE` corrects the *point estimate*; significance test always uses unweighted group means (see above) | Handled natively by ML for both point estimate and significance test |
-| **Missing data** | Pairwise deletion per variable pair | Listwise deletion across all modeled variables |
-| **Small number of groups** | Significance tests are exact | Asymptotic MLR standard errors; can be unreliable with few groups |
-| **Interpretability** | Simple, transparent formulas | Estimates come from a fitted latent-variable model |
+| | decomposition | sem | bayes |
+|---|---|---|---|
+| **Speed** | Fast; closed-form | Slower; iterative MLR estimation | Slowest; MCMC sampling |
+| **Balanced group sizes** | Works well | Works well | Works well |
+| **Very unequal group sizes** | `weight = TRUE` corrects the *point estimate*; significance test always uses unweighted group means (see above) | Handled natively by ML for both point estimate and significance test | `weight = TRUE` corrects the point estimate; CI always uses unweighted group means (see above) |
+| **Missing data** | Pairwise deletion per variable pair | Listwise deletion across all modeled variables | Pairwise deletion per variable pair |
+| **Small number of groups** | Significance tests are exact | Asymptotic MLR standard errors; can be unreliable with few groups | Posteriors do not rely on asymptotic or bivariate-normal assumptions |
+| **Uncertainty** | p-values | p-values (z-tests) | Credible intervals |
+| **Interpretability** | Simple, transparent formulas | Estimates come from a fitted latent-variable model | Estimates come from a fitted Bayesian model |
 
 As a starting point: use `method = "decomposition"` (the default) for most
 applications, particularly when group sizes are reasonably similar or the
 number of groups is small. Consider `method = "sem"` when group sizes are
 very unequal and you want the significance tests --- not just the point
-estimate --- to fully account for that imbalance.
+estimate --- to fully account for that imbalance. Consider `method = "bayes"`
+when the number of groups is small and you want credible intervals instead of
+p-values, and are willing to accept longer computation times.
 
 ## References
+
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. *Journal of Statistical Software, 80*(1), 1–28.
+https://doi.org/10.18637/jss.v080.i01
 
 Hox, J., Moerbeek, M., & van de Schoot, R. (2018). *Multilevel analysis:
 Techniques and applications* (3rd ed.). Routledge.

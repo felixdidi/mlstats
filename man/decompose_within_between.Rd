@@ -113,7 +113,6 @@ Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sect
 multilevel models: A new look at an old issue. \emph{Psychological Methods}, 12(2), 121-138.
 }
 \seealso{
-\code{\link{within_between_correlations}} and
-\code{\link{bayes_within_between_correlations}}, which use this function
-internally to perform the within/between decomposition.
+\code{\link{within_between_correlations}}, which uses this
+function internally to perform the within/between decomposition.
 }

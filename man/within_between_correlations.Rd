@@ -8,10 +8,12 @@ within_between_correlations(
   data,
   group,
   vars,
-  method = c("decomposition", "sem"),
+  method = c("decomposition", "sem", "bayes"),
   weight = TRUE,
   flip = FALSE,
-  significance = c("basic", "detailed")
+  significance = c("basic", "detailed"),
+  ci = 0.9,
+  folder = NULL
 )
 }
 \arguments{
@@ -22,14 +24,14 @@ within_between_correlations(
 \item{vars}{A character vector specifying the names of variables to correlate.}
 
 \item{method}{Character string specifying the estimation method: \code{"decomposition"}
-(default) or \code{"sem"}. See Details.}
+(default), \code{"sem"}, or \code{"bayes"}. See Details.}
 
-\item{weight}{Logical. Only used when \code{method = "decomposition"}. If TRUE
-(default), the between-group correlation gives more weight to larger groups;
-significance, however, is always tested using the unweighted correlation of
-group means. If FALSE, every group counts equally regardless of size. Ignored
-(with a message) when \code{method = "sem"}, because that method handles
-unequal group sizes automatically.}
+\item{weight}{Logical. Used when \code{method = "decomposition"} or \code{method =
+  "bayes"}. If TRUE (default), the between-group correlation gives more weight to
+larger groups; significance/credible intervals, however, are always based on the
+unweighted correlation of group means. If FALSE, every group counts equally
+regardless of size. Ignored (with a message) when \code{method = "sem"}, because
+that method handles unequal group sizes automatically.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
@@ -37,7 +39,18 @@ triangle and within-group correlations in the lower triangle. Default is FALSE.}
 \item{significance}{Character string specifying the significance marking style.
 Either "basic" (default) or "detailed". If "basic", correlations with p < .05
 are marked with a star. If "detailed", correlations are marked with 1-3 stars
-for p < .05, p < .01, or p < .001, respectively.}
+for p < .05, p < .01, or p < .001, respectively. Ignored (with a message) when
+\code{method = "bayes"}, which always marks correlations whose credible interval
+(see \code{ci}) excludes zero with a single star.}
+
+\item{ci}{Numeric value strictly between 0 and 1 specifying the credible interval
+width used to decide whether a correlation is starred. Only applicable when
+\code{method = "bayes"}; default is 0.9 (90\% CI). Ignored (with a message) for
+other methods.}
+
+\item{folder}{Character string specifying the directory path where \code{brms}
+models should be saved. Required when \code{method = "bayes"}; ignored (with a
+message) otherwise. Default is \code{NULL}.}
 }
 \value{
 A tibble containing a correlation matrix where:
@@ -45,7 +58,8 @@ A tibble containing a correlation matrix where:
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
 \item Diagonal elements are marked with "–"
-\item Significant correlations are marked with asterisks (see \code{significance} parameter)
+\item Significant correlations are marked with asterisks (see \code{significance}
+parameter, or \code{ci} when \code{method = "bayes"})
 }
 }
 \description{
@@ -55,7 +69,7 @@ be misleading, because it mixes two different relationships: how the variables
 relate \emph{within} each group (e.g., do a person's good days also tend to be
 their productive days?), and how they relate \emph{between} groups (e.g., do
 people who are generally happier also tend to be generally more productive?).
-This function estimates both relationships separately, using either of two
+This function estimates both relationships separately, using one of three
 methods (see Details and \code{vignette("correlation-methods")} for the full
 statistical background).
 }
@@ -86,6 +100,16 @@ time-invariant traits) are modeled only at the between-group level, and
 variables with almost no between-group variance (intraclass correlation near
 zero) are modeled only at the within-group level; the corresponding cells of the
 unused level are reported as \code{NA}.
+
+\strong{Method \code{"bayes"}} mirrors \code{"decomposition"}, but estimates
+both correlations via Bayesian multivariate models fit with \code{brms::brm()}
+(requires the \pkg{brms} package) instead of closed-form formulas, reporting
+posterior medians and credible intervals (via \code{ci}) in place of point
+estimates and p-values. It requires a \code{folder} argument to cache fitted
+models, can take considerably longer than the other two methods, and is most
+useful when the number of groups is small or when communicating uncertainty
+via credible intervals is a priority. See \code{vignette("correlation-methods")}
+for details on the number of models fit and caching behavior.
 }
 \examples{
 data("media_diary")
@@ -124,8 +148,23 @@ result_detailed <- within_between_correlations(
   significance = "detailed"
 )
 
+# Use Bayesian estimation (requires the brms package)
+\donttest{
+result_bayes <- within_between_correlations(
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
+  method = "bayes",
+  folder = tempdir()
+)
+}
+
 }
 \references{
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. \emph{Journal of Statistical Software, 80}(1), 1–28.
+\doi{10.18637/jss.v080.i01}
+
 Hox, J., Moerbeek, M., & van de Schoot, R. (2018). \emph{Multilevel analysis:
 Techniques and applications} (3rd ed.). Routledge.
 
@@ -139,5 +178,5 @@ introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishe
 \code{\link{mldesc}}, which combines this function's output with
 descriptive statistics and ICCs in a single table. See
 \code{vignette("correlation-methods")} for a detailed statistical description
-of both methods.
+of all three methods.
 }

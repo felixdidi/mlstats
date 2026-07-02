@@ -94,10 +94,9 @@ mlstats comes with documentation vignettes to help you get started:
 - Learn how to use decomposed variables and interpret effects in
   **Random Effects Within-Between (REWB)** models in
   `vignette("rewb-models")`.
-- Learn about the different frequentist **estimation approaches** for
-  within- and between-group correlations in
-  `vignette("correlation-methods")`, or how to use **Bayesian
-  estimation** in `vignette("bayesian-estimation")`.
+- Learn about the different **estimation approaches** (decomposition,
+  SEM, and Bayesian) for within- and between-group correlations in
+  `vignette("correlation-methods")`.
 
 ## References
 

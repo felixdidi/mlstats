@@ -17,8 +17,6 @@ navbar:
         href: articles/tables.html
       - text: REWB Models
         href: articles/rewb-models.html
-      - text: Bayesian Estimation
-        href: articles/bayesian-estimation.html
       - text: "-------"
       - text: Statistical Background
       - text: Correlation Methods
@@ -33,30 +31,18 @@ articles:
   - multilevel-descriptives
   - tables
   - rewb-models
-  - bayesian-estimation
 - title: Statistical Background
   contents:
   - correlation-methods
 
 reference:
 - title: Multilevel Descriptive Statistics
-  desc: Compute ICCs, within/between SDs, and APA-formatted descriptive statistics
-    for nested data.
   contents:
   - mldesc
-  - bayes_mldesc
-- title: Within-Between Correlations
-  desc: Compute within-group and between-group correlations via variance decomposition
-    or two-level SEM.
-  contents:
   - within_between_correlations
-  - bayes_within_between_correlations
 - title: Data Preparation
-  desc: Decompose variables into within-group and between-group components for REWB
-    models.
   contents: decompose_within_between
 - title: Example Data
-  desc: Simulated dataset used throughout the vignettes.
   contents: media_diary
 - title: Package
   contents: mlstats-package
