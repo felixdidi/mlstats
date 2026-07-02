@@ -94,47 +94,42 @@ generalized linear mixed model. A warning is emitted if any \code{vars}
 look binary, ordinal, or count-like (few, whole-number values).
 }
 \examples{
-set.seed(123)
-# Create sample data
-data <- data.frame(
-  school = rep(1:5, each = 20),
-  math_score = rnorm(100, 50, 10),
-  reading_score = rnorm(100, 50, 10),
-  motivation = rnorm(100, 5, 2)
-)
+data("media_diary")
+vars <- c("self_control", "wellbeing", "screen_time", "stress")
 
 # Compute multilevel descriptives (default: decomposition method)
 result <- mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation")
+  data = media_diary,
+  group = "person",
+  vars = vars
 )
 
 result
 
 # Compute with unweighted between-group correlations
 result_unweighted <- mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
+  data = media_diary,
+  group = "person",
+  vars = vars,
   weight = FALSE
 )
 
-# Use SEM-based estimation for correlations
+# Use SEM-based estimation for correlations (on similarly-scaled variables;
+# SEM is sensitive to large scale differences, unlike "decomposition")
 \donttest{
 result_sem <- mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
+  data = media_diary,
+  group = "person",
+  vars = c("self_control", "wellbeing", "stress"),
   method = "sem"
 )
 }
 
 # Use detailed significance marking
 result_detailed <- mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
+  data = media_diary,
+  group = "person",
+  vars = vars,
   significance = "detailed"
 )
 

@@ -103,19 +103,14 @@ long time for larger numbers of variables.
 }
 \examples{
 \donttest{
-# Create sample data
-data <- data.frame(
-  school = rep(1:5, each = 20),
-  math_score = rnorm(100, 50, 10),
-  reading_score = rnorm(100, 50, 10),
-  motivation = rnorm(100, 5, 2)
-)
+data("media_diary")
+vars <- c("self_control", "wellbeing", "screen_time")
 
 # Compute Bayesian multilevel descriptives with weighted between-group correlations
 result <- bayes_mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
+  data = media_diary,
+  group = "person",
+  vars = vars,
   folder = tempdir()
 )
 
@@ -129,13 +124,13 @@ print(result, "gt")
 print(result, "gt",
       table_title = "Custom Table Title",
       correlation_note = "Custom correlation note",
-      note_text = "Data collected from 5 schools.")
+      note_text = "Data collected from 100 participants.")
 
 # Compute with unweighted between-group correlations
 result_unweighted <- bayes_mldesc(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score", "motivation"),
+  data = media_diary,
+  group = "person",
+  vars = vars,
   weight = FALSE,
   folder = tempdir()
 )

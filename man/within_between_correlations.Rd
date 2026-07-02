@@ -88,44 +88,39 @@ zero) are modeled only at the within-group level; the corresponding cells of the
 unused level are reported as \code{NA}.
 }
 \examples{
-set.seed(123)
-# Create sample data
-data <- data.frame(
-  school = rep(1:5, each = 20),
-  math_score = rnorm(100, 50, 10),
-  reading_score = rnorm(100, 50, 10)
-)
+data("media_diary")
 
 # Compute weighted between-group correlations (default, decomposition method)
 result_weighted <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score")
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time")
 )
 
 # Compute unweighted between-group correlations
 result_unweighted <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score"),
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
   weight = FALSE
 )
 
-# Use SEM-based estimation
+# Use SEM-based estimation (on similarly-scaled variables; SEM is
+# sensitive to large scale differences, unlike "decomposition")
 \donttest{
 result_sem <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score"),
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "stress"),
   method = "sem"
 )
 }
 
 # Use detailed significance marking
 result_detailed <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score"),
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
   significance = "detailed"
 )
 

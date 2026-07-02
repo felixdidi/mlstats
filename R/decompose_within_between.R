@@ -54,34 +54,28 @@
 #' within-group effect of the predictor in REWB models.
 #'
 #' @examples
-#' set.seed(123)
-#' # Create sample data
-#' data <- data.frame(
-#'   participant = rep(1:10, each = 5),
-#'   stress = rnorm(50, 50, 10),
-#'   mood = rnorm(50, 50, 10)
-#' )
+#' data("media_diary")
 #'
 #' # Decompose all three components (default)
 #' result <- decompose_within_between(
-#'   data = data,
-#'   group = "participant",
-#'   vars = c("stress", "mood")
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("stress", "screen_time")
 #' )
 #'
 #' # Only between and within (no grand mean centering)
 #' result_wb <- decompose_within_between(
-#'   data = data,
-#'   group = "participant",
-#'   vars = c("stress", "mood"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("stress", "screen_time"),
 #'   components = c("between", "within")
 #' )
 #'
 #' # Custom column naming: flat suffixes without the group name
 #' result_flat <- decompose_within_between(
-#'   data = data,
-#'   group = "participant",
-#'   vars = c("stress", "mood"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("stress", "screen_time"),
 #'   components = c("between", "within"),
 #'   between_pattern = "{col}_between",
 #'   within_pattern = "{col}_within"

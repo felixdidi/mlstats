@@ -70,27 +70,22 @@
 #'
 #' @examples
 #' \donttest{
-#' # Create sample data
-#' data <- data.frame(
-#'   school = rep(1:5, each = 20),
-#'   math_score = rnorm(100, 50, 10),
-#'   reading_score = rnorm(100, 50, 10)
-#' )
+#' data("media_diary")
 #'
 #' # Compute Bayesian within and between correlations (weighted)
 #' result <- bayes_within_between_correlations(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
 #'   ci = 0.9,
 #'   folder = tempdir()
 #' )
 #'
 #' # Compute unweighted between-group correlations
 #' result_unweighted <- bayes_within_between_correlations(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
 #'   weight = FALSE,
 #'   ci = 0.9,
 #'   folder = tempdir()
