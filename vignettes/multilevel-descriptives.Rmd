@@ -45,16 +45,18 @@ vars <- c("self_control", "wellbeing", "screen_time", "stress")
 
 When observations are nested within groups, the overall (pooled) correlation
 between two variables is a weighted mix of two conceptually different
-relationships: how variables co-vary *within* groups over time, and whether
+relationships: how variables co-vary within groups over time, and whether
 groups that score higher on one variable also score higher on the other. These
 two relationships can differ substantially in magnitude or can even point in
-opposite directions.
+opposite directions. 
 
-## Within- and Between-Person Correlations
+## Within- and Between-Group Correlations
 
 `within_between_correlations()` returns a single correlation matrix in which
-within-person correlations appear **above** the diagonal and between-person
-correlations appear **below**:
+within-group correlations appear **above** the diagonal and between-group
+correlations appear **below**. In our example dataset, observations are nested
+within persons, so the function computes within-person correlations (upper triangle)
+and between-person correlations (lower triangle).
 
 ```{r correlations, warning = FALSE}
 within_between_correlations(
