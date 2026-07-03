@@ -203,7 +203,7 @@ print.mlstats_desc_tibble <- function(
     all_cols <- base::names(x)
     correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]
     
-    tt_result <- 
+    tt_data <-
       x |>
       dplyr::rename_with(
         ~ dplyr::case_when(
@@ -217,6 +217,11 @@ print.mlstats_desc_tibble <- function(
           TRUE ~ .x
         )
       ) |>
+      tibble::rowid_to_column(var = "id")
+    base::names(tt_data)[1] <- ""
+
+    tt_result <-
+      tt_data |>
       tinytable::tt(
         caption = table_title,
         notes = list(
