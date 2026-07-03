@@ -37,7 +37,15 @@ skip_if_no_bayes <- function() {
   testthat::skip_if_not_installed("brms")
 }
 
-bayes_cache_folder <- file.path(tools::R_user_dir("mlstats", "cache"), "testthat", "bayes_shared")
+# Persistent cache only in local dev (NOT_CRAN = "true"); CRAN's check machines
+# must not have anything written outside tempdir(), so fall back to a
+# session-local, auto-cleaned folder there -- this disables the cross-run
+# speed-up on CRAN, but the fits are skipped there anyway (skip_if_no_bayes()).
+bayes_cache_folder <- if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+  file.path(tools::R_user_dir("mlstats", "cache"), "testthat", "bayes_shared")
+} else {
+  file.path(tempdir(), "mlstats_testthat_bayes_shared")
+}
 dir.create(bayes_cache_folder, recursive = TRUE, showWarnings = FALSE)
 prune_old_brms_cache(bayes_cache_folder, days = 7)
 
