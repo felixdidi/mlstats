@@ -113,10 +113,10 @@ print.mlstats_wb_tibble <- function(
         title = gt::html(table_title)
       ) |>
       gt::tab_source_note(
-        source_note = gt::html(note_text)
+        source_note = gt::md(note_text)
       ) |>
       gt::tab_source_note(
-        source_note = gt::html(
+        source_note = gt::md(
           base::paste0(
             "<sup>a</sup> ",
             correlation_note
@@ -124,7 +124,7 @@ print.mlstats_wb_tibble <- function(
         )
       ) |>
       gt::tab_source_note(
-        source_note = gt::html(
+        source_note = gt::md(
           base::paste0(
             "<sup>b</sup> ",
             significance_note
