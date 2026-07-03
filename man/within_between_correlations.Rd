@@ -61,6 +61,9 @@ A tibble containing a correlation matrix where:
 \item Significant correlations are marked with asterisks (see \code{significance}
 parameter, or \code{ci} when \code{method = "bayes"})
 }
+
+The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+and as a tinytable object using \code{print(result, format = "tt")}.
 }
 \description{
 In data with a grouping structure (e.g., repeated measurements per person, or

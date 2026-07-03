@@ -46,6 +46,9 @@
 #'     parameter, or \code{ci} when \code{method = "bayes"})
 #' }
 #'
+#' The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+#' and as a tinytable object using \code{print(result, format = "tt")}.
+#'
 #' @details
 #' \strong{Method \code{"decomposition"}} (the default) computes the within-group
 #' correlation by first subtracting each group's mean from every observation, then
@@ -292,12 +295,39 @@ within_between_correlations <- function(
     significance_note <- "All correlations marked with a star are significant at p < .05."
   }
 
+  group_label <- .group_note_label(group)
+
   class(result_tibble) <- c("mlstats_wb_tibble", class(result_tibble))
+  base::attr(result_tibble, "group") <- group
   base::attr(result_tibble, "flipped") <- flip
+  base::attr(result_tibble, "table_title") <- ""
+  base::attr(result_tibble, "correlation_note") <- if (flip) {
+    base::paste0(
+      "Between-", group_label, " correlations above, within-", group_label,
+      " correlations below the diagonal."
+    )
+  } else {
+    base::paste0(
+      "Within-", group_label, " correlations above, between-", group_label,
+      " correlations below the diagonal."
+    )
+  }
   base::attr(result_tibble, "significance_note") <- significance_note
   base::attr(result_tibble, "method") <- method
   if (method == "bayes") {
     base::attr(result_tibble, "bayesian") <- TRUE
+    base::attr(result_tibble, "note_text") <- if (weight) {
+      base::paste0("Bayesian group-weighted within- and between-", group_label, " correlations computed with mlstats.")
+    } else {
+      base::paste0("Bayesian unweighted within- and between-", group_label, " correlations computed with mlstats.")
+    }
+  } else {
+    method_label <- if (method == "sem") "SEM-based" else if (weight) "group-weighted" else "unweighted"
+    base::attr(result_tibble, "note_text") <- base::paste0(
+      base::toupper(base::substr(method_label, 1, 1)),
+      base::substr(method_label, 2, base::nchar(method_label)),
+      " within- and between-", group_label, " correlations computed with mlstats."
+    )
   }
   return(result_tibble)
 }

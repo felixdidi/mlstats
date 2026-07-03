@@ -409,12 +409,20 @@ mldesc <- function(
   class(result) <- c("mlstats_desc_tibble", class(result))
 
   # Store default values as attributes
+  group_label <- .group_note_label(group)
   attr(result, "table_title") <- ""
   attr(result, "flipped") <- flip
+  attr(result, "group") <- group
   attr(result, "correlation_note") <- if (flip) {
-    "Between-group correlations above, within-group correlations below the diagonal."
+    base::paste0(
+      "Between-", group_label, " correlations above, within-", group_label,
+      " correlations below the diagonal."
+    )
   } else {
-    "Within-group correlations above, between-group correlations below the diagonal."
+    base::paste0(
+      "Within-", group_label, " correlations above, between-", group_label,
+      " correlations below the diagonal."
+    )
   }
 
   # Get significance note from correlation matrix

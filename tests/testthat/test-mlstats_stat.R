@@ -30,13 +30,13 @@ test_that("within_between_correlations default print dispatches pillar methods",
   result <- within_between_correlations(data, "g", c("x", "y"))
 
   output <- capture.output(print(result))
-  expect_true(any(grepl("Within- and Between-Group Correlations", output)))
-  expect_true(any(grepl("Within-group correlations above", output)))
+  expect_true(any(grepl("Within- and Between-G Correlations", output)))
+  expect_true(any(grepl("Within-g correlations above", output)))
   expect_true(any(grepl("variance decomposition", output)))
 
   result_flipped <- within_between_correlations(data, "g", c("x", "y"), flip = TRUE)
   output_flipped <- capture.output(print(result_flipped))
-  expect_true(any(grepl("Between-group correlations above", output_flipped)))
+  expect_true(any(grepl("Between-g correlations above", output_flipped)))
 })
 
 test_that("within_between_correlations sem method note appears in default print", {

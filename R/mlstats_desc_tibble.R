@@ -218,6 +218,7 @@ print.mlstats_desc_tibble <- function(
         )
       ) |>
       tinytable::tt(
+        caption = table_title,
         notes = list(
           stringr::str_c("*Note.* ", note_text),
           a = correlation_note,
@@ -226,7 +227,7 @@ print.mlstats_desc_tibble <- function(
       ) |>
       tinytable::group_tt(j = "__") |>
       tinytable::format_tt(markdown = TRUE)
-    
+
     return(tt_result)
 
   } else {

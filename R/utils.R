@@ -66,17 +66,47 @@ utils::globalVariables("variable")
   base::getOption("mlstats.brms_chains", 4)
 }
 
+# Sentence-case label for the grouping variable, used in table titles (e.g.
+# "Within- and Between-Person Correlations"). Falls back to "Group" when no
+# group name is available (e.g. an object with the `group` attribute
+# stripped).
+.group_title_label <- function(group) {
+  if (base::is.null(group) || !base::nzchar(group)) {
+    return("Group")
+  }
+  base::paste0(
+    base::toupper(base::substr(group, 1, 1)),
+    base::substr(group, 2, base::nchar(group))
+  )
+}
+
+# Lowercase label for the grouping variable, used inline in notes (e.g.
+# "within-person correlations above..."). Falls back to "group".
+.group_note_label <- function(group) {
+  if (base::is.null(group) || !base::nzchar(group)) {
+    return("group")
+  }
+  base::tolower(group)
+}
+
 # Shared footer-note builder for tbl_format_footer.mlstats_wb_tibble and
 # tbl_format_footer.mlstats_desc_tibble: the correlation-note, significance-
 # note, and method-note lines are identical for both classes.
 .mlstats_footer_notes <- function(x, setup) {
   correlation_note <- base::attr(x, "correlation_note", exact = TRUE)
   if (base::is.null(correlation_note)) {
+    group_label <- .group_note_label(base::attr(x, "group", exact = TRUE))
     flipped <- base::isTRUE(base::attr(x, "flipped"))
     correlation_note <- if (flipped) {
-      "Between-group correlations above, within-group correlations below the diagonal."
+      base::paste0(
+        "Between-", group_label, " correlations above, within-", group_label,
+        " correlations below the diagonal."
+      )
     } else {
-      "Within-group correlations above, between-group correlations below the diagonal."
+      base::paste0(
+        "Within-", group_label, " correlations above, between-", group_label,
+        " correlations below the diagonal."
+      )
     }
   }
   correlation_note <- base::paste0("\u2139 ", correlation_note)
