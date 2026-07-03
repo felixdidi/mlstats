@@ -10,7 +10,7 @@ A data frame with 1,400 rows and 6 columns:
 \item{person}{Integer person identifier (1–100).}
 \item{self_control}{Trait self-control, measured once at study entry
 (1–7 scale, higher = more self-control). Constant within persons;
-ICC ≈ 1.}
+ICC approximately 1.}
 \item{wellbeing}{Daily positive wellbeing (1–7 scale, higher = better).}
 \item{screen_time}{Minutes of entertainment media consumed that day
 (e.g., television, streaming services; non-negative integer).}
