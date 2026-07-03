@@ -3,7 +3,6 @@
 S3method(as.character,mlstats_stat)
 S3method(as.double,mlstats_stat)
 S3method(as.integer,mlstats_stat)
-S3method(as.numeric,mlstats_stat)
 S3method(pillar::ctl_new_pillar,mlstats_desc_tibble)
 S3method(pillar::ctl_new_pillar,mlstats_wb_tibble)
 S3method(pillar::pillar_shaft,mlstats_stat)
