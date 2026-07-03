@@ -7,19 +7,26 @@
 \title{mlstats: Multilevel Descriptive Statistics and Data Preparation}
 \description{
 The \strong{mlstats} package provides tools for multilevel descriptive statistics
-and data preparation. It supports:
+and data preparation (e.g., repeated measurements per person, or students
+nested within schools). It supports:
 \itemize{
+\item Computing within-group and between-group correlations
+(\code{\link[=within_between_correlations]{within_between_correlations()}})
+\item Creating publication-ready descriptive statistics tables with ICCs and
+within-/between-group correlations (\code{\link[=mldesc]{mldesc()}})
 \item Decomposing variables into within-group and between-group components for
 Random Effects Within-Between (REWB) models
 (\code{\link[=decompose_within_between]{decompose_within_between()}})
-\item Computing within-group and between-group correlations
-(\code{\link[=within_between_correlations]{within_between_correlations()}})
-\item Creating publication-ready descriptive statistics tables with ICCs
-(\code{\link[=mldesc]{mldesc()}})
-\item Frequentist (via lme4 or lavaan) and Bayesian (via brms) estimation,
-selectable via the \code{method} argument of \code{\link[=mldesc]{mldesc()}} and
-\code{\link[=within_between_correlations]{within_between_correlations()}}
+\item Three estimation methods, selectable via the \code{method} argument of
+\code{\link[=mldesc]{mldesc()}} and \code{\link[=within_between_correlations]{within_between_correlations()}}: variance decomposition
+(default), two-level structural equation modeling (via lavaan), and
+Bayesian multilevel modeling (via brms)
+\item Exporting result tables as 'gt' or 'tinytable' objects via
+\code{print(result, format = "gt")} or \code{print(result, format = "tt")}
 }
+
+See \code{vignette("correlation-methods")} for the statistical background, and
+\link{media_diary} for an example dataset.
 }
 \seealso{
 Useful links:
