@@ -236,7 +236,8 @@ mldesc(
   group  = "person",
   vars   = vars,
   method = "bayes",
-  folder = "brms_models"
+  folder = "brms_models",
+  ci     = 0.95
 )
 ```
 

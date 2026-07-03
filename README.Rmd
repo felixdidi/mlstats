@@ -32,7 +32,7 @@ pak::pak("felixdidi/mlstats")
 
 **mlstats** is built around two main tasks:
 
-- **Multilevel descriptives**: `mldesc()` computes means, standard deviations, ranges, ICCs, and a combined within-/between-group correlation matrix in a single call.
+- **Multilevel descriptives**: `mldesc()` computes means, standard deviations, ranges, ICCs, and a combined within-/between-group correlation matrix in a single call. `within_between_correlations()` computes only the correlation matrix. Both support multiple print methods for publication-ready output.
 - **Variable decomposition**: `decompose_within_between()` splits time-varying predictors into within-group deviations (situational fluctuations) and between-group means (stable differences), ready for use in REWB models.
 
 ## Example

@@ -59,10 +59,9 @@ Because these processes were built into the simulation, they are present by desi
 `decompose_within_between()` splits each specified variable into up to three
 components:
 
-- **`_between`**: the group mean (stable between-group component)
-- **`_within`**: the deviation from the group mean on each observation
-  (within-group fluctuation)
-- **`_gmc`**: the grand-mean-centred value (deviation from the sample mean)
+- **`_grand_mean_centered`**: grand-mean-centered value
+- **`_between_{group}`**: group mean (stable between-group component)
+- **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
 
 The `vars` argument names the variables to decompose. `group` names the
 grouping variable.

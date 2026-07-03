@@ -43,7 +43,9 @@ pak::pak("felixdidi/mlstats")
 
 - **Multilevel descriptives**: `mldesc()` computes means, standard
   deviations, ranges, ICCs, and a combined within-/between-group
-  correlation matrix in a single call.
+  correlation matrix in a single call. `within_between_correlations()`
+  computes only the correlation matrix. Both support multiple print
+  methods for publication-ready output.
 - **Variable decomposition**: `decompose_within_between()` splits
   time-varying predictors into within-group deviations (situational
   fluctuations) and between-group means (stable differences), ready for
@@ -76,7 +78,7 @@ media_diary |>
     ## 3 Screen time  1,400 128.66 42.29 0–272 -.67* -.34*     –  .29*   .45
     ## 4 Stress       1,400   3.81  0.91   1–7 -.53* -.38*  .38*     –   .33
     ##   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====
-    ## # ℹ Within-group correlations above, between-group correlations below the
+    ## # ℹ Within-person correlations above, between-person correlations below the
     ## #   diagonal.
     ## # ℹ All correlations marked with a star are significant at p < .05.
     ## # ℹ Correlations estimated via variance decomposition.
