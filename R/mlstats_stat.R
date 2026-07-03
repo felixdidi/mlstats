@@ -34,13 +34,8 @@ pillar_shaft.mlstats_stat <- function(x, ...) {
   base::ifelse(cleaned %in% base::c("\u2013", "NA"), NA_character_, cleaned)
 }
 
-# Method for as.numeric()
-#' @export
-as.numeric.mlstats_stat <- function(x, ...) {
-  .clean_mlstats_stat(x) |> base::as.numeric()
-}
-
-# Method for as.double()
+# Method for as.double(). Also covers as.numeric(): R has no S3 dispatch for
+# as.numeric() on objects -- it always routes through as.double() instead.
 #' @export
 as.double.mlstats_stat <- function(x, ...) {
   .clean_mlstats_stat(x) |> base::as.double()
