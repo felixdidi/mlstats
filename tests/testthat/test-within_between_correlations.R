@@ -108,6 +108,27 @@ test_that("within_between_correlations handles missing values", {
   expect_equal(nrow(result), 2)
 })
 
+test_that("within_between_correlations returns NA for a zero between-group-variance pair", {
+  set.seed(321)
+  # x alternates +1/-1 identically within every group, so each group mean is
+  # exactly 0 (no floating-point residue): between-group variance is exactly
+  # zero, which must short-circuit to "NA" rather than a 0/0 correlation.
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rep(c(1, -1, 1, -1, 1, -1, 1, -1, 1, -1), times = 3),
+    y = rnorm(30)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  # Row 2 ("y"), column "1" ("x") is the lower/between-group triangle.
+  expect_equal(vctrs::vec_data(result$`1`)[2], "NA")
+})
+
 test_that("within_between_correlations handles single variable", {
   set.seed(111)
   data <- data.frame(
@@ -536,6 +557,71 @@ test_that("flip defaults to FALSE", {
   
   # Should be identical
   expect_identical(result_default, result_explicit)
+})
+
+# ---- Tests for print(format = "gt"/"tt") ----
+
+test_that("within_between_correlations print method accepts format parameter", {
+  set.seed(6000)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  result_gt <- print(result, "gt")
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  expect_s4_class(result_tt, "tinytable")
+})
+
+test_that("within_between_correlations print method accepts custom parameters", {
+  set.seed(6000)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  custom_title <- "Custom Within-Between Correlations Table"
+  custom_note <- "Custom correlation interpretation"
+  custom_significance_note <- "Custom significance interpretation"
+  custom_footer <- "Custom footer note"
+
+  result_gt <- print(
+    result,
+    "gt",
+    table_title = custom_title,
+    correlation_note = custom_note,
+    significance_note = custom_significance_note,
+    note_text = custom_footer
+  )
+
+  result_tt <- print(
+    result,
+    "tt",
+    table_title = custom_title,
+    correlation_note = custom_note,
+    significance_note = custom_significance_note,
+    note_text = custom_footer
+  )
+
+  # Should return correct classes
+  expect_s3_class(result_gt, "gt_tbl")
+  expect_s4_class(result_tt, "tinytable")
 })
 
 # ---- Tests for method = "sem" ----
