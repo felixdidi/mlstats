@@ -1,0 +1,13 @@
+pandoc: 3.8.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  correlation-methods: correlation-methods.html
+  mlstats: mlstats.html
+  multilevel-descriptives: multilevel-descriptives.html
+  rewb-models: rewb-models.html
+  tables: tables.html
+last_built: 2026-07-03T12:08Z
+urls:
+  reference: https://felixdidi.github.io/mlstats/reference
+  article: https://felixdidi.github.io/mlstats/articles

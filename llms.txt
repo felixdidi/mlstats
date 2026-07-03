@@ -1,0 +1,161 @@
+# mlstats
+
+The **mlstats** package provides tools for multilevel descriptive
+statistics and data preparation. It computes within-group and
+between-group correlations (via variance decomposition or two-level
+structural equation modeling), intraclass correlation coefficients
+(ICCs), and descriptive statistics for nested data (e.g., repeated
+measurements per person), supporting both frequentist (via `lme4` or
+`lavaan`) and Bayesian (via `brms`) estimation. Results are formatted
+according to APA standards and can be exported as tables using `gt` or
+`tinytable`. The package also includes functions for decomposing
+variables into within-group and between-group components for use in
+Random Effects Within-Between (REWB) models.
+
+## Installation
+
+You can install mlstats from CRAN:
+
+``` r
+
+install.packages("mlstats")
+```
+
+You can also install the development version from GitHub:
+
+``` r
+
+# install.packages("pak")
+pak::pak("felixdidi/mlstats")
+```
+
+## Overview
+
+**mlstats** is built around two main tasks:
+
+- **Multilevel descriptives**:
+  [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
+  computes means, standard deviations, ranges, ICCs, and a combined
+  within-/between-group correlation matrix in a single call.
+  [`within_between_correlations()`](https://felixdidi.github.io/mlstats/reference/within_between_correlations.md)
+  computes only the correlation matrix. Both support multiple print
+  methods for publication-ready output.
+- **Variable decomposition**:
+  [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
+  splits time-varying predictors into within-group deviations
+  (situational fluctuations) and between-group means (stable
+  differences), ready for use in REWB models.
+
+## Example
+
+This example uses the simulated `media_diary` dataset included with
+**mlstats**. It mimics a study in which 100 participants completed brief
+daily surveys for 14 consecutive days (*N* = 100 persons, *T* = 1,400
+daily observations).
+
+``` r
+
+library(mlstats)
+data("media_diary")
+
+media_diary |>
+  mldesc(
+    group = "person",
+    vars = c("self_control", "wellbeing", "screen_time", "stress")
+  )
+```
+
+``` R
+## # Multilevel Descriptive Statistics
+##   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====
+##   variable     n_obs      m    sd range   `1`   `2`   `3`   `4`   icc
+##   ------------ ----- ------ ----- ----- ----- ----- ----- ----- -----
+## 1 Self control 1,400   4.03  0.83   2–6     –    NA    NA    NA  1.00
+## 2 Wellbeing    1,400   4.45  0.87   2–7  .61*     –  .42* -.43*   .46
+## 3 Screen time  1,400 128.66 42.29 0–272 -.67* -.34*     –  .29*   .45
+## 4 Stress       1,400   3.81  0.91   1–7 -.53* -.38*  .38*     –   .33
+##   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====
+## # ℹ Within-person correlations above, between-person correlations below the
+## #   diagonal.
+## # ℹ All correlations marked with a star are significant at p < .05.
+## # ℹ Correlations estimated via variance decomposition.
+## # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
+```
+
+## Learning more
+
+mlstats comes with documentation vignettes to help you get started:
+
+- Learn a **best practice workflow** in
+  [`vignette("mlstats")`](https://felixdidi.github.io/mlstats/articles/mlstats.md).
+- Learn how to **report multilevel descriptive statistics** in
+  [`vignette("multilevel-descriptives")`](https://felixdidi.github.io/mlstats/articles/multilevel-descriptives.md)
+  and how to transform them into **publication-ready multilevel
+  descriptive tables** in
+  [`vignette("tables")`](https://felixdidi.github.io/mlstats/articles/tables.md).
+- Learn how to use decomposed variables and interpret effects in
+  **Random Effects Within-Between (REWB)** models in
+  [`vignette("rewb-models")`](https://felixdidi.github.io/mlstats/articles/rewb-models.md).
+- Learn about the different **estimation approaches** (decomposition,
+  SEM, and Bayesian) for within- and between-group correlations in
+  [`vignette("correlation-methods")`](https://felixdidi.github.io/mlstats/articles/correlation-methods.md).
+
+## References
+
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects
+models: Making an informed choice. *Quality & Quantity, 53*(2),
+1051–1074. <https://doi.org/10.1007/s11135-018-0802-x>
+
+Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
+cross-sectional multilevel models: A new look at an old issue.
+*Psychological Methods, 12*(2), 121–138.
+<https://doi.org/10.1037/1082-989X.12.2.121>
+
+Pedhazur, E. J. (1997). *Multiple regression in behavioral research:
+Explanation and prediction* (3rd ed.). Harcourt Brace.
+
+# Package index
+
+## Multilevel Descriptive Statistics
+
+- [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
+  : Compute Multilevel Descriptive Statistics
+- [`within_between_correlations()`](https://felixdidi.github.io/mlstats/reference/within_between_correlations.md)
+  : Compute Within-Group and Between-Group Correlations
+
+## Data Preparation
+
+- [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
+  : Decompose Variables into Within-Group and Between-Group Components
+
+## Example Data
+
+- [`media_diary`](https://felixdidi.github.io/mlstats/reference/media_diary.md)
+  : Simulated daily diary study: entertainment media use and wellbeing
+
+## Package
+
+- [`mlstats`](https://felixdidi.github.io/mlstats/reference/mlstats-package.md)
+  [`mlstats-package`](https://felixdidi.github.io/mlstats/reference/mlstats-package.md)
+  : mlstats: Multilevel Descriptive Statistics and Data Preparation
+
+# Articles
+
+### Getting Started
+
+- [Getting Started with
+  mlstats](https://felixdidi.github.io/mlstats/articles/mlstats.md):
+
+### Workflows
+
+- [Multilevel Descriptive
+  Statistics](https://felixdidi.github.io/mlstats/articles/multilevel-descriptives.md):
+- [Publication-Ready
+  Tables](https://felixdidi.github.io/mlstats/articles/tables.md):
+- [REWB
+  Models](https://felixdidi.github.io/mlstats/articles/rewb-models.md):
+
+### Statistical Background
+
+- [Within- and Between-Group Correlation
+  Methods](https://felixdidi.github.io/mlstats/articles/correlation-methods.md):
