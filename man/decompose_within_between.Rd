@@ -4,7 +4,15 @@
 \alias{decompose_within_between}
 \title{Decompose Variables into Within-Group and Between-Group Components}
 \usage{
-decompose_within_between(data, group, vars)
+decompose_within_between(
+  data,
+  group,
+  vars,
+  components = c("gmc", "between", "within"),
+  gmc_pattern = "{col}_grand_mean_centered",
+  between_pattern = "{col}_between_{group}",
+  within_pattern = "{col}_within_{group}"
+)
 }
 \arguments{
 \item{data}{A data frame containing the variables to decompose.}
@@ -12,14 +20,32 @@ decompose_within_between(data, group, vars)
 \item{group}{A character string specifying the name of the grouping variable.}
 
 \item{vars}{A character vector specifying the names of variables to decompose.}
+
+\item{components}{A character vector specifying which components to compute.
+Any subset of \code{c("gmc", "between", "within")} (default: all three).
+\code{"gmc"} = grand mean centering, \code{"between"} = group means,
+\code{"within"} = within-group deviations. If \code{"within"} is requested
+without \code{"between"}, the between component is computed internally as an
+intermediate step and not included in the output.}
+
+\item{gmc_pattern}{A glue-style naming pattern for grand-mean-centered columns.
+Use \code{{col}} for the variable name. Default: \code{"{col}_grand_mean_centered"}.}
+
+\item{between_pattern}{A glue-style naming pattern for between-group (group mean)
+columns. Use \code{{col}} for the variable name and \code{{group}} for the
+grouping variable name. Default: \code{"{col}_between_{group}"}.}
+
+\item{within_pattern}{A glue-style naming pattern for within-group deviation
+columns. Use \code{{col}} for the variable name and \code{{group}} for the
+grouping variable name. Default: \code{"{col}_within_{group}"}.}
 }
 \value{
 A data frame containing:
 \itemize{
 \item All original variables from \code{data}
-\item Grand mean centered versions (suffix: \code{_grand_mean_centered})
-\item Between-group means (suffix: \code{_between_[group]})
-\item Within-group deviations (suffix: \code{_within_[group]})
+\item Grand mean centered versions (named by \code{gmc_pattern}), if \code{"gmc"} in \code{components}
+\item Between-group means (named by \code{between_pattern}), if \code{"between"} in \code{components}
+\item Within-group deviations (named by \code{within_pattern}), if \code{"within"} in \code{components}
 }
 }
 \description{
@@ -51,21 +77,32 @@ their group mean. This removes all between-group variance and represents the
 within-group effect of the predictor in REWB models.
 }
 \examples{
-\dontrun{
-# Create sample data
-data <- data.frame(
-  participant = rep(1:10, each = 5),
-  stress = rnorm(50, 50, 10),
-  mood = rnorm(50, 50, 10)
+data("media_diary")
+
+# Decompose all three components (default)
+result <- decompose_within_between(
+  data = media_diary,
+  group = "person",
+  vars = c("stress", "screen_time")
 )
 
-# Decompose variables for REWB modeling
-result <- decompose_within_between(
-  data = data,
-  group = "participant",
-  vars = c("stress", "mood")
+# Only between and within (no grand mean centering)
+result_wb <- decompose_within_between(
+  data = media_diary,
+  group = "person",
+  vars = c("stress", "screen_time"),
+  components = c("between", "within")
 )
-}
+
+# Custom column naming: flat suffixes without the group name
+result_flat <- decompose_within_between(
+  data = media_diary,
+  group = "person",
+  vars = c("stress", "screen_time"),
+  components = c("between", "within"),
+  between_pattern = "{col}_between",
+  within_pattern = "{col}_within"
+)
 
 }
 \references{
@@ -76,5 +113,6 @@ Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in cross-sect
 multilevel models: A new look at an old issue. \emph{Psychological Methods}, 12(2), 121-138.
 }
 \seealso{
-\code{\link{within_between_correlations}} for computing correlations on decomposed components
+\code{\link{within_between_correlations}}, which uses this
+function internally to perform the within/between decomposition.
 }

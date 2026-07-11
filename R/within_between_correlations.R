@@ -1,100 +1,219 @@
 #' Compute Within-Group and Between-Group Correlations
 #'
-#' This function decomposes observed correlations between variables into within-group
-#' and between-group components following the approach of Pedhazur (1997) as originally implemented
-#' in \code{psych::statsBy}. The decomposition follows the formula:
-#' \deqn{r_{xy} = \eta_{x,wg} * \eta_{y,wg} * r_{xy,wg} + \eta_{x,bg} * \eta_{y,bg} * r_{xy,bg}}
+#' In data with a grouping structure (e.g., repeated measurements per person, or
+#' students nested within schools), a single correlation between two variables can
+#' be misleading, because it mixes two different relationships: how the variables
+#' relate \emph{within} each group (e.g., do a person's good days also tend to be
+#' their productive days?), and how they relate \emph{between} groups (e.g., do
+#' people who are generally happier also tend to be generally more productive?).
+#' This function estimates both relationships separately, using one of three
+#' methods (see Details and \code{vignette("correlation-methods")} for the full
+#' statistical background).
 #'
 #' @param data A data frame containing the variables to analyze.
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to correlate.
-#' @param weight Logical. If TRUE (default), between-group correlations are weighted by group size.
-#'   If FALSE, each group contributes equally (unweighted group means).
+#' @param method Character string specifying the estimation method: \code{"decomposition"}
+#'   (default), \code{"sem"}, or \code{"bayes"}. See Details.
+#' @param weight Logical. Used when \code{method = "decomposition"} or \code{method =
+#'   "bayes"}. If TRUE (default), the between-group correlation gives more weight to
+#'   larger groups; significance/credible intervals, however, are always based on the
+#'   unweighted correlation of group means. If FALSE, every group counts equally
+#'   regardless of size. Ignored (with a message) when \code{method = "sem"}, because
+#'   that method handles unequal group sizes automatically.
 #' @param flip Logical. If TRUE, between-group correlations are shown in the upper
 #'   triangle and within-group correlations in the lower triangle. Default is FALSE.
 #' @param significance Character string specifying the significance marking style.
 #'   Either "basic" (default) or "detailed". If "basic", correlations with p < .05
-#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars 
-#'   for p < .05, p < .01, or p < .001, respectively.
+#'   are marked with a star. If "detailed", correlations are marked with 1-3 stars
+#'   for p < .05, p < .01, or p < .001, respectively. Ignored (with a message) when
+#'   \code{method = "bayes"}, which always marks correlations whose credible interval
+#'   (see \code{ci}) excludes zero with a single star.
+#' @param ci Numeric value strictly between 0 and 1 specifying the credible interval
+#'   width used to decide whether a correlation is starred. Only applicable when
+#'   \code{method = "bayes"}; default is 0.9 (90% CI). Ignored (with a message) for
+#'   other methods.
+#' @param folder Character string specifying the directory path where \code{brms}
+#'   models should be saved. Required when \code{method = "bayes"}; ignored (with a
+#'   message) otherwise. Default is \code{NULL}.
 #'
 #' @return A tibble containing a correlation matrix where:
 #' \itemize{
 #'   \item The upper triangle contains within-group correlations
 #'   \item The lower triangle contains between-group correlations
-#'   \item Diagonal elements are marked with "-"
-#'   \item Significant correlations are marked with asterisks (see \code{significance} parameter)
+#'   \item Diagonal elements are marked with "–"
+#'   \item Significant correlations are marked with asterisks (see \code{significance}
+#'     parameter, or \code{ci} when \code{method = "bayes"})
 #' }
+#'
+#' The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+#' and as a tinytable object using \code{print(result, format = "tt")}.
 #'
 #' @details
-#' \strong{Within-group correlations} are computed on deviation scores (individual values
-#' minus group means).
+#' \strong{Method \code{"decomposition"}} (the default) computes the within-group
+#' correlation by first subtracting each group's mean from every observation, then
+#' correlating the resulting deviation scores. It computes the between-group
+#' correlation by correlating the group means with one another (optionally weighted
+#' by group size; see \code{weight}). This approach follows Pedhazur (1997, ch.
+#' 16), and the significance tests account for the fact that subtracting group
+#' means uses up degrees of freedom, following the general testing principle in
+#' Snijders and Bosker (2012, sec. 6.1). This method is fast and easy to interpret,
+#' and works well for most data sets, but is less suited to data with very unequal
+#' group sizes.
 #'
-#' \strong{Between-group correlations} can be computed in two ways:
-#' \itemize{
-#'   \item If \code{weight = TRUE}: Computed on group means replicated for each observation.
-#'     This implicitly weights groups by their sample size and matches the variance
-#'     decomposition formula.
-#'   \item If \code{weight = FALSE}: Computed on unique group means only. Each group
-#'     contributes equally regardless of size.
-#' }
+#' \strong{Method \code{"sem"}} fits a two-level structural equation model (via
+#' \code{lavaan::sem()}) that estimates the within-group and between-group
+#' covariance matrices simultaneously using maximum likelihood. Significance is
+#' based on the resulting z-tests. Because groups are weighted implicitly through
+#' maximum likelihood estimation rather than through the \code{weight} argument,
+#' this method is the more principled choice for data with very unequal group
+#' sizes or a moderate amount of missing data. It is slower than
+#' \code{"decomposition"} and can occasionally fail to converge for small or
+#' collinear data sets.
 #'
-#' The significance tests account for the effective sample size:
-#' \itemize{
-#'   \item Within-group p-values use the total number of observations
-#'   \item Between-group p-values use the number of groups
-#' }
+#' For \code{method = "sem"}, variables that never vary within a group (e.g.,
+#' time-invariant traits) are modeled only at the between-group level, and
+#' variables with almost no between-group variance (intraclass correlation near
+#' zero) are modeled only at the within-group level; the corresponding cells of the
+#' unused level are reported as \code{NA}.
 #'
+#' \strong{Method \code{"bayes"}} mirrors \code{"decomposition"}, but estimates
+#' both correlations via Bayesian multivariate models fit with \code{brms::brm()}
+#' (requires the \pkg{brms} package) instead of closed-form formulas, reporting
+#' posterior medians and credible intervals (via \code{ci}) in place of point
+#' estimates and p-values. It requires a \code{folder} argument to cache fitted
+#' models, can take considerably longer than the other two methods, and is most
+#' useful when the number of groups is small or when communicating uncertainty
+#' via credible intervals is a priority. See \code{vignette("correlation-methods")}
+#' for details on the number of models fit and caching behavior.
 #'
 #' @examples
-#' \dontrun{
-#' # Create sample data
-#' data <- data.frame(
-#'   school = rep(1:5, each = 20),
-#'   math_score = rnorm(100, 50, 10),
-#'   reading_score = rnorm(100, 50, 10)
-#' )
+#' data("media_diary")
 #'
-#' # Compute weighted between-group correlations (default)
+#' # Compute weighted between-group correlations (default, decomposition method)
 #' result_weighted <- within_between_correlations(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score")
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time")
 #' )
 #'
 #' # Compute unweighted between-group correlations
 #' result_unweighted <- within_between_correlations(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
 #'   weight = FALSE
 #' )
 #'
+#' # Use SEM-based estimation (on similarly-scaled variables; SEM is
+#' # sensitive to large scale differences, unlike "decomposition")
+#' \donttest{
+#' result_sem <- within_between_correlations(
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "stress"),
+#'   method = "sem"
+#' )
+#' }
+#'
 #' # Use detailed significance marking
 #' result_detailed <- within_between_correlations(
-#'   data = data,
-#'   group = "school",
-#'   vars = c("math_score", "reading_score"),
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
 #'   significance = "detailed"
+#' )
+#'
+#' # Use Bayesian estimation (requires the brms package)
+#' \donttest{
+#' result_bayes <- within_between_correlations(
+#'   data = media_diary,
+#'   group = "person",
+#'   vars = c("wellbeing", "screen_time"),
+#'   method = "bayes",
+#'   folder = tempdir()
 #' )
 #' }
 #'
 #' @references
-#' Pedhazur, E. J. (1997). Multiple regression in behavioral research: explanation and prediction. Harcourt Brace.
+#' Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+#' Stan. \emph{Journal of Statistical Software, 80}(1), 1–28.
+#' \doi{10.18637/jss.v080.i01}
 #'
-#' @seealso \code{\link[psych]{statsBy}} for the original implementation
+#' Hox, J., Moerbeek, M., & van de Schoot, R. (2018). \emph{Multilevel analysis:
+#' Techniques and applications} (3rd ed.). Routledge.
+#'
+#' Pedhazur, E. J. (1997). \emph{Multiple regression in behavioral research:
+#' Explanation and prediction}. Harcourt Brace.
+#'
+#' Snijders, T. A. B., & Bosker, R. J. (2012). \emph{Multilevel analysis: An
+#' introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishers.
+#'
+#' @seealso \code{\link{mldesc}}, which combines this function's output with
+#'   descriptive statistics and ICCs in a single table. See
+#'   \code{vignette("correlation-methods")} for a detailed statistical description
+#'   of all three methods.
 #'
 #' @export
-within_between_correlations <- function(data, group, vars, weight = TRUE, flip = FALSE, significance = c("basic", "detailed")) {
+within_between_correlations <- function(
+  data,
+  group,
+  vars,
+  method = c("decomposition", "sem", "bayes"),
+  weight = TRUE,
+  flip = FALSE,
+  significance = c("basic", "detailed"),
+  ci = 0.9,
+  folder = NULL
+) {
+  # Captured before match.arg() reassigns `significance` below: once a
+  # formal argument has been assigned to, missing() unconditionally returns
+  # FALSE for it, regardless of whether the caller actually supplied it.
+  significance_missing <- base::missing(significance)
+
+  method <- base::match.arg(method)
   significance <- base::match.arg(significance)
-  
+  .validate_group_vars(data, group, vars)
+
+  # Warn if weight is specified with SEM method. `weight` has no effect on
+  # the correlation estimates under method = "sem" regardless of whether it
+  # is TRUE or FALSE, so this fires for either explicit value.
+  if (method == "sem" && !base::missing(weight)) {
+    cli::cli_inform(c(
+      "i" = "The {.arg weight} argument has no effect on the correlation estimates when {.code method = \"sem\"}.",
+      "i" = "ML estimation handles unbalanced group sizes natively."
+    ))
+  }
+
+  # `ci`/`folder` only matter for method = "bayes"; `significance` only
+  # matters for the other two methods (bayes marks credible intervals
+  # instead of p-values). Only fire when the caller explicitly supplied the
+  # inapplicable argument, mirroring the `weight`/`sem` message above.
+  if (method != "bayes") {
+    if (!base::missing(ci)) {
+      cli::cli_inform(c(
+        "i" = "The {.arg ci} argument has no effect unless {.code method = \"bayes\"}."
+      ))
+    }
+    if (!base::is.null(folder)) {
+      cli::cli_inform(c(
+        "i" = "The {.arg folder} argument has no effect unless {.code method = \"bayes\"}."
+      ))
+    }
+  } else if (!significance_missing) {
+    cli::cli_inform(c(
+      "i" = "The {.arg significance} argument has no effect when {.code method = \"bayes\"}.",
+      "i" = "Credible-interval-based marking is controlled by {.arg ci} instead."
+    ))
+  }
+
   # Helper function to add significance stars
   add_stars <- function(est, pval, style) {
-    label <- if (base::is.finite(est)) {
-      base::sprintf("%.2f", est)
-    } else {
-      "NA"
+    if (!base::is.finite(est)) {
+      return("NA")
     }
-    
+    label <- base::sprintf("%.2f", est)
+
     if (!base::is.na(pval)) {
       if (style == "detailed") {
         if (pval < 0.001) {
@@ -110,114 +229,32 @@ within_between_correlations <- function(data, group, vars, weight = TRUE, flip =
         }
       }
     }
-    
+
     return(label)
   }
-  
-  # Compute group means
-  group_means <-
-    data |>
-    dplyr::group_by(!!rlang::sym(group)) |>
-    dplyr::summarise(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ base::mean(.x, na.rm = TRUE)
-      ),
-      .groups = "drop"
+
+  if (method == "bayes") {
+    rlang::check_installed(
+      "brms",
+      reason = "to fit Bayesian within- and between-group correlations."
     )
-
-  # Merge group means back to original data
-  d_with_means <-
-    data |>
-    dplyr::select(dplyr::all_of(c(group, vars))) |>
-    dplyr::left_join(
-      group_means,
-      by = group,
-      suffix = c("", "_between")
-    )
-
-  # Compute within-group deviations
-  d_centered <-
-    d_with_means |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::all_of(vars),
-        ~ .x - base::get(base::paste0(dplyr::cur_column(), "_between")),
-        .names = "{col}_within"
-      )
-    )
-
-  # Prepare data for between-group correlations
-  if (weight) {
-    # Use all observations (variance-weighted)
-    d_between <- d_centered
-  } else {
-    # Use only one observation per group (unweighted)
-    d_between <- d_centered |>
-      dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
-  }
-
-  # Initialize comparison matrix
-  n_groups <- base::nrow(group_means)
-  n <- base::length(vars)
-  comparison_matrix <- base::matrix("", nrow = n, ncol = n)
-
-  # Compute correlations
-  for (i in base::seq_along(vars)) {
-    for (j in base::seq_along(vars)) {
-      if (i == j) {
-        comparison_matrix[i, j] <- "\u2013"
-      } else if (i < j) {
-        # Within-group correlation (on all observations)
-        within_x <- d_centered[[base::paste0(vars[i], "_within")]]
-        within_y <- d_centered[[base::paste0(vars[j], "_within")]]
-
-        # Check for zero variance
-        if (
-          stats::sd(within_x, na.rm = TRUE) == 0 ||
-            stats::sd(within_y, na.rm = TRUE) == 0
-        ) {
-          comparison_matrix[i, j] <- "NA"
-        } else {
-          cor_within <- base::suppressWarnings(
-            stats::cor.test(within_x, within_y)
-          )
-          est <- base::as.numeric(cor_within$estimate)
-          pval <- cor_within$p.value
-          comparison_matrix[i, j] <- add_stars(est, pval, significance)
-        }
-      } else {
-        # Between-group correlation
-        between_x <- d_between[[base::paste0(vars[i], "_between")]]
-        between_y <- d_between[[base::paste0(vars[j], "_between")]]
-
-        # Check for zero variance
-        if (
-          stats::sd(between_x, na.rm = TRUE) == 0 ||
-            stats::sd(between_y, na.rm = TRUE) == 0
-        ) {
-          comparison_matrix[i, j] <- "NA"
-        } else {
-          r_bg <- stats::cor(
-            between_x,
-            between_y,
-            use = "pairwise.complete.obs"
-          )
-          # Compute p-value using number of groups (only if df > 0)
-          if (n_groups > 2) {
-            t_stat <- (r_bg * base::sqrt(n_groups - 2)) / base::sqrt(1 - r_bg^2)
-            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = n_groups - 2))
-          } else {
-            # With 2 or fewer groups, p-value is undefined
-            pval <- NA
-          }
-
-          est <- r_bg
-          comparison_matrix[i, j] <- add_stars(est, pval, significance)
-        }
-      }
+    if (base::is.null(folder)) {
+      base::stop("Argument 'folder' must be specified to save brms models when method = \"bayes\".")
     }
+    if (!base::dir.exists(folder)) {
+      base::dir.create(folder, recursive = TRUE)
+    }
+    if (ci <= 0 || ci >= 1) {
+      base::stop("Argument 'ci' must be between 0 and 1.")
+    }
+    comparison_matrix <- .wb_cor_bayes(data, group, vars, weight, ci, folder)
+  } else if (method == "sem") {
+    comparison_matrix <- .wb_cor_sem(data, group, vars, significance, add_stars)
+  } else {
+    comparison_matrix <- .wb_cor_decomposition(data, group, vars, weight, significance, add_stars)
   }
+
+  n <- base::length(vars)
 
   # Convert to tibble for output
   result_tibble <-
@@ -245,14 +282,749 @@ within_between_correlations <- function(data, group, vars, weight = TRUE, flip =
     )
 
   # Set significance note based on style
-  if (significance == "detailed") {
+  if (method == "bayes") {
+    ci_percent <- base::round(ci * 100)
+    significance_note <- base::paste0(
+      "Correlations marked with a star have ",
+      ci_percent,
+      "% credible intervals that exclude zero."
+    )
+  } else if (significance == "detailed") {
     significance_note <- "Correlations marked with * are significant at p < .05, ** at p < .01, and *** at p < .001."
   } else {
     significance_note <- "All correlations marked with a star are significant at p < .05."
   }
 
+  group_label <- .group_note_label(group)
+
   class(result_tibble) <- c("mlstats_wb_tibble", class(result_tibble))
+  base::attr(result_tibble, "group") <- group
   base::attr(result_tibble, "flipped") <- flip
+  base::attr(result_tibble, "table_title") <- ""
+  base::attr(result_tibble, "correlation_note") <- if (flip) {
+    base::paste0(
+      "Between-", group_label, " correlations above, within-", group_label,
+      " correlations below the diagonal."
+    )
+  } else {
+    base::paste0(
+      "Within-", group_label, " correlations above, between-", group_label,
+      " correlations below the diagonal."
+    )
+  }
   base::attr(result_tibble, "significance_note") <- significance_note
+  base::attr(result_tibble, "method") <- method
+  if (method == "bayes") {
+    base::attr(result_tibble, "bayesian") <- TRUE
+    base::attr(result_tibble, "note_text") <- if (weight) {
+      base::paste0("Bayesian group-weighted within- and between-", group_label, " correlations computed with mlstats.")
+    } else {
+      base::paste0("Bayesian unweighted within- and between-", group_label, " correlations computed with mlstats.")
+    }
+  } else {
+    method_label <- if (method == "sem") "SEM-based" else if (weight) "group-weighted" else "unweighted"
+    base::attr(result_tibble, "note_text") <- base::paste0(
+      base::toupper(base::substr(method_label, 1, 1)),
+      base::substr(method_label, 2, base::nchar(method_label)),
+      " within- and between-", group_label, " correlations computed with mlstats."
+    )
+  }
   return(result_tibble)
+}
+
+# --- Internal: decomposition method (Pedhazur, 1997) ---
+.wb_cor_decomposition <- function(data, group, vars, weight, significance, add_stars) {
+  d_centered <- decompose_within_between(
+    dplyr::select(data, dplyr::all_of(base::c(group, vars))),
+    group = group,
+    vars = vars,
+    components = base::c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
+
+  n_groups <- base::length(base::unique(data[[group]]))
+
+  # One row per group — used for unweighted between correlation and for the
+  # significance test (df = n_groups - 2, regardless of weight)
+  d_between_unweighted <- d_centered |>
+    dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
+
+  # Prepare data for between-group point estimates
+  d_between <- if (weight) d_centered else d_between_unweighted
+
+  # Initialize comparison matrix
+  n <- base::length(vars)
+  comparison_matrix <- base::matrix("", nrow = n, ncol = n)
+
+  # Compute correlations
+  for (i in base::seq_along(vars)) {
+    for (j in base::seq_along(vars)) {
+      if (i == j) {
+        comparison_matrix[i, j] <- "\u2013"
+      } else if (i < j) {
+        # Within-group correlation (on all observations)
+        within_x <- d_centered[[base::paste0(vars[i], "_within")]]
+        within_y <- d_centered[[base::paste0(vars[j], "_within")]]
+
+        # Check for zero variance
+        if (
+          stats::sd(within_x, na.rm = TRUE) == 0 ||
+            stats::sd(within_y, na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          est <- stats::cor(within_x, within_y, use = "pairwise.complete.obs")
+
+          # Group-mean centering removes one df per group that contributed at
+          # least one complete (x, y) pair — only those groups' means were
+          # actually subtracted from observations entering the correlation.
+          # See Snijders & Bosker (2012, eq. 6.1) for the general rule.
+          complete_rows <- stats::complete.cases(within_x, within_y)
+          n_pairs <- base::sum(complete_rows)
+          n_groups_with_pairs <- base::length(
+            base::unique(d_centered[[group]][complete_rows])
+          )
+          df_wg <- n_pairs - n_groups_with_pairs - 1
+
+          if (df_wg > 0) {
+            t_stat <- est * base::sqrt(df_wg) / base::sqrt(1 - est^2)
+            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = df_wg))
+          } else {
+            pval <- NA
+          }
+
+          comparison_matrix[i, j] <- add_stars(est, pval, significance)
+        }
+      } else {
+        # Between-group correlation
+        between_x <- d_between[[base::paste0(vars[i], "_between")]]
+        between_y <- d_between[[base::paste0(vars[j], "_between")]]
+
+        # Check for zero variance
+        if (
+          stats::sd(between_x, na.rm = TRUE) == 0 ||
+            stats::sd(between_y, na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          est <- stats::cor(
+            between_x,
+            between_y,
+            use = "pairwise.complete.obs"
+          )
+
+          # The significance test always uses the unweighted correlation of
+          # group means (one independent observation per group), even when
+          # `weight = TRUE` and the displayed estimate is the group-size-
+          # weighted correlation. df is based on the number of groups that
+          # contributed a non-NA mean for both variables, since groups with
+          # all-NA observations on either variable are excluded by
+          # pairwise.complete.obs and should not consume a degree of freedom.
+          r_bg_unweighted <- stats::cor(
+            d_between_unweighted[[base::paste0(vars[i], "_between")]],
+            d_between_unweighted[[base::paste0(vars[j], "_between")]],
+            use = "pairwise.complete.obs"
+          )
+
+          n_groups_complete <- base::sum(stats::complete.cases(
+            d_between_unweighted[[base::paste0(vars[i], "_between")]],
+            d_between_unweighted[[base::paste0(vars[j], "_between")]]
+          ))
+
+          if (n_groups_complete > 2 && !base::is.na(r_bg_unweighted)) {
+            t_stat <- (r_bg_unweighted * base::sqrt(n_groups_complete - 2)) /
+              base::sqrt(1 - r_bg_unweighted^2)
+            pval <- 2 * (1 - stats::pt(base::abs(t_stat), df = n_groups_complete - 2))
+          } else {
+            # With 2 or fewer complete groups, p-value is undefined
+            pval <- NA
+          }
+
+          comparison_matrix[i, j] <- add_stars(est, pval, significance)
+        }
+      }
+    }
+  }
+
+  comparison_matrix
+}
+
+# --- Internal: SEM method (two-level SEM via lavaan) ---
+.wb_cor_sem <- function(data, group, vars, significance, add_stars) {
+  rlang::check_installed("lavaan", reason = "to compute SEM-based multilevel correlations.")
+
+  n <- base::length(vars)
+  comparison_matrix <- base::matrix("", nrow = n, ncol = n)
+
+  if (n < 2) {
+    comparison_matrix[1, 1] <- "\u2013"
+    return(comparison_matrix)
+  }
+
+  cluster_vec <- data[[group]]
+
+  # --- Detect (and exclude) zero-variance variables up front ---
+  # A variable that is constant across the whole sample has no variance at
+  # either level. Left unhandled, it would be classified as between-only
+  # below (every per-cluster variance is also ~0) and handed to lavaan as a
+  # guaranteed singular/zero-variance parameter at the between level.
+  is_constant <- base::vapply(vars, function(v) {
+    stats::var(data[[v]], na.rm = TRUE) < .Machine$double.eps^0.5
+  }, FUN.VALUE = base::logical(1))
+  constant_vars <- vars[is_constant]
+  if (base::length(constant_vars) > 0) {
+    cli::cli_warn(c(
+      "{cli::qty(constant_vars)}{.val {constant_vars}} {?is/are} constant (zero variance) and cannot be modeled.",
+      "i" = "{cli::qty(constant_vars)}Excluding {?it/them} from the SEM model; the corresponding correlations will be {.val NA}."
+    ))
+  }
+  classifiable_vars <- base::setdiff(vars, constant_vars)
+
+  # --- Detect between-only variables (zero within-cluster variance) ---
+  # These are cluster-level variables (e.g., traits) that have no within-group
+  # variation and must be excluded from the within (level 1) model.
+  is_between_only <- base::vapply(classifiable_vars, function(v) {
+    grp_var <- base::tapply(data[[v]], cluster_vec, stats::var, na.rm = TRUE)
+    grp_var_observed <- grp_var[!base::is.na(grp_var)]
+    if (base::length(grp_var_observed) == 0) {
+      # No cluster has more than one observation for this variable, so no
+      # within-cluster variance is observable at all; treat as between-only.
+      return(TRUE)
+    }
+    base::all(grp_var_observed < .Machine$double.eps^0.5)
+  }, FUN.VALUE = base::logical(1))
+  between_only_vars <- classifiable_vars[is_between_only]
+
+  # --- Detect within-only variables (ICC ~ 0) among remaining variables ---
+  # These variables have no between-group variation and must be excluded from
+  # the between (level 2) model.
+  remaining_vars <- base::setdiff(classifiable_vars, between_only_vars)
+  if (base::length(remaining_vars) > 0) {
+    is_within_only <- base::vapply(remaining_vars, function(v) {
+      sigma2_total <- stats::var(data[[v]], na.rm = TRUE)
+      grp_means <- base::tapply(data[[v]], cluster_vec, base::mean, na.rm = TRUE)
+      sigma2_between <- stats::var(grp_means, na.rm = TRUE)
+      (sigma2_between / sigma2_total) < .Machine$double.eps^0.5
+    }, FUN.VALUE = base::logical(1))
+    within_only_vars <- remaining_vars[is_within_only]
+  } else {
+    within_only_vars <- base::character(0)
+  }
+
+  # --- Variable sets per level ---
+  var_within <- base::setdiff(vars, base::c(between_only_vars, constant_vars))
+  var_between <- base::setdiff(vars, base::c(within_only_vars, constant_vars))
+
+  # --- Build lavaan model syntax (covariances only, as in misty) ---
+  within_lines <- base::character(0)
+  between_lines <- base::character(0)
+
+  if (base::length(var_within) >= 2) {
+    combos_w <- utils::combn(var_within, 2)
+    for (k in base::seq_len(base::ncol(combos_w))) {
+      within_lines <- base::c(
+        within_lines,
+        base::paste0(combos_w[1, k], " ~~ ", combos_w[2, k])
+      )
+    }
+  } else if (base::length(var_within) == 1) {
+    within_lines <- base::paste0(var_within, " ~~ ", var_within)
+  }
+
+  if (base::length(var_between) >= 2) {
+    combos_b <- utils::combn(var_between, 2)
+    for (k in base::seq_len(base::ncol(combos_b))) {
+      between_lines <- base::c(
+        between_lines,
+        base::paste0(combos_b[1, k], " ~~ ", combos_b[2, k])
+      )
+    }
+  } else if (base::length(var_between) == 1) {
+    between_lines <- base::paste0(var_between, " ~~ ", var_between)
+  }
+
+  # lavaan requires a non-empty model for *each* level when `cluster` is set
+  # (an empty `level:` block, or a single-level-only spec, is a syntax error).
+  # If every variable was classified into a single level (e.g. none has any
+  # within-group variance at all), a two-level model cannot be fit at all.
+  if (base::length(var_within) == 0 || base::length(var_between) == 0) {
+    cli::cli_warn(c(
+      "None of {.val {vars}} has variance at both the within-group and between-group level.",
+      "i" = "Returning {.val NA} for all correlations.",
+      "i" = "Try {.code method = \"decomposition\"} instead, or check whether {.arg vars} are constant or vary at only one level."
+    ))
+    comparison_matrix[] <- "NA"
+    base::diag(comparison_matrix) <- "\u2013"
+    return(comparison_matrix)
+  }
+
+  model_syntax <- base::paste0(
+    "level: 1\n",
+    base::paste(within_lines, collapse = "\n"),
+    "\n\nlevel: 2\n",
+    base::paste(between_lines, collapse = "\n")
+  )
+
+  # --- Fit the model (MLR with nlminb -> EM fallback -> ML fallback) ---
+  # Warnings from lavaan::sem() are captured (not discarded) so that real
+  # convergence/non-PD problems are still visible to the user, just routed
+  # through a single, consistently-formatted cli::cli_warn() instead of
+  # raw lavaan console output.
+  .try_sem <- function(...) {
+    caught <- base::character(0)
+    fit <- base::tryCatch(
+      base::withCallingHandlers(
+        lavaan::sem(...),
+        warning = function(w) {
+          caught <<- base::c(caught, base::conditionMessage(w))
+          rlang::cnd_muffle(w)
+        }
+      ),
+      error = function(e) NULL
+    )
+    base::list(fit = fit, warnings = base::unique(caught))
+  }
+  .converged <- function(fit) {
+    !base::is.null(fit) && base::isTRUE(lavaan::lavInspect(fit, "converged"))
+  }
+
+  attempt <- .try_sem(
+    model_syntax,
+    data = data,
+    cluster = group,
+    estimator = "MLR",
+    missing = "listwise",
+    optim.method = "nlminb",
+    check.gradient = FALSE,
+    check.post = FALSE,
+    check.vcov = FALSE
+  )
+  fit <- attempt$fit
+
+  if (!.converged(fit)) {
+    attempt <- .try_sem(
+      model_syntax,
+      data = data,
+      cluster = group,
+      estimator = "MLR",
+      missing = "listwise",
+      optim.method = "em",
+      se = "robust.huber.white",
+      check.gradient = FALSE,
+      check.post = FALSE,
+      check.vcov = FALSE
+    )
+    fit <- attempt$fit
+  }
+
+  se_ok <- base::tryCatch(
+    {
+      pe <- lavaan::parameterEstimates(fit)
+      base::all(!base::is.na(pe$se))
+    },
+    error = function(e) FALSE
+  )
+
+  if (!.converged(fit) || !se_ok) {
+    attempt <- .try_sem(
+      model_syntax,
+      data = data,
+      cluster = group,
+      estimator = "ML",
+      missing = "listwise",
+      check.gradient = FALSE,
+      check.post = FALSE,
+      check.vcov = FALSE
+    )
+    fit <- attempt$fit
+  }
+
+  if (!.converged(fit)) {
+    cli::cli_warn(c(
+      "The two-level SEM model could not be fit for variables {.val {vars}}.",
+      "i" = "Returning {.val NA} for all correlations.",
+      "i" = "Try {.code method = \"decomposition\"} instead, or check your data for collinearity or small group sizes."
+    ))
+    comparison_matrix[] <- "NA"
+    base::diag(comparison_matrix) <- "\u2013"
+    return(comparison_matrix)
+  }
+
+  # --- Extract results via lavMatrixRepresentation (warnings captured too) ---
+  extraction_warnings <- base::character(0)
+  std_sol <- base::withCallingHandlers(
+    lavaan::lavMatrixRepresentation(lavaan::standardizedSolution(fit)),
+    warning = function(w) {
+      extraction_warnings <<- base::c(extraction_warnings, base::conditionMessage(w))
+      rlang::cnd_muffle(w)
+    }
+  )
+  param_est <- lavaan::lavMatrixRepresentation(
+    lavaan::parameterEstimates(fit)
+  )
+
+  fit_warnings <- base::unique(base::c(attempt$warnings, extraction_warnings))
+  if (base::length(fit_warnings) > 0) {
+    cli::cli_warn(c(
+      "!" = "The two-level SEM model for variables {.val {vars}} converged, but {.pkg lavaan} reported {base::length(fit_warnings)} warning{?s} during estimation:",
+      stats::setNames(fit_warnings, base::rep("*", base::length(fit_warnings))),
+      "i" = "These often indicate a non-positive-definite covariance matrix or a non-identified model; inspect the results carefully."
+    ))
+  }
+
+  # Within: filter level 1 parameter IDs, then theta matrix off-diagonal
+  within_ids <- base::unlist(
+    base::subset(param_est, param_est$level == 1, select = "id")
+  )
+  if (base::length(within_ids) > 0) {
+    within_std <- std_sol[within_ids, , drop = FALSE]
+    within_theta <- within_std[
+      within_std$mat == "theta" & within_std$row != within_std$col,
+      ,
+      drop = FALSE
+    ]
+  } else {
+    within_theta <- std_sol[0, , drop = FALSE]
+  }
+
+  # Between: filter level 2 parameter IDs, then theta matrix off-diagonal
+  between_ids <- base::unlist(
+    base::subset(param_est, param_est$level == 2, select = "id")
+  )
+  if (base::length(between_ids) > 0) {
+    between_std <- std_sol[between_ids, , drop = FALSE]
+    between_theta <- between_std[
+      between_std$mat == "theta" & between_std$row != between_std$col,
+      ,
+      drop = FALSE
+    ]
+  } else {
+    between_theta <- std_sol[0, , drop = FALSE]
+  }
+
+  # --- Fill comparison matrix ---
+  improper_pairs <- base::character(0)
+
+  for (i in base::seq_along(vars)) {
+    for (j in base::seq_along(vars)) {
+      if (i == j) {
+        comparison_matrix[i, j] <- "\u2013"
+      } else if (i < j) {
+        # Within-group correlation (upper triangle by default)
+        vi <- vars[i]
+        vj <- vars[j]
+        if (vi %in% var_within && vj %in% var_within) {
+          idx <- base::which(
+            (within_theta$lhs == vi & within_theta$rhs == vj) |
+              (within_theta$lhs == vj & within_theta$rhs == vi)
+          )
+          if (base::length(idx) > 0) {
+            est <- within_theta$est.std[idx[1]]
+            pval <- within_theta$pvalue[idx[1]]
+            if (!base::is.finite(est) || base::abs(est) > 1) {
+              improper_pairs <- base::c(
+                improper_pairs,
+                base::paste0(vi, "-", vj, " (within)")
+              )
+              comparison_matrix[i, j] <- "NA"
+            } else {
+              comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            }
+          } else {
+            comparison_matrix[i, j] <- "NA"
+          }
+        } else {
+          comparison_matrix[i, j] <- "NA"
+        }
+      } else {
+        # Between-group correlation (lower triangle by default)
+        vi <- vars[i]
+        vj <- vars[j]
+        if (vi %in% var_between && vj %in% var_between) {
+          idx <- base::which(
+            (between_theta$lhs == vi & between_theta$rhs == vj) |
+              (between_theta$lhs == vj & between_theta$rhs == vi)
+          )
+          if (base::length(idx) > 0) {
+            est <- between_theta$est.std[idx[1]]
+            pval <- between_theta$pvalue[idx[1]]
+            if (!base::is.finite(est) || base::abs(est) > 1) {
+              improper_pairs <- base::c(
+                improper_pairs,
+                base::paste0(vi, "-", vj, " (between)")
+              )
+              comparison_matrix[i, j] <- "NA"
+            } else {
+              comparison_matrix[i, j] <- add_stars(est, pval, significance)
+            }
+          } else {
+            comparison_matrix[i, j] <- "NA"
+          }
+        } else {
+          comparison_matrix[i, j] <- "NA"
+        }
+      }
+    }
+  }
+
+  if (base::length(improper_pairs) > 0) {
+    n_improper <- base::length(improper_pairs)
+    cli::cli_warn(c(
+      "The two-level SEM model produced {n_improper} out-of-range standardized correlation{?s} (outside [-1, 1]) for: {.val {improper_pairs}}.",
+      "i" = "This usually indicates a non-positive-definite residual covariance matrix at that level.",
+      "i" = "Returning {.val NA} for the affected {n_improper} correlation{?s}."
+    ))
+  }
+
+  comparison_matrix
+}
+
+# --- Internal: Bayesian method (multivariate brms models) ---
+.wb_cor_bayes <- function(data, group, vars, weight, ci, folder) {
+  # brms::brm(file = ...) caches purely on filename, so a content hash of the
+  # relevant data (plus the sampling settings, which also affect the fit) is
+  # folded into every cache filename below. Otherwise, re-running with
+  # different data, or different options(mlstats.brms_iter/chains = ...),
+  # but the same `vars`/`group`/`folder` would silently reload a stale
+  # cached fit instead of refitting.
+  data_hash <- rlang::hash(base::list(data[base::c(group, vars)], .brms_iter(), .brms_chains()))
+
+  # Calculate quantiles for CI
+  alpha <- (1 - ci) / 2
+  ci_low <- alpha
+  ci_high <- 1 - alpha
+
+  d_centered <- decompose_within_between(
+    dplyr::select(data, dplyr::all_of(base::c(group, vars))),
+    group = group,
+    vars = vars,
+    components = base::c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
+
+  # One row per group — used for unweighted CI and for the significance test
+  d_between_unweighted <- d_centered |>
+    dplyr::distinct(!!rlang::sym(group), .keep_all = TRUE)
+
+  # Initialize comparison matrix
+  n <- base::length(vars)
+  comparison_matrix <- base::matrix("", nrow = n, ncol = n)
+
+  # Compute correlations
+  for (i in base::seq_along(vars)) {
+    for (j in base::seq_along(vars)) {
+      if (i == j) {
+        comparison_matrix[i, j] <- "\u2013"
+      } else if (i < j) {
+        # Within-group correlation
+        within_x <- base::paste0(vars[i], "_within")
+        within_y <- base::paste0(vars[j], "_within")
+
+        # Check for zero variance
+        if (
+          stats::sd(d_centered[[within_x]], na.rm = TRUE) == 0 ||
+            stats::sd(d_centered[[within_y]], na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          model_file <- base::file.path(
+            folder,
+            base::paste0("within_", vars[i], "__", vars[j], "_", data_hash)
+          )
+
+          fit <- base::suppressWarnings(
+            brms::brm(
+              brms::bf(stats::as.formula(base::paste0(
+                "brms::mvbind(",
+                within_x,
+                ", ",
+                within_y,
+                ") ~ 1"
+              ))) +
+                brms::set_rescor(rescor = TRUE),
+              seed = 42,
+              iter = .brms_iter(),
+              chains = .brms_chains(),
+              data = d_centered,
+              file = model_file,
+              silent = 2,
+              refresh = 0
+            )
+          )
+
+          draws <- fit |>
+            brms::as_draws_df() |>
+            dplyr::summarise(
+              dplyr::across(
+                dplyr::starts_with("rescor"),
+                base::list(
+                  Median = ~ stats::median(.x, na.rm = TRUE),
+                  CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                  CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                ),
+                .names = "{.fn}"
+              )
+            )
+
+          # Check if CI excludes zero
+          is_credible <- base::sign(draws$CI_high) + base::sign(draws$CI_low) != 0
+
+          label <- base::sprintf("%.2f", draws$Median)
+          if (is_credible) {
+            label <- base::paste0(label, "*")
+          }
+          comparison_matrix[i, j] <- label
+        }
+      } else {
+        # Between-group correlation
+        between_x <- base::paste0(vars[i], "_between")
+        between_y <- base::paste0(vars[j], "_between")
+
+        # Check for zero variance
+        if (
+          stats::sd(d_between_unweighted[[between_x]], na.rm = TRUE) == 0 ||
+            stats::sd(d_between_unweighted[[between_y]], na.rm = TRUE) == 0
+        ) {
+          comparison_matrix[i, j] <- "NA"
+        } else {
+          if (weight) {
+            # Fit unweighted model for credible intervals
+            model_file_unweighted <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_unweighted_", data_hash)
+            )
+
+            fit_unweighted <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_between_unweighted,
+                file = model_file_unweighted,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws_unweighted <- fit_unweighted |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                    CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            # Fit weighted model for point estimate
+            model_file_weighted <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_weighted_", data_hash)
+            )
+
+            fit_weighted <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_centered,
+                file = model_file_weighted,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws_weighted <- fit_weighted |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    Median = ~ stats::median(.x, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            # Use weighted estimate but unweighted CI
+            is_credible <- base::sign(draws_unweighted$CI_high) +
+              base::sign(draws_unweighted$CI_low) !=
+              0
+            label <- base::sprintf("%.2f", draws_weighted$Median)
+          } else {
+            # For unweighted, both estimate and CI from unweighted model
+            model_file <- base::file.path(
+              folder,
+              base::paste0("between_", vars[i], "__", vars[j], "_unweighted_", data_hash)
+            )
+
+            fit <- base::suppressWarnings(
+              brms::brm(
+                brms::bf(stats::as.formula(base::paste0(
+                  "brms::mvbind(",
+                  between_x,
+                  ", ",
+                  between_y,
+                  ") ~ 1"
+                ))) +
+                  brms::set_rescor(rescor = TRUE),
+                seed = 42,
+                iter = .brms_iter(),
+                chains = .brms_chains(),
+                data = d_between_unweighted,
+                file = model_file,
+                silent = 2,
+                refresh = 0
+              )
+            )
+
+            draws <- fit |>
+              brms::as_draws_df() |>
+              dplyr::summarise(
+                dplyr::across(
+                  dplyr::starts_with("rescor"),
+                  base::list(
+                    Median = ~ stats::median(.x, na.rm = TRUE),
+                    CI_low = ~ stats::quantile(.x, ci_low, na.rm = TRUE),
+                    CI_high = ~ stats::quantile(.x, ci_high, na.rm = TRUE)
+                  ),
+                  .names = "{.fn}"
+                )
+              )
+
+            is_credible <- base::sign(draws$CI_high) + base::sign(draws$CI_low) != 0
+            label <- base::sprintf("%.2f", draws$Median)
+          }
+
+          if (is_credible) {
+            label <- base::paste0(label, "*")
+          }
+          comparison_matrix[i, j] <- label
+        }
+      }
+    }
+  }
+
+  comparison_matrix
 }

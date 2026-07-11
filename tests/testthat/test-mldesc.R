@@ -41,7 +41,7 @@ test_that("mldesc computes descriptive statistics correctly", {
   expect_equal(vctrs::vec_data(result$m)[1], "20.00")
   
   # Check range format - extract underlying value
-  expect_match(vctrs::vec_data(result$range)[1], "^[0-9]+-[0-9]+$")
+  expect_match(vctrs::vec_data(result$range)[1], "^-?[0-9]+–-?[0-9]+$")
 })
 
 test_that("mldesc handles multiple variables", {
@@ -274,7 +274,7 @@ test_that("mldesc formats numbers correctly", {
   expect_match(sd_val, "^[0-9]+\\.[0-9]{2}$")
   
   # Range should be integers
-  expect_match(range_val, "^[0-9]+-[0-9]+$")
+  expect_match(range_val, "^-?[0-9]+–-?[0-9]+$")
   
   # ICC should have 2 decimal places
   expect_match(icc_val, "^\\.[0-9]{2}$")
@@ -677,8 +677,9 @@ test_that("mldesc stores default attributes for printing", {
     weight = TRUE
   )
   
-  # Check that default attributes are stored
-  expect_equal(attr(result, "table_title"), "Multilevel descriptive statistics")
+  # Check that default attributes are stored (table_title defaults to "" so
+  # that gt/tt output has no title unless the user supplies one via print())
+  expect_equal(attr(result, "table_title"), "")
   expect_equal(attr(result, "correlation_note"), 
                "Within-group correlations above, between-group correlations below the diagonal.")
   expect_match(attr(result, "note_text"), "Group-weighted")
@@ -854,20 +855,20 @@ test_that("mldesc flip doesn't affect descriptives or ICC", {
   )
 })
 
-test_that("bayes_mldesc print method accepts format parameter", {
+test_that("mldesc print method accepts format parameter", {
   set.seed(6000)
   data <- data.frame(
     group = rep(1:3, each = 10),
     x = rnorm(30),
     y = rnorm(30)
   )
-  
+
   result <- mldesc(
     data = data,
     group = "group",
     vars = c("x", "y")
   )
-  
+
   result_gt <- print(result, "gt")
   # Should return a gt table
   expect_s3_class(result_gt, "gt_tbl")
@@ -877,7 +878,7 @@ test_that("bayes_mldesc print method accepts format parameter", {
   expect_s4_class(result_tt, "tinytable")
 })
 
-test_that("bayes_mldesc print method accepts custom parameters", {
+test_that("mldesc print method accepts custom parameters", {
   set.seed(6000)
   data <- data.frame(
     group = rep(1:3, each = 10),
@@ -914,4 +915,570 @@ test_that("bayes_mldesc print method accepts custom parameters", {
   # Should return correct classes
   expect_s3_class(result_gt, "gt_tbl")
   expect_s4_class(result_tt, "tinytable")
+})
+
+# ---- Tests for method = "sem" ----
+
+test_that("mldesc method='sem' handles basic input correctly", {
+  set.seed(7001)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200, 50, 10),
+    y = rnorm(200, 50, 10)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  # Check structure
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_equal(nrow(result), 2)
+  expect_true(all(c("variable", "n_obs", "m", "sd", "range", "1", "2", "icc") %in% colnames(result)))
+})
+
+test_that("mldesc method='sem' does not leak the weight-ignored message", {
+  set.seed(7001)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200, 50, 10),
+    y = rnorm(200, 50, 10)
+  )
+
+  # within_between_correlations() informs when `weight` is explicitly
+  # specified under method = "sem" (it has no effect on the correlations),
+  # but mldesc() should not surface that message: `weight` still controls
+  # the mean/SD calculation here regardless of `method`.
+  expect_no_message(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y"),
+      method = "sem",
+      weight = FALSE
+    )
+  )
+})
+
+test_that("mldesc method='sem' still uses weight for mean/SD with unequal group sizes", {
+  set.seed(7002)
+  data <- data.frame(
+    group = rep(1:5, times = c(2, 4, 6, 8, 10)),
+    x = rnorm(30, 50, 10)
+  )
+
+  result_weighted <- suppressWarnings(mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem",
+    weight = TRUE
+  ))
+  result_unweighted <- suppressWarnings(mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem",
+    weight = FALSE
+  ))
+
+  expect_false(identical(result_weighted$m, result_unweighted$m))
+})
+
+test_that("mldesc method='sem' stores correct method attribute", {
+  set.seed(7002)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result_sem <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  expect_equal(attr(result_sem, "method"), "sem")
+  expect_match(attr(result_sem, "note_text"), "SEM-based")
+})
+
+test_that("mldesc method='sem' still computes descriptives and ICC", {
+  set.seed(7003)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rep(1:10, each = 20) + rnorm(200, 0, 0.5)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = "x",
+    method = "sem"
+  )
+
+  # ICC should be present and high
+  icc_val <- vctrs::vec_data(result$icc)[1]
+  expect_match(icc_val, "^\\.[0-9]{2}$")
+  icc_value <- as.numeric(paste0("0", icc_val))
+  expect_gt(icc_value, 0.5)
+
+  # n_obs should be correct
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "200")
+})
+
+test_that("mldesc method defaults to decomposition", {
+  set.seed(7004)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result_default <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  result_explicit <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "decomposition"
+  )
+
+  expect_identical(result_default, result_explicit)
+})
+
+test_that("mldesc method='sem' works with flip=TRUE", {
+  set.seed(7005)
+  data <- data.frame(
+    group = rep(1:10, each = 20),
+    x = rnorm(200),
+    y = rnorm(200),
+    z = rnorm(200)
+  )
+
+  result_normal <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = FALSE
+    ),
+    "out-of-range"
+  )
+
+  result_flipped <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("x", "y", "z"),
+      method = "sem",
+      flip = TRUE
+    ),
+    "out-of-range"
+  )
+
+  # Upper triangle of normal should equal lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+
+  # Descriptives and ICC should be identical
+  expect_equal(
+    vctrs::vec_data(result_normal$icc),
+    vctrs::vec_data(result_flipped$icc)
+  )
+})
+
+test_that("mldesc method='sem' print methods work", {
+  set.seed(7006)
+  data <- data.frame(
+    group = rep(1:5, each = 20),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+
+  result <- mldesc(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    method = "sem"
+  )
+
+  result_gt <- print(result, "gt")
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  expect_s4_class(result_tt, "tinytable")
+})
+
+test_that("mldesc method='sem' handles between-only variables correctly", {
+  set.seed(7007)
+  # Create a between-only variable (constant within groups, like a trait)
+  data <- data.frame(
+    group = rep(1:20, each = 25)
+  )
+  data$trait <- rep(rnorm(20, 10, 3), each = 25)
+  data$x <- rnorm(500, 5, 2)
+  data$y <- rnorm(500, 5, 2)
+
+  result <- expect_warning_value(
+    mldesc(
+      data = data,
+      group = "group",
+      vars = c("trait", "x", "y"),
+      method = "sem"
+    ),
+    "out-of-range"
+  )
+
+  # Check structure
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_equal(nrow(result), 3)
+
+  # Descriptives should be computed for all variables
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "500")
+  expect_equal(vctrs::vec_data(result$n_obs)[2], "500")
+
+  # Within-group correlations involving the trait should be NA
+  expect_equal(vctrs::vec_data(result$`2`)[1], "NA")
+  expect_equal(vctrs::vec_data(result$`3`)[1], "NA")
+
+  # ICC for the between-only variable should be very high (close to 1)
+  icc_trait <- as.numeric(paste0("0", vctrs::vec_data(result$icc)[1]))
+  expect_gt(icc_trait, 0.9)
+})
+
+test_that("mldesc errors on unknown group variable", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    mldesc(data, group = "nope", vars = "x"),
+    "not found"
+  )
+})
+
+test_that("mldesc errors on unknown vars", {
+  data <- data.frame(group = rep(1:3, each = 5), x = rnorm(15))
+  expect_error(
+    mldesc(data, group = "group", vars = c("x", "missing")),
+    "not found"
+  )
+})
+
+test_that("mldesc errors for non-numeric variables", {
+  set.seed(11)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    flag = sample(c(TRUE, FALSE), 50, replace = TRUE)
+  )
+
+  expect_error(mldesc(data, "group", c("x", "flag")), "numeric")
+})
+
+test_that("mldesc default print method dispatches to pillar formatting", {
+  set.seed(12)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  result <- mldesc(data, "group", c("x", "y"))
+
+  output <- capture.output(print(result))
+  expect_true(any(grepl("Multilevel Descriptive Statistics", output)))
+  expect_true(any(grepl("Within-group correlations", output)))
+  expect_true(any(grepl("variance decomposition", output)))
+})
+
+test_that("mldesc print accepts a custom significance_note", {
+  set.seed(13)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  result <- mldesc(data, "group", c("x", "y"))
+
+  output <- capture.output(print(result, significance_note = "Custom significance note."))
+  expect_true(any(grepl("Custom significance note", output)))
+})
+
+# ---- Tests for `ci`/`folder` being no-ops outside method = "bayes" ----
+
+test_that("ci argument is ignored with a message unless method = 'bayes'", {
+  set.seed(3012)
+  data <- data.frame(group = rep(1:3, each = 10), x = rnorm(30), y = rnorm(30))
+
+  expect_message(
+    mldesc(data, "group", c("x", "y"), ci = 0.8),
+    "no effect"
+  )
+})
+
+test_that("folder argument is ignored with a message unless method = 'bayes'", {
+  set.seed(3013)
+  data <- data.frame(group = rep(1:3, each = 10), x = rnorm(30), y = rnorm(30))
+
+  expect_message(
+    mldesc(data, "group", c("x", "y"), folder = tempdir()),
+    "no effect"
+  )
+})
+
+# ---- Tests for method = "bayes" ----
+# See helper-bayes-fixtures.R for the shared cache folder/fixture data/
+# skip_if_no_bayes() and why these tests are structured to reuse cached brms
+# fits (both the ICC fits here and the correlation fits from
+# test-within_between_correlations.R's "method = 'bayes'" section, since
+# mldesc(method = "bayes") calls within_between_correlations(method =
+# "bayes") internally with the same data/vars/folder) as much as possible.
+
+test_that("mldesc method='bayes' requires folder argument", {
+  skip_if_no_bayes()
+  expect_error(
+    mldesc(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes"
+    ),
+    "folder.*must be specified"
+  )
+})
+
+test_that("mldesc method='bayes' validates ci argument", {
+  skip_if_no_bayes()
+  expect_error(
+    mldesc(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes",
+      ci = 0,
+      folder = bayes_cache_folder
+    ),
+    "ci.*must be between 0 and 1"
+  )
+
+  expect_error(
+    mldesc(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = c("x", "y"),
+      method = "bayes",
+      ci = 1.5,
+      folder = bayes_cache_folder
+    ),
+    "ci.*must be between 0 and 1"
+  )
+})
+
+test_that("mldesc method='bayes' creates folder if it doesn't exist", {
+  skip_if_no_bayes()
+  # Single variable: still fits one ICC model (ICC is always computed), but
+  # no correlation models, keeping this cheap.
+  temp_folder <- file.path(tempdir(), "test_brms_mldesc_folder")
+  on.exit(unlink(temp_folder, recursive = TRUE), add = TRUE)
+
+  expect_false(dir.exists(temp_folder))
+
+  result <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = "x",
+    method = "bayes",
+    folder = temp_folder
+  )
+
+  expect_true(dir.exists(temp_folder))
+})
+
+test_that("mldesc method='bayes' handles basic input correctly", {
+  skip_if_no_bayes()
+  result <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  expect_s3_class(result, "tbl_df")
+  expect_s3_class(result, "mlstats_desc_tibble")
+  expect_equal(nrow(result), 2)
+  expect_equal(result$variable, c("X", "Y"))
+  expect_equal(colnames(result), c("variable", "n_obs", "m", "sd", "range", "1", "2", "icc"))
+
+  expect_match(result$n_obs, "^[0-9]+$")
+  expect_match(result$m, "^[0-9]+\\.[0-9]{2}$")
+  expect_match(result$sd, "^[0-9]+\\.[0-9]{2}$")
+  expect_match(result$range, "^-?[0-9]+–-?[0-9]+$")
+  expect_match(result$icc, "^\\.[0-9]{2}$")
+  expect_equal(as.character(result$`1`[1]), "\u2013")
+
+  expect_true(all(sapply(result[, -1], function(col) inherits(col, "mlstats_stat"))))
+
+  expect_equal(attr(result, "method"), "bayes")
+  expect_true(attr(result, "bayesian"))
+  expect_true(!is.null(attr(result, "table_title")))
+  expect_true(!is.null(attr(result, "correlation_note")))
+})
+
+test_that("mldesc method='bayes' weight=FALSE affects descriptives but not ICC", {
+  skip_if_no_bayes()
+  result_weighted <- mldesc(
+    data = bayes_fixture_unbalanced,
+    group = "group",
+    vars = "x",
+    method = "bayes",
+    weight = TRUE,
+    folder = bayes_cache_folder
+  )
+
+  result_unweighted <- mldesc(
+    data = bayes_fixture_unbalanced,
+    group = "group",
+    vars = "x",
+    method = "bayes",
+    weight = FALSE,
+    folder = bayes_cache_folder
+  )
+
+  group_means <- tapply(bayes_fixture_unbalanced$x, bayes_fixture_unbalanced$group, mean)
+
+  expect_equal(as.character(result_weighted$m), sprintf("%.2f", mean(bayes_fixture_unbalanced$x)))
+  expect_equal(as.character(result_unweighted$m), sprintf("%.2f", mean(group_means)))
+
+  # ICC doesn't depend on weighting
+  expect_equal(as.character(result_weighted$icc), as.character(result_unweighted$icc))
+
+  expect_match(attr(result_weighted, "note_text"), "Bayesian group-weighted")
+  expect_match(attr(result_unweighted, "note_text"), "Bayesian unweighted")
+})
+
+test_that("mldesc method='bayes' handles different ci levels without refitting", {
+  skip_if_no_bayes()
+  result_90 <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    ci = 0.9,
+    folder = bayes_cache_folder
+  )
+
+  result_95 <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    ci = 0.95,
+    folder = bayes_cache_folder
+  )
+
+  expect_equal(dim(result_90), dim(result_95))
+})
+
+test_that("mldesc method='bayes' reuses cached models", {
+  skip_if_no_bayes()
+  result1 <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  result2 <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  expect_identical(result1, result2)
+})
+
+test_that("mldesc method='bayes' flip=TRUE forwards correctly", {
+  skip_if_no_bayes()
+  result_normal <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder,
+    flip = FALSE
+  )
+
+  result_flipped <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder,
+    flip = TRUE
+  )
+
+  expect_false(attr(result_normal, "flipped"))
+  expect_true(attr(result_flipped, "flipped"))
+
+  # Upper triangle of normal = lower triangle of flipped
+  expect_equal(
+    vctrs::vec_data(result_normal$`2`)[1],
+    vctrs::vec_data(result_flipped$`1`)[2]
+  )
+
+  # ICC should be identical regardless of flip
+  expect_equal(
+    vctrs::vec_data(result_normal$icc),
+    vctrs::vec_data(result_flipped$icc)
+  )
+})
+
+test_that("mldesc method='bayes' print method supports gt, tt, and default formats", {
+  skip_if_no_bayes()
+  result <- mldesc(
+    data = bayes_fixture_basic,
+    group = "group",
+    vars = c("x", "y"),
+    method = "bayes",
+    folder = bayes_cache_folder
+  )
+
+  result_gt <- print(result, "gt")
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt")
+  expect_s4_class(result_tt, "tinytable")
+
+  output <- capture.output(print(result))
+  expect_true(any(grepl("Multilevel Descriptive Statistics", output)))
+  expect_true(any(grepl("credible intervals", output)))
+  expect_true(any(grepl("Bayesian multilevel models", output)))
+})
+
+test_that("mldesc method='bayes' ignores significance with a message", {
+  skip_if_no_bayes()
+  expect_message(
+    mldesc(
+      data = bayes_fixture_basic,
+      group = "group",
+      vars = "x",
+      method = "bayes",
+      significance = "detailed",
+      folder = bayes_cache_folder
+    ),
+    "no effect"
+  )
 })

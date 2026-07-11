@@ -1,0 +1,165 @@
+---
+title: "Getting Started with mlstats"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with mlstats}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(mlstats)
+library(dplyr)
+```
+
+The **mlstats** package provides tools for multilevel descriptive statistics
+and data preparation. It is designed for data where observations are nested
+within groups — for example, repeated daily measurements per person, students
+within classrooms, or employees within teams.
+
+## Example Data
+
+To demonstrate, we use `media_diary`, a simulated daily diary dataset included
+with **mlstats**. It mimics a study in which 100 participants completed brief
+daily surveys for 14 consecutive days (*N* = 100 persons, *T* = 1,400 daily
+observations). The variables are:
+
+- **`person`**: person identifier
+- **`self_control`**: trait self-control, measured once at study entry (stable,
+  between-person characteristic; ICC ≈ 1)
+- **`wellbeing`**: daily positive wellbeing (1–7)
+- **`screen_time`**: minutes of entertainment media consumed that day
+- **`stress`**: daily perceived stress (1–7)
+- **`enjoyment`**: enjoyment of the media watched that day (1–7)
+
+```{r data}
+data("media_diary")
+media_diary
+```
+
+The data are in long format: each row is one diary entry (one person on one
+day). The `person` column identifies which person a row belongs to.
+
+## Multilevel Descriptive Statistics
+
+`mldesc()` produces a publication-ready descriptive statistics table that
+combines means, standard deviations, ranges, ICCs, and a within-/between-group
+correlation matrix in a single object:
+
+```{r mldesc, warning = FALSE}
+vars <- c("self_control", "wellbeing", "screen_time", "stress")
+
+result <- mldesc(
+  data  = media_diary,
+  group = "person",
+  vars  = vars
+)
+
+result
+```
+
+### Estimation Method
+
+Three estimation methods are available via the `method` argument:
+
+- **`method = "decomposition"`** (default): Uses the variance-decomposition
+  approach to estimate within- and between-group correlations. Between-group
+  correlations and descriptive statistics are weighted by group size when `weight = TRUE`
+  (the default). Set `weight = FALSE` to give every group equal influence.
+- **`method = "sem"`**: Fits a two-level structural equation model via `lavaan`
+  using robust maximum likelihood. This handles very unequal group sizes more
+  rigorously.
+- **`method = "bayes"`**: Fits Bayesian multilevel models via `brms`,
+  reporting credible intervals instead of p-values. Requires the additional
+  `ci` and `folder` arguments; see `vignette("multilevel-descriptives")`.
+- See `vignette("correlation-methods")` for a detailed comparison.
+
+### Customising the Output
+
+Several options control the appearance of the output:
+
+- **`significance = "detailed"`**: Adds stars for *p* < .05, *p* < .01, and *p* < .001.
+  The default (`"basic"`) marks only *p* < .05.
+- **`flip = TRUE`**: Swaps the correlation matrix (between above, within below).
+- **`remove_leading_zero = FALSE`**: Keeps the leading zero in decimal numbers.
+  The default removes it for APA formatting (`.45` instead of `0.45`).
+
+### Pretty Printing
+
+The result can be formatted for publication via `print()`. All print methods
+accept optional arguments `table_title`, `correlation_note`,
+`significance_note`, and `note_text`.
+
+**tinytable** is included with **mlstats** (no extra installation needed):
+
+```{r tt-output, warning = FALSE}
+result |>
+  print(format = "tt")
+```
+
+If more customization is needed, **gt** produces richly formatted HTML tables.
+It must be installed separately:
+
+```{r gt-install, eval = FALSE}
+install.packages("gt")
+```
+
+```{r gt-basic}
+result |>
+  print(format = "gt")
+```
+
+Both `tt` and `gt` smoothly render to HTML, PDF, or Word via R Markdown or Quarto.
+
+For details on customising printed tables — including custom titles, notes,
+variable labels, and column selection — see `vignette("tables")`.
+
+For detailed coverage of all `mldesc()` options and `within_between_correlations()`
+(the underlying function), including ICC and correlation matrix interpretation,
+see `vignette("multilevel-descriptives")`.
+
+## Decomposing Variables into Within- and Between-Person Components
+
+Before fitting multilevel models, time-varying predictors are typically
+decomposed into their within-group and between-group components.
+`decompose_within_between()` makes this easy by adding three new columns per variable:
+
+- **`_grand_mean_centered`**: grand-mean-centered value
+- **`_between_{group}`**: group mean (stable between-group component)
+- **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
+
+```{r decompose}
+media_diary |>
+  decompose_within_between(
+    group = "person",
+    vars  = c("stress", "screen_time")
+  ) |>
+  select(starts_with("stress"))
+```
+
+The within and between components serve as separate predictors in Random
+Effects Within-Between (REWB) models, which estimate distinct within-group
+and between-group effects. See `vignette("rewb-models")` for a full guide to
+data preparation and REWB model fitting with mlstats, including all options
+of `decompose_within_between()`.
+
+## References
+
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models:
+Making an informed choice. *Quality & Quantity, 53*(2), 1051–1074.
+https://doi.org/10.1007/s11135-018-0802-x
+
+Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
+cross-sectional multilevel models: A new look at an old issue.
+*Psychological Methods, 12*(2), 121–138.
+https://doi.org/10.1037/1082-989X.12.2.121
+
+Pedhazur, E. J. (1997). *Multiple regression in behavioral research: Explanation
+and prediction* (3rd ed.). Harcourt Brace.

@@ -175,10 +175,10 @@ test_that("decompose_within_between throws error for missing group variable", {
     id = rep(1:5, each = 10),
     x = rnorm(50)
   )
-  
+
   expect_error(
     decompose_within_between(data = data, group = "nonexistent", vars = "x"),
-    "Group variable 'nonexistent' not found in data"
+    "not found"
   )
 })
 
@@ -187,11 +187,174 @@ test_that("decompose_within_between throws error for missing variables", {
     id = rep(1:5, each = 10),
     x = rnorm(50)
   )
-  
+
   expect_error(
     decompose_within_between(data = data, group = "id", vars = c("x", "y", "z")),
-    "Variables not found in data: y, z"
+    "not found"
   )
+})
+
+test_that("decompose_within_between throws error for non-numeric variables", {
+  data <- data.frame(
+    id = rep(1:5, each = 10),
+    x = rnorm(50),
+    label = letters[1:50]
+  )
+
+  expect_error(
+    decompose_within_between(data = data, group = "id", vars = c("x", "label")),
+    "numeric"
+  )
+})
+
+test_that("decompose_within_between components = c('between', 'within') excludes gmc", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = c("x", "y"),
+    components = c("between", "within")
+  )
+
+  expect_false("x_grand_mean_centered" %in% colnames(result))
+  expect_false("y_grand_mean_centered" %in% colnames(result))
+  expect_true("x_between_group" %in% colnames(result))
+  expect_true("x_within_group" %in% colnames(result))
+  expect_true("y_between_group" %in% colnames(result))
+  expect_true("y_within_group" %in% colnames(result))
+})
+
+test_that("decompose_within_between components = 'between' only returns group means", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = "between"
+  )
+
+  expect_false("x_grand_mean_centered" %in% colnames(result))
+  expect_false("x_within_group" %in% colnames(result))
+  expect_true("x_between_group" %in% colnames(result))
+  expect_equal(
+    unique(result$x_between_group[result$group == 1]),
+    mean(data$x[data$group == 1])
+  )
+})
+
+test_that("decompose_within_between components = 'within' excludes between from output", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = "within"
+  )
+
+  expect_false("x_grand_mean_centered" %in% colnames(result))
+  expect_false("x_between_group" %in% colnames(result))
+  expect_true("x_within_group" %in% colnames(result))
+  # within means should be zero per group
+  within_means <- tapply(result$x_within_group, result$group, mean)
+  expect_equal(as.numeric(within_means), c(0, 0, 0), tolerance = 1e-10)
+})
+
+test_that("decompose_within_between components = 'gmc' only returns grand-mean-centered", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30, 50, 5)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = "gmc"
+  )
+
+  expect_true("x_grand_mean_centered" %in% colnames(result))
+  expect_false("x_between_group" %in% colnames(result))
+  expect_false("x_within_group" %in% colnames(result))
+  expect_equal(mean(result$x_grand_mean_centered), 0, tolerance = 1e-10)
+})
+
+test_that("decompose_within_between custom naming patterns work", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = c("between", "within"),
+    between_pattern = "{col}_between",
+    within_pattern = "{col}_within"
+  )
+
+  expect_true("x_between" %in% colnames(result))
+  expect_true("x_within" %in% colnames(result))
+  expect_false("x_between_group" %in% colnames(result))
+  expect_false("x_within_group" %in% colnames(result))
+})
+
+test_that("decompose_within_between custom gmc_pattern works", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30, 50, 5)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = "gmc",
+    gmc_pattern = "{col}_gmc"
+  )
+
+  expect_true("x_gmc" %in% colnames(result))
+  expect_false("x_grand_mean_centered" %in% colnames(result))
+  expect_equal(mean(result$x_gmc), 0, tolerance = 1e-10)
+})
+
+test_that("decompose_within_between custom pattern preserves mathematical identity", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = "x",
+    components = c("between", "within"),
+    between_pattern = "{col}_b",
+    within_pattern = "{col}_w"
+  )
+
+  # x = between + within
+  expect_equal(result$x_b + result$x_w, result$x, tolerance = 1e-10)
 })
 
 test_that("decompose_within_between handles single variable", {

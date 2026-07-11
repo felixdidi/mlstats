@@ -8,9 +8,12 @@ within_between_correlations(
   data,
   group,
   vars,
+  method = c("decomposition", "sem", "bayes"),
   weight = TRUE,
   flip = FALSE,
-  significance = c("basic", "detailed")
+  significance = c("basic", "detailed"),
+  ci = 0.9,
+  folder = NULL
 )
 }
 \arguments{
@@ -20,8 +23,15 @@ within_between_correlations(
 
 \item{vars}{A character vector specifying the names of variables to correlate.}
 
-\item{weight}{Logical. If TRUE (default), between-group correlations are weighted by group size.
-If FALSE, each group contributes equally (unweighted group means).}
+\item{method}{Character string specifying the estimation method: \code{"decomposition"}
+(default), \code{"sem"}, or \code{"bayes"}. See Details.}
+
+\item{weight}{Logical. Used when \code{method = "decomposition"} or \code{method =
+  "bayes"}. If TRUE (default), the between-group correlation gives more weight to
+larger groups; significance/credible intervals, however, are always based on the
+unweighted correlation of group means. If FALSE, every group counts equally
+regardless of size. Ignored (with a message) when \code{method = "sem"}, because
+that method handles unequal group sizes automatically.}
 
 \item{flip}{Logical. If TRUE, between-group correlations are shown in the upper
 triangle and within-group correlations in the lower triangle. Default is FALSE.}
@@ -29,79 +39,147 @@ triangle and within-group correlations in the lower triangle. Default is FALSE.}
 \item{significance}{Character string specifying the significance marking style.
 Either "basic" (default) or "detailed". If "basic", correlations with p < .05
 are marked with a star. If "detailed", correlations are marked with 1-3 stars
-for p < .05, p < .01, or p < .001, respectively.}
+for p < .05, p < .01, or p < .001, respectively. Ignored (with a message) when
+\code{method = "bayes"}, which always marks correlations whose credible interval
+(see \code{ci}) excludes zero with a single star.}
+
+\item{ci}{Numeric value strictly between 0 and 1 specifying the credible interval
+width used to decide whether a correlation is starred. Only applicable when
+\code{method = "bayes"}; default is 0.9 (90\% CI). Ignored (with a message) for
+other methods.}
+
+\item{folder}{Character string specifying the directory path where \code{brms}
+models should be saved. Required when \code{method = "bayes"}; ignored (with a
+message) otherwise. Default is \code{NULL}.}
 }
 \value{
 A tibble containing a correlation matrix where:
 \itemize{
 \item The upper triangle contains within-group correlations
 \item The lower triangle contains between-group correlations
-\item Diagonal elements are marked with "-"
-\item Significant correlations are marked with asterisks (see \code{significance} parameter)
+\item Diagonal elements are marked with "–"
+\item Significant correlations are marked with asterisks (see \code{significance}
+parameter, or \code{ci} when \code{method = "bayes"})
 }
+
+The tibble can be returned as a gt object using \code{print(result, format = "gt")}
+and as a tinytable object using \code{print(result, format = "tt")}.
 }
 \description{
-This function decomposes observed correlations between variables into within-group
-and between-group components following the approach of Pedhazur (1997) as originally implemented
-in \code{psych::statsBy}. The decomposition follows the formula:
-\deqn{r_{xy} = \eta_{x,wg} * \eta_{y,wg} * r_{xy,wg} + \eta_{x,bg} * \eta_{y,bg} * r_{xy,bg}}
+In data with a grouping structure (e.g., repeated measurements per person, or
+students nested within schools), a single correlation between two variables can
+be misleading, because it mixes two different relationships: how the variables
+relate \emph{within} each group (e.g., do a person's good days also tend to be
+their productive days?), and how they relate \emph{between} groups (e.g., do
+people who are generally happier also tend to be generally more productive?).
+This function estimates both relationships separately, using one of three
+methods (see Details and \code{vignette("correlation-methods")} for the full
+statistical background).
 }
 \details{
-\strong{Within-group correlations} are computed on deviation scores (individual values
-minus group means).
+\strong{Method \code{"decomposition"}} (the default) computes the within-group
+correlation by first subtracting each group's mean from every observation, then
+correlating the resulting deviation scores. It computes the between-group
+correlation by correlating the group means with one another (optionally weighted
+by group size; see \code{weight}). This approach follows Pedhazur (1997, ch.
+16), and the significance tests account for the fact that subtracting group
+means uses up degrees of freedom, following the general testing principle in
+Snijders and Bosker (2012, sec. 6.1). This method is fast and easy to interpret,
+and works well for most data sets, but is less suited to data with very unequal
+group sizes.
 
-\strong{Between-group correlations} can be computed in two ways:
-\itemize{
-\item If \code{weight = TRUE}: Computed on group means replicated for each observation.
-This implicitly weights groups by their sample size and matches the variance
-decomposition formula.
-\item If \code{weight = FALSE}: Computed on unique group means only. Each group
-contributes equally regardless of size.
-}
+\strong{Method \code{"sem"}} fits a two-level structural equation model (via
+\code{lavaan::sem()}) that estimates the within-group and between-group
+covariance matrices simultaneously using maximum likelihood. Significance is
+based on the resulting z-tests. Because groups are weighted implicitly through
+maximum likelihood estimation rather than through the \code{weight} argument,
+this method is the more principled choice for data with very unequal group
+sizes or a moderate amount of missing data. It is slower than
+\code{"decomposition"} and can occasionally fail to converge for small or
+collinear data sets.
 
-The significance tests account for the effective sample size:
-\itemize{
-\item Within-group p-values use the total number of observations
-\item Between-group p-values use the number of groups
-}
+For \code{method = "sem"}, variables that never vary within a group (e.g.,
+time-invariant traits) are modeled only at the between-group level, and
+variables with almost no between-group variance (intraclass correlation near
+zero) are modeled only at the within-group level; the corresponding cells of the
+unused level are reported as \code{NA}.
+
+\strong{Method \code{"bayes"}} mirrors \code{"decomposition"}, but estimates
+both correlations via Bayesian multivariate models fit with \code{brms::brm()}
+(requires the \pkg{brms} package) instead of closed-form formulas, reporting
+posterior medians and credible intervals (via \code{ci}) in place of point
+estimates and p-values. It requires a \code{folder} argument to cache fitted
+models, can take considerably longer than the other two methods, and is most
+useful when the number of groups is small or when communicating uncertainty
+via credible intervals is a priority. See \code{vignette("correlation-methods")}
+for details on the number of models fit and caching behavior.
 }
 \examples{
-\dontrun{
-# Create sample data
-data <- data.frame(
-  school = rep(1:5, each = 20),
-  math_score = rnorm(100, 50, 10),
-  reading_score = rnorm(100, 50, 10)
-)
+data("media_diary")
 
-# Compute weighted between-group correlations (default)
+# Compute weighted between-group correlations (default, decomposition method)
 result_weighted <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score")
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time")
 )
 
 # Compute unweighted between-group correlations
 result_unweighted <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score"),
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
   weight = FALSE
 )
 
+# Use SEM-based estimation (on similarly-scaled variables; SEM is
+# sensitive to large scale differences, unlike "decomposition")
+\donttest{
+result_sem <- within_between_correlations(
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "stress"),
+  method = "sem"
+)
+}
+
 # Use detailed significance marking
 result_detailed <- within_between_correlations(
-  data = data,
-  group = "school",
-  vars = c("math_score", "reading_score"),
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
   significance = "detailed"
+)
+
+# Use Bayesian estimation (requires the brms package)
+\donttest{
+result_bayes <- within_between_correlations(
+  data = media_diary,
+  group = "person",
+  vars = c("wellbeing", "screen_time"),
+  method = "bayes",
+  folder = tempdir()
 )
 }
 
 }
 \references{
-Pedhazur, E. J. (1997). Multiple regression in behavioral research: explanation and prediction. Harcourt Brace.
+Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using
+Stan. \emph{Journal of Statistical Software, 80}(1), 1–28.
+\doi{10.18637/jss.v080.i01}
+
+Hox, J., Moerbeek, M., & van de Schoot, R. (2018). \emph{Multilevel analysis:
+Techniques and applications} (3rd ed.). Routledge.
+
+Pedhazur, E. J. (1997). \emph{Multiple regression in behavioral research:
+Explanation and prediction}. Harcourt Brace.
+
+Snijders, T. A. B., & Bosker, R. J. (2012). \emph{Multilevel analysis: An
+introduction to basic and advanced multilevel modeling} (2nd ed.). Sage Publishers.
 }
 \seealso{
-\code{\link[psych]{statsBy}} for the original implementation
+\code{\link{mldesc}}, which combines this function's output with
+descriptive statistics and ICCs in a single table. See
+\code{vignette("correlation-methods")} for a detailed statistical description
+of all three methods.
 }

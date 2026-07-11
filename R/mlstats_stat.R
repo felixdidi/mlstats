@@ -9,7 +9,7 @@ vec_ptype_abbr.mlstats_stat <- function(x) {
 pillar_shaft.mlstats_stat <- function(x, ...) {
   values <- vctrs::vec_data(x)
   
-  # Apply subtle style to "–" characters
+  # Apply subtle style to "\u2013" characters
   styled_values <- ifelse(
     values == "\u2013",
     pillar::style_subtle(values),
@@ -22,22 +22,29 @@ pillar_shaft.mlstats_stat <- function(x, ...) {
   )
 }
 
-# Method for as.numeric()
-#' @export
-as.numeric.mlstats_stat <- function(x, ...) {
-  vctrs::vec_data(x) |> base::as.character() |> stringr::str_remove_all("\\*") |> stringr::str_remove_all(",") |> base::as.numeric()
+# Strip formatting (stars, thousands separators) and map cells with no
+# numeric value (the diagonal marker and explicit "NA") to NA_character_, so
+# that coercion below doesn't trigger an "NAs introduced by coercion" warning
+# for values that were already intentionally unavailable.
+.clean_mlstats_stat <- function(x) {
+  cleaned <- vctrs::vec_data(x) |>
+    base::as.character() |>
+    stringr::str_remove_all("\\*") |>
+    stringr::str_remove_all(",")
+  base::ifelse(cleaned %in% base::c("\u2013", "NA"), NA_character_, cleaned)
 }
 
-# Method for as.double()
+# Method for as.double(). Also covers as.numeric(): R has no S3 dispatch for
+# as.numeric() on objects -- it always routes through as.double() instead.
 #' @export
 as.double.mlstats_stat <- function(x, ...) {
-  vctrs::vec_data(x) |> base::as.character() |> stringr::str_remove_all("\\*") |> stringr::str_remove_all(",") |> base::as.double()
+  .clean_mlstats_stat(x) |> base::as.double()
 }
 
 # Method for as.integer()
 #' @export
 as.integer.mlstats_stat <- function(x, ...) {
-  vctrs::vec_data(x) |> base::as.character() |> stringr::str_remove_all("\\*") |> stringr::str_remove_all(",") |> base::as.integer()
+  .clean_mlstats_stat(x) |> base::as.integer()
 }
 
 # Method for as.character()

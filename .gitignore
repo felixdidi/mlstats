@@ -4,6 +4,10 @@
 .httr-oauth
 .DS_Store
 .quarto
-brms_models
 /.quarto/
 **/*.quarto_ipynb
+/doc/
+/Meta/
+/dev/
+/docs/
+docs

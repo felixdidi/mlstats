@@ -1,0 +1,292 @@
+---
+title: "REWB Models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{REWB Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+# options(scipen = 10)
+```
+
+```{r setup, message = FALSE}
+library(mlstats)
+library(dplyr)
+library(lme4)
+library(lmerTest)
+```
+
+When observations are nested within groups (repeated measurements per person,
+students within classrooms, etc.), the association between two variables has two
+faces: how they co-vary *within* groups over time, and whether groups that score
+higher on one variable also tend to score higher on the other. A naive linear
+regression cannot distinguish these two effects, and conflating them can produce
+severely misleading conclusions.
+
+The **Random Effects Within-Between (REWB)** model (Bell et al., 2019) solves
+this by including both components as separate predictors. This vignette shows
+how to use `decompose_within_between()` to prepare data for REWB models and
+how to fit and interpret those models.
+
+## Example Data
+
+We use `media_diary`, a simulated daily diary dataset included with **mlstats**
+(100 participants over 14 days; *N* = 100 persons, *T* = 1,400 daily observations). See `?media_diary` for details.
+
+```{r data}
+data("media_diary")
+```
+
+The dataset was generated to illustrate two processes that can operate simultaneously — and in opposite directions — at within- and between-person levels:
+
+1. **Between persons**: people who watch more entertainment media on average
+   tend to have lower average wellbeing — perhaps because chronic heavy media
+   use reflects lower trait self-control, which itself predicts lower wellbeing.
+2. **Within persons**: on days when someone watches more than usual, their
+   wellbeing is slightly higher — consistent with short-term escapism or mood
+   repair through media use.
+
+Because these processes were built into the simulation, they are present by design — not empirical discoveries. The purpose of the example is to show how REWB models recover effects that point in *opposite directions*, and what happens when they are conflated. A naive regression conflates them and produces a near-zero coefficient, making it appear that screen time has no relationship with wellbeing, when in fact it has two real and opposing effects (in the simulation).
+
+## Decomposing Time-Varying Predictors
+
+`decompose_within_between()` splits each specified variable into up to three
+components:
+
+- **`_grand_mean_centered`**: grand-mean-centered value
+- **`_between_{group}`**: group mean (stable between-group component)
+- **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
+
+The `vars` argument names the variables to decompose. `group` names the
+grouping variable.
+
+```{r decompose-basic}
+media_diary |>
+  decompose_within_between(group = "person", vars = "screen_time") |>
+  select(starts_with("screen_time_"))
+```
+
+`screen_time_within_person` is the group-mean-centred score: how many more (or
+fewer) minutes this person watched today compared to their own average.
+`screen_time_between_person` is the person's average screen time, repeated for every
+row belonging to that person. `screen_time_grand_mean_centered` is the grand-mean-centred
+value, which shows each observation's deviation from the overall mean.
+
+### Selecting Components
+
+By default all three components are returned. Use the `components` argument to
+select a subset. For REWB models, the within and between components are the
+predictors you need.
+
+```{r decompose-components}
+media_diary |>
+  decompose_within_between(
+    group = "person",
+    vars = "screen_time",
+    components = c("within", "between")
+  ) |>
+  select(starts_with("screen_time"))
+```
+
+Valid values for `components` are any non-empty subset of
+`c("within", "between", "gmc")`.
+
+### Customising Column Names
+
+The `within_pattern`, `between_pattern`, and `gmc_pattern` arguments control
+the naming of the new columns. Each pattern is a glue-style string where
+`{col}` is replaced by the variable name and `{group}` is replaced by the 
+grouping variable name. For example, the default `{col}_within_{group}` produces `screen_time_within_person`. Here, we use `{col}_wg` and `{col}_bg` to produce shorter names:
+
+```{r decompose-names}
+media_diary |>
+  decompose_within_between(
+    group = "person",
+    vars = c("screen_time"),
+    components = c("within", "between"),
+    within_pattern = "{col}_wg",
+    between_pattern = "{col}_bg"
+  ) |>
+  select(starts_with("screen_time"))
+```
+
+### Decomposing Multiple Variables at Once
+
+Pass a character vector to `vars` to decompose several variables in a single
+call. The same `components` and naming patterns apply to all variables:
+
+```{r decompose-multi}
+media_diary |>
+  decompose_within_between(
+    group = "person",
+    vars = c("screen_time", "stress"),
+    components = c("within", "between")
+  ) |>
+  glimpse()
+```
+
+## Fitting the REWB Model
+
+### Step 1 — Within and between effects
+
+We start with a model that includes only the within- and between-person
+components of `screen_time` and a random intercept for person. This is the
+core REWB specification:
+
+```{r rewb-model-base}
+diary_decomp <- decompose_within_between(
+  data            = media_diary,
+  group           = "person",
+  vars            = "screen_time",
+  components      = c("within", "between"),
+  within_pattern  = "{col}_within",
+  between_pattern = "{col}_between"
+)
+
+fit_rewb <- lmer(
+  wellbeing ~ screen_time_within + screen_time_between + (1 | person),
+  data = diary_decomp
+)
+
+summary(fit_rewb, correlation = FALSE)
+```
+
+**Interpreting the coefficients:**
+
+In this simulated dataset, the within-person coefficient
+(`r round(fixef(fit_rewb)["screen_time_within"], 4)`) is positive and highly
+significant. To illustrate how such an effect would be interpreted: on days
+when someone watches one minute more than their own average, their wellbeing is
+`r round(fixef(fit_rewb)["screen_time_within"], 4)` points higher. For a person
+watching 60 minutes more than usual, the expected gain would be
+`r round(60 * fixef(fit_rewb)["screen_time_within"], 2)` wellbeing points.
+
+The between-person coefficient (`r round(fixef(fit_rewb)["screen_time_between"], 4)`)
+is negative and significant. Illustrating interpretation: people who watch one
+minute more per day on average show
+`r abs(round(fixef(fit_rewb)["screen_time_between"], 4))` lower wellbeing. For
+someone who watches 60 minutes more per day on average than another person, the
+expected wellbeing gap would be
+`r abs(round(60 * fixef(fit_rewb)["screen_time_between"], 2))` points.
+
+The two effects point in *opposite directions* — exactly the pattern built into
+the simulation. A naive regression conflates them:
+
+```{r naive-model}
+fit_naive <- lm(wellbeing ~ screen_time, data = diary_decomp)
+summary(fit_naive)
+```
+
+The naive coefficient is near zero because the positive within-person and
+negative between-person effects cancel each other out — an entirely uninformative
+result that hides two simulated effects pointing in opposite directions. This
+illustrates why a naive regression can be misleading when within- and
+between-group processes operate simultaneously.
+
+### Step 2 — Accounting for confounding
+
+`self_control` was identified above as a confounder of the *between-person*
+effect: people with lower trait self-control may watch more media on average
+*and* have lower wellbeing, making it appear as though heavy media use causes
+worse wellbeing at the between-person level. Adding `self_control` as a
+covariate lets us test whether the between-person association with screen time
+persists after removing this alternative explanation.
+
+```{r rewb-model-confounded}
+fit_rewb_conf <- lmer(
+  wellbeing ~ screen_time_within + screen_time_between + self_control +
+    (1 | person),
+  data = diary_decomp
+)
+
+summary(fit_rewb_conf, correlation = FALSE)
+```
+
+**Interpreting the coefficients:**
+
+In this simulated dataset, the within-person coefficient is unchanged
+(`r round(fixef(fit_rewb_conf)["screen_time_within"], 4)`): `self_control` is a
+stable trait measured once per person, so it carries no within-person variation
+and cannot alter the within-person estimate. This is a general property of
+between-person covariates in REWB models, not specific to these simulated data.
+
+The between-person coefficient changes substantially — from
+`r round(fixef(fit_rewb)["screen_time_between"], 4)` (significant) in the
+unadjusted model to
+`r round(fixef(fit_rewb_conf)["screen_time_between"], 4)` (*p* = .23,
+non-significant) after adjusting for `self_control`. This illustrates confounding:
+the simulation was designed so that the apparent between-person harm of screen
+time is driven by self-control. In a real study, a similar pattern would suggest
+that people with lower self-control watch more TV on average *and* have lower
+wellbeing, and that the self-control deficit — not screen time — explains the
+wellbeing gap.
+
+## Adding More Predictors
+
+When you have several time-varying predictors, decompose all of them at once:
+
+```{r multi-predictor, eval = FALSE}
+diary_decomp2 <- decompose_within_between(
+  data            = media_diary,
+  group           = "person",
+  vars            = c("screen_time", "stress"),
+  components      = c("within", "between"),
+  within_pattern  = "{col}_within",
+  between_pattern = "{col}_between"
+)
+
+fit_multi <- lmer(
+  wellbeing ~ screen_time_within + screen_time_between +
+    stress_within + stress_between +
+    self_control + (1 | person),
+  data = diary_decomp2
+)
+```
+
+Here `stress_within` captures whether more stressful days than usual predict
+lower wellbeing on those days (within-person), while `stress_between` captures
+whether chronically more stressed people have lower wellbeing overall
+(between-person).
+
+## Adding Random Slopes
+
+The REWB model above assumes the within-person effect of screen time on wellbeing
+is the same for all persons. You can allow this effect to vary by adding a
+random slope:
+
+```{r random-slopes, eval = FALSE}
+fit_slopes <- lmer(
+  wellbeing ~ screen_time_within + screen_time_between + self_control +
+    (screen_time_within | person),
+  data = diary_decomp
+)
+```
+
+A significant random slope variance indicates that the within-person association
+between screen time and wellbeing differs across persons — for some, extra media
+use lifts their mood more than for others.
+
+## Further Reading
+
+This vignette covers the data-preparation and basic modelling side of REWB
+analysis. For thorough treatments of model specification, assumption checking,
+and interpretation — including cross-level interactions — see Bell et al. (2019)
+and Enders & Tofighi (2007). For descriptive statistics and correlation matrices
+that can inform REWB model specification, see `vignette("multilevel-descriptives")`.
+
+## References
+
+Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects models:
+Making an informed choice. *Quality & Quantity, 53*(2), 1051–1074.
+https://doi.org/10.1007/s11135-018-0802-x
+
+Enders, C. K., & Tofighi, D. (2007). Centering predictor variables in
+cross-sectional multilevel models: A new look at an old issue.
+*Psychological Methods, 12*(2), 121–138.
+https://doi.org/10.1037/1082-989X.12.2.121
