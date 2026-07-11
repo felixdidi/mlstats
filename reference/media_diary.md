@@ -40,7 +40,7 @@ A data frame with 1,400 rows and 6 columns:
 - self_control:
 
   Trait self-control, measured once at study entry (1–7 scale, higher =
-  more self-control). Constant within persons; ICC ≈ 1.
+  more self-control). Constant within persons; ICC approximately 1.
 
 - wellbeing:
 

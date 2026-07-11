@@ -2,6 +2,8 @@
 
 ## mlstats 0.1.0
 
+CRAN release: 2026-07-11
+
 Initial CRAN release.
 
 - [`within_between_correlations()`](https://felixdidi.github.io/mlstats/reference/within_between_correlations.md)
