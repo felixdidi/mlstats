@@ -208,7 +208,7 @@ print.mlstats_desc_tibble <- function(
       dplyr::rename_with(
         ~ dplyr::case_when(
           .x == "variable" ~ "Variable",
-          .x == "n_obs" ~ "Descriptives__*N*<sub>obs</sub>",
+          .x == "n_obs" ~ "Descriptives__*N*~obs~",
           .x == "m" ~ "Descriptives__*M*",
           .x == "sd" ~ "Descriptives__*SD*",
           .x == "range" ~ "Descriptives__Range",
