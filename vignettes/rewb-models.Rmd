@@ -59,12 +59,13 @@ Because these processes were built into the simulation, they are present by desi
 `decompose_within_between()` splits each specified variable into up to three
 components:
 
-- **`_grand_mean_centered`**: grand-mean-centered value
 - **`_between_{group}`**: group mean (stable between-group component)
 - **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
+- **`_grand_mean_centered`**: grand-mean-centered value (opt-in; see below)
 
 The `vars` argument names the variables to decompose. `group` names the
-grouping variable.
+grouping variable. By default, `decompose_within_between()` returns the
+within- and between-group components — the two predictors REWB models need.
 
 ```{r decompose-basic}
 media_diary |>
@@ -75,27 +76,27 @@ media_diary |>
 `screen_time_within_person` is the group-mean-centred score: how many more (or
 fewer) minutes this person watched today compared to their own average.
 `screen_time_between_person` is the person's average screen time, repeated for every
-row belonging to that person. `screen_time_grand_mean_centered` is the grand-mean-centred
-value, which shows each observation's deviation from the overall mean.
+row belonging to that person.
 
 ### Selecting Components
 
-By default all three components are returned. Use the `components` argument to
-select a subset. For REWB models, the within and between components are the
-predictors you need.
+Use the `components` argument to add the grand-mean-centered score, or to
+restrict the output to a single component.
 
 ```{r decompose-components}
 media_diary |>
   decompose_within_between(
     group = "person",
     vars = "screen_time",
-    components = c("within", "between")
+    components = c("within", "between", "gmc")
   ) |>
   select(starts_with("screen_time"))
 ```
 
-Valid values for `components` are any non-empty subset of
-`c("within", "between", "gmc")`.
+`screen_time_grand_mean_centered` is the grand-mean-centred value, which shows
+each observation's deviation from the overall mean. Valid values for
+`components` are any non-empty subset of `c("within", "between", "gmc")`; the
+default is `c("within", "between")`.
 
 ### Customising Column Names
 

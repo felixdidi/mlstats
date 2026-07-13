@@ -129,11 +129,15 @@ see `vignette("multilevel-descriptives")`.
 
 Before fitting multilevel models, time-varying predictors are typically
 decomposed into their within-group and between-group components.
-`decompose_within_between()` makes this easy by adding three new columns per variable:
+`decompose_within_between()` makes this easy by adding, by default, two new
+columns per variable:
 
-- **`_grand_mean_centered`**: grand-mean-centered value
 - **`_between_{group}`**: group mean (stable between-group component)
 - **`_within_{group}`**: deviation from the group mean (within-group fluctuation)
+
+A third, optional column can be requested via `components`:
+
+- **`_grand_mean_centered`**: grand-mean-centered value
 
 ```{r decompose}
 media_diary |>

@@ -17,10 +17,12 @@
 #' @param group A character string specifying the name of the grouping variable.
 #' @param vars A character vector specifying the names of variables to decompose.
 #' @param components A character vector specifying which components to compute.
-#'   Any subset of \code{c("gmc", "between", "within")} (default: all three).
-#'   \code{"gmc"} = grand mean centering, \code{"between"} = group means,
-#'   \code{"within"} = within-group deviations. If \code{"within"} is requested
-#'   without \code{"between"}, the between component is computed internally as an
+#'   Any subset of \code{c("gmc", "between", "within")} (default:
+#'   \code{c("between", "within")}). \code{"gmc"} = grand mean centering,
+#'   \code{"between"} = group means, \code{"within"} = within-group deviations.
+#'   Grand mean centered scores are not included by default and must be
+#'   requested explicitly. If \code{"within"} is requested without
+#'   \code{"between"}, the between component is computed internally as an
 #'   intermediate step and not included in the output.
 #' @param gmc_pattern A glue-style naming pattern for grand-mean-centered columns.
 #'   Use \code{{col}} for the variable name. Default: \code{"{col}_grand_mean_centered"}.
@@ -56,19 +58,19 @@
 #' @examples
 #' data("media_diary")
 #'
-#' # Decompose all three components (default)
+#' # Decompose between and within components (default)
 #' result <- decompose_within_between(
 #'   data = media_diary,
 #'   group = "person",
 #'   vars = c("stress", "screen_time")
 #' )
 #'
-#' # Only between and within (no grand mean centering)
-#' result_wb <- decompose_within_between(
+#' # Include grand mean centered scores as well
+#' result_gmc <- decompose_within_between(
 #'   data = media_diary,
 #'   group = "person",
 #'   vars = c("stress", "screen_time"),
-#'   components = c("between", "within")
+#'   components = c("gmc", "between", "within")
 #' )
 #'
 #' # Custom column naming: flat suffixes without the group name
@@ -96,12 +98,16 @@ decompose_within_between <- function(
   data,
   group,
   vars,
-  components = c("gmc", "between", "within"),
+  components = c("between", "within"),
   gmc_pattern = "{col}_grand_mean_centered",
   between_pattern = "{col}_between_{group}",
   within_pattern = "{col}_within_{group}"
 ) {
-  components <- base::match.arg(components, several.ok = TRUE)
+  components <- base::match.arg(
+    components,
+    choices = c("gmc", "between", "within"),
+    several.ok = TRUE
+  )
 
   # Validate inputs
   .validate_group_vars(data, group, vars)

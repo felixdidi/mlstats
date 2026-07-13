@@ -19,11 +19,11 @@ test_that("decompose_within_between handles basic input correctly", {
   # Check that original columns are preserved
   expect_true(all(c("participant", "x", "y") %in% colnames(result)))
   
-  # Check that decomposed columns exist
-  expect_true("x_grand_mean_centered" %in% colnames(result))
+  # Check that decomposed columns exist (gmc is opt-in, not part of the default)
+  expect_false("x_grand_mean_centered" %in% colnames(result))
   expect_true("x_between_participant" %in% colnames(result))
   expect_true("x_within_participant" %in% colnames(result))
-  expect_true("y_grand_mean_centered" %in% colnames(result))
+  expect_false("y_grand_mean_centered" %in% colnames(result))
   expect_true("y_between_participant" %in% colnames(result))
   expect_true("y_within_participant" %in% colnames(result))
 })
@@ -38,9 +38,10 @@ test_that("decompose_within_between computes grand mean centering correctly", {
   result <- decompose_within_between(
     data = data,
     group = "group",
-    vars = "x"
+    vars = "x",
+    components = "gmc"
   )
-  
+
   # Grand mean should be 20
   # Grand mean centered values should be: -10, 0, 10
   expect_equal(mean(result$x_grand_mean_centered), 0, tolerance = 1e-10)
@@ -106,7 +107,8 @@ test_that("decompose_within_between handles multiple variables", {
   result <- decompose_within_between(
     data = data,
     group = "school",
-    vars = c("math", "reading", "science")
+    vars = c("math", "reading", "science"),
+    components = c("gmc", "between", "within")
   )
   
   # Check all decomposed columns exist for all variables
@@ -158,13 +160,14 @@ test_that("decompose_within_between handles missing values", {
   result <- decompose_within_between(
     data = data,
     group = "group",
-    vars = c("x", "y")
+    vars = c("x", "y"),
+    components = "gmc"
   )
-  
+
   # Should complete without error
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 30)
-  
+
   # Missing values should propagate appropriately
   expect_true(is.na(result$x_grand_mean_centered[1]))
   expect_true(is.na(result$y_grand_mean_centered[2]))
@@ -205,6 +208,28 @@ test_that("decompose_within_between throws error for non-numeric variables", {
     decompose_within_between(data = data, group = "id", vars = c("x", "label")),
     "numeric"
   )
+})
+
+test_that("decompose_within_between defaults to between and within, excluding gmc", {
+  set.seed(42)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result <- decompose_within_between(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  expect_false("x_grand_mean_centered" %in% colnames(result))
+  expect_false("y_grand_mean_centered" %in% colnames(result))
+  expect_true("x_between_group" %in% colnames(result))
+  expect_true("x_within_group" %in% colnames(result))
+  expect_true("y_between_group" %in% colnames(result))
+  expect_true("y_within_group" %in% colnames(result))
 })
 
 test_that("decompose_within_between components = c('between', 'within') excludes gmc", {
@@ -372,14 +397,14 @@ test_that("decompose_within_between handles single variable", {
   
   # Check structure
   expect_equal(nrow(result), 30)
-  expect_equal(ncol(result), 5)  # original 2 + 3 decompositions
-  
+  expect_equal(ncol(result), 4)  # original 2 + 2 decompositions (between, within)
+
   # Check decomposed columns exist
   expect_true(all(c(
-    "x_grand_mean_centered",
     "x_between_group",
     "x_within_group"
   ) %in% colnames(result)))
+  expect_false("x_grand_mean_centered" %in% colnames(result))
 })
 
 test_that("decompose_within_between handles numeric group variable", {
@@ -561,9 +586,10 @@ test_that("decompose_within_between column naming is consistent", {
   result <- decompose_within_between(
     data = data,
     group = "my_group",
-    vars = c("var1", "var2")
+    vars = c("var1", "var2"),
+    components = c("gmc", "between", "within")
   )
-  
+
   # Check naming pattern
   expect_true("var1_grand_mean_centered" %in% colnames(result))
   expect_true("var1_between_my_group" %in% colnames(result))
