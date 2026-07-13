@@ -46,6 +46,10 @@
 <h2 class="pkg-version" data-toc-text="development version" id="mlstats-development-version">mlstats (development version)<a class="anchor" aria-label="anchor" href="#mlstats-development-version"></a></h2>
 </div>
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="mlstats-011">mlstats 0.1.1<a class="anchor" aria-label="anchor" href="#mlstats-011"></a></h2>
+<ul><li>Fixed <code>print(..., format = "tt")</code> on <code><a href="../reference/mldesc.html">mldesc()</a></code> output so that the <em>N</em><sub>obs</sub> column header renders “obs” as a proper subscript in Word/docx output, not just HTML. The header markup used a raw HTML <code>&lt;sub&gt;obs&lt;/sub&gt;</code> tag, which <code>tinytable</code> silently drops when going through its markdown-to-docx (Pandoc) conversion path; it is now written with <code>tinytable</code>’s markdown subscript syntax (<code>~obs~</code>), consistent with the markdown italics (<code>*N*</code>) already used on the same label and with how the “a”/“b” correlation-note superscripts are marked elsewhere in the table.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="mlstats-010">mlstats 0.1.0<a class="anchor" aria-label="anchor" href="#mlstats-010"></a></h2><p class="text-muted">CRAN release: 2026-07-11</p>
 <p>Initial CRAN release.</p>
 <ul><li><p><code><a href="../reference/within_between_correlations.html">within_between_correlations()</a></code> computes within-group and between-group correlations for nested data (e.g., repeated measurements per person, or students nested within schools), using one of three methods: variance decomposition (default), two-level structural equation modeling (via <code>lavaan</code>), or Bayesian multilevel modeling (via <code>brms</code>).</p></li>

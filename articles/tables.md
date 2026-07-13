@@ -79,7 +79,7 @@ print(result, format = "tt")
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_hdtt7ihqj4w0ioy0lc1w
+Multilevel Descriptive Statistics {#tinytable_hqj4w0ioy0lc1w6vygmi
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -115,7 +115,7 @@ print(result,
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
 Daily diary study: descriptive statistics and multilevel correlations
-{#tinytable_o807p4310fayebf9wmd8 .table .tinytable
+{#tinytable_0fayebf9wmd8io9wpp61 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
 
@@ -171,7 +171,7 @@ result |>
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_tug9tppapbp7j8ifyvfr
+Multilevel Descriptive Statistics {#tinytable_zri9umrdtulfupqtq1uz
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -200,7 +200,7 @@ result |>
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_a28ap8aut9xdf68no8rq
+Multilevel Descriptive Statistics {#tinytable_q82zfc3ctpf1mvkpz5em
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -234,7 +234,7 @@ result |>
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Study variables: descriptive statistics {#tinytable_k5h0qivkacdwagke7fvq
+Study variables: descriptive statistics {#tinytable_5xd9n7up7icpcob4k5bs
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -277,7 +277,7 @@ result |>
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |
 
 Descriptive statistics and multilevel correlations
-{#tinytable_t8tyea8wst5c8k28bwz0 .table .tinytable
+{#tinytable_hhvqo0accobap1r92a8r .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
 

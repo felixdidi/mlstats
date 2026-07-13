@@ -143,7 +143,7 @@ result |>
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_g8l5gya08tpxs7fzqv0x
+Multilevel Descriptive Statistics {#tinytable_ya08tpxs7fzqv0x2gd4b
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}

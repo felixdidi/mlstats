@@ -2,6 +2,19 @@
 
 ## mlstats (development version)
 
+## mlstats 0.1.1
+
+- Fixed `print(..., format = "tt")` on
+  [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
+  output so that the *N*_(obs) column header renders “obs” as a proper
+  subscript in Word/docx output, not just HTML. The header markup used a
+  raw HTML `<sub>obs</sub>` tag, which `tinytable` silently drops when
+  going through its markdown-to-docx (Pandoc) conversion path; it is now
+  written with `tinytable`’s markdown subscript syntax (`~obs~`),
+  consistent with the markdown italics (`*N*`) already used on the same
+  label and with how the “a”/“b” correlation-note superscripts are
+  marked elsewhere in the table.
+
 ## mlstats 0.1.0
 
 CRAN release: 2026-07-11
