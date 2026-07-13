@@ -42,7 +42,7 @@ and between-person correlations, including a case where the two go in
 opposite directions (\strong{screen_time} × \strong{wellbeing}):
 \itemize{
 \item \emph{Within persons}: on days when someone watches more entertainment media
-than usual, they report slightly better wellbeing — consistent with
+than usual, they report better wellbeing — consistent with
 short-term escapism or mood repair through media use.
 \item \emph{Between persons}: people who watch more entertainment media on average
 tend to report lower average wellbeing — chronic heavy media use is

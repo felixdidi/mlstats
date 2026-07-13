@@ -1391,3 +1391,45 @@ test_that("method='bayes' ignores significance with a message", {
     "no effect"
   )
 })
+test_that("within_between_correlations errors informatively on all-NA variables", {
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = rnorm(20),
+    y = NA_real_
+  )
+
+  expect_error(
+    within_between_correlations(data, group = "group", vars = c("x", "y")),
+    "only missing values"
+  )
+})
+
+test_that("within_between_correlations warns on and excludes missing groups", {
+  set.seed(8104)
+  data <- data.frame(
+    group = rep(1:10, each = 10),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+  data_na <- data
+  data_na$group[1:10] <- NA
+
+  result_na <- expect_warning_value(
+    within_between_correlations(data_na, group = "group", vars = c("x", "y")),
+    "missing value on the grouping variable"
+  )
+  result_filtered <- within_between_correlations(
+    data[data$group != 1, ],
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  expect_equal(
+    vctrs::vec_data(result_na$`1`),
+    vctrs::vec_data(result_filtered$`1`)
+  )
+  expect_equal(
+    vctrs::vec_data(result_na$`2`),
+    vctrs::vec_data(result_filtered$`2`)
+  )
+})

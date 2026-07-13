@@ -96,6 +96,15 @@ precision when group sizes are very unequal, treating data dominated by a
 few large groups as if it carried as much information as many similarly
 sized ones would.)
 
+**A note on serial dependence.** Like other descriptive approaches to
+within-group correlation, these tests treat observations as exchangeable
+within their group: serial dependence (e.g., autocorrelation across
+consecutive days in intensive longitudinal data) is not modeled. When
+consecutive observations are strongly dependent, within-group p-values can
+be somewhat liberal. This applies equally to the SEM and Bayesian methods,
+which likewise assume conditional independence of observations within
+groups.
+
 ## The SEM method
 
 `method = "sem"` fits a two-level structural equation model using
@@ -107,6 +116,13 @@ robust maximum likelihood (MLR; Hox, Moerbeek, & van de Schoot, 2018,
 ch. 14, sec. 14.3). The standardized solution provides the within- and
 between-group correlations, and significance is based on the resulting
 z-tests.
+
+Note that the between-level covariance matrix in a two-level SEM refers to
+*latent* group means. Unlike the decomposition method, which correlates
+*observed* group means, the SEM estimate is corrected for that sampling error
+(Snijders & Bosker, 2012). Between-group correlations from `method = "sem"`
+are therefore typically somewhat larger in absolute value than their decomposition
+counterparts, particularly when groups contribute few observations.
 
 Because MLR estimation incorporates each group's sample size into the
 likelihood automatically, there is no separate `weight` argument for this
@@ -150,13 +166,15 @@ a 90% CI).
 
 | | decomposition | sem | bayes |
 |---|---|---|---|
-| **Speed** | Fast; closed-form | Slower; iterative MLR estimation | Slowest; MCMC sampling |
+| **Within-group estimand** | Pooled within-group correlation, computed from observed group-mean-centered deviation scores | Pooled within-group correlation, from the model-implied within-level covariance matrix; in practice near-identical to decomposition | Pooled within-group correlation, from the same deviation scores as decomposition |
+| **Between-group estimand** | Correlation of *observed* group means; attenuated by within-group sampling error when groups contribute few observations | Correlation of *latent* group means, corrected for within-group sampling error | Correlation of *observed* group means, as in decomposition |
 | **Balanced group sizes** | Works well | Works well | Works well |
 | **Very unequal group sizes** | `weight = TRUE` corrects the *point estimate*; significance test always uses unweighted group means (see above) | Handled natively by ML for both point estimate and significance test | `weight = TRUE` corrects the point estimate; CI always uses unweighted group means (see above) |
 | **Missing data** | Pairwise deletion per variable pair | Listwise deletion across all modeled variables | Pairwise deletion per variable pair |
 | **Small number of groups** | Significance tests are exact | Asymptotic MLR standard errors; can be unreliable with few groups | Posteriors do not rely on asymptotic or bivariate-normal assumptions |
-| **Uncertainty** | p-values | p-values (z-tests) | Credible intervals |
+| **Uncertainty** | p-values | p-values | Credible intervals |
 | **Interpretability** | Simple, transparent formulas | Estimates come from a fitted latent-variable model | Estimates come from a fitted Bayesian model |
+| **Speed** | Fast; closed-form | Slower; iterative MLR estimation | Slowest; MCMC sampling |
 
 As a starting point: use `method = "decomposition"` (the default) for most
 applications, particularly when group sizes are reasonably similar or the

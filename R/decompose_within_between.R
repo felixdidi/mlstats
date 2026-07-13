@@ -55,6 +55,11 @@
 #' their group mean. This removes all between-group variance and represents the
 #' within-group effect of the predictor in REWB models.
 #'
+#' Observations with a missing value on \code{group} are kept in the output,
+#' but their between- and within-group components are set to \code{NA} (with a
+#' warning): without a known group, no group mean can be assigned. Grand mean
+#' centering does not involve the grouping variable and is unaffected.
+#'
 #' @examples
 #' data("media_diary")
 #'
@@ -136,6 +141,17 @@ decompose_within_between <- function(
 
   # Between and/or within components
   if ("between" %in% components || "within" %in% components) {
+    # dplyr::group_by() would treat NA as a group of its own and hand those
+    # observations a "group mean" computed across all unknown-group rows.
+    # Their components are set to NA after the fact instead (the rows are
+    # kept so the output still aligns with the input data).
+    na_group <- base::is.na(data[[group]])
+    if (base::any(na_group)) {
+      cli::cli_warn(c(
+        "{base::sum(na_group)} observation{?s} {?has/have} a missing value on the grouping variable {.val {group}}.",
+        "i" = "{cli::qty(base::sum(na_group))}{?Its/Their} between- and within-group components are set to {.val NA}."
+      ))
+    }
     # Between: group means (always needed when within is requested, even if not
     # in final output, because within is defined as x - group_mean)
     result <- result |>
@@ -174,6 +190,24 @@ decompose_within_between <- function(
         base::character(1)
       )
       result <- dplyr::select(result, -dplyr::all_of(between_col_names))
+    }
+
+    if (base::any(na_group)) {
+      component_cols <- base::character(0)
+      for (pattern in base::c(
+        if ("between" %in% components) between_pattern,
+        if ("within" %in% components) within_pattern
+      )) {
+        component_cols <- base::c(
+          component_cols,
+          base::vapply(
+            vars,
+            function(v) .eval_name_pattern(pattern, v, group),
+            base::character(1)
+          )
+        )
+      }
+      result[na_group, component_cols] <- NA
     }
   }
 

@@ -45,10 +45,15 @@
 #' @return A tibble of class \code{mlstats_desc_tibble} containing:
 #' \itemize{
 #'   \item \code{variable}: Variable name
-#'   \item \code{n_obs}: Number of observations
-#'   \item \code{m}: Mean
-#'   \item \code{sd}: Standard deviation
-#'   \item \code{range}: Range from minimum to maximum
+#'   \item \code{n_obs}: Number of observations. For variables that are
+#'     constant within every group (e.g., a trait measured once per person
+#'     but repeated across that person's rows), this is the number of groups
+#'     that provided a value, not the number of rows it was replicated across.
+#'   \item \code{m}: Mean (rounded to two decimals)
+#'   \item \code{sd}: Standard deviation (rounded to two decimals)
+#'   \item \code{range}: Range from observed minimum to maximum, rounded to
+#'     two decimals unless both are whole numbers (e.g., integer scales), in
+#'     which case decimals are dropped
 #'   \item One column per variable in \code{vars} containing correlations
 #'   \item \code{icc}: Intraclass correlation coefficient
 #' }
@@ -176,6 +181,7 @@ mldesc <- function(
   method <- base::match.arg(method)
   significance <- base::match.arg(significance)
   .validate_group_vars(data, group, vars)
+  data <- .drop_na_group(data, group)
 
   # `ci`/`folder` only matter for method = "bayes"; `significance` only
   # matters for the other two methods (bayes marks credible intervals
@@ -309,6 +315,22 @@ mldesc <- function(
       var_data <- data[[var]]
       var_data_clean <- var_data[!base::is.na(var_data)]
 
+      # Variables that are constant within every group (e.g., a trait
+      # measured once per person but attached to every observation) were
+      # measured once per group, not once per row: count the groups that
+      # provided a value, not the rows the value was replicated across.
+      group_values <- base::tapply(
+        var_data,
+        data[[group]],
+        function(v) base::length(base::unique(v[!base::is.na(v)]))
+      )
+      is_trait <- base::all(group_values <= 1) && base::any(group_values == 1)
+      n_val <- if (is_trait) {
+        base::sum(group_values == 1)
+      } else {
+        base::length(var_data_clean)
+      }
+
       if (weight) {
         # Weighted: each observation contributes equally
         m_val <- base::mean(var_data_clean, na.rm = TRUE)
@@ -327,15 +349,27 @@ mldesc <- function(
         sd_val <- stats::sd(group_means$group_mean, na.rm = TRUE)
       }
 
+      # Two decimals for the observed minimum/maximum, unless both are whole
+      # numbers (e.g., integer scales), in which case decimals are dropped
+      range_min <- base::min(var_data_clean, na.rm = TRUE)
+      range_max <- base::max(var_data_clean, na.rm = TRUE)
+      range_fmt <- if (
+        range_min == base::round(range_min) && range_max == base::round(range_max)
+      ) {
+        "%.0f"
+      } else {
+        "%.2f"
+      }
+
       tibble::tibble(
         variable = var,
-        n_obs = base::as.character(scales::comma(base::length(var_data_clean))),
+        n_obs = base::as.character(scales::comma(n_val)),
         m = base::sprintf("%.2f", m_val),
         sd = base::sprintf("%.2f", sd_val),
         range = base::paste0(
-          base::sprintf("%.0f", base::min(var_data_clean, na.rm = TRUE)),
+          base::sprintf(range_fmt, range_min),
           "\u2013",
-          base::sprintf("%.0f", base::max(var_data_clean, na.rm = TRUE))
+          base::sprintf(range_fmt, range_max)
         )
       )
     })

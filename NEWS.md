@@ -1,6 +1,4 @@
-# mlstats (development version)
-
-# mlstats 0.1.1
+# mlstats 0.1.0.9000 (development version)
 
 * `decompose_within_between()` now defaults to `components = c("between",
   "within")`, so grand-mean-centered scores are no longer returned by
@@ -18,6 +16,31 @@
   `tinytable`'s markdown subscript syntax (`~obs~`), consistent with the
   markdown italics (`*N*`) already used on the same label and with how the
   "a"/"b" correlation-note superscripts are marked elsewhere in the table.
+
+  * `mldesc()` now reports the observed minimum and maximum in the `range`
+  column with two decimals instead of rounding them to whole numbers
+  (decimals are dropped when both the minimum and the maximum are whole
+  numbers, e.g., for integer scales). Previously, a variable observed
+  between 1.5 and 6.9 was reported as "2–7", wrongly implying that the
+  scale endpoints were observed.
+
+* `mldesc()` now counts variables that are constant within every group
+  (e.g., a trait measured once per person but repeated across that person's
+  rows) once per group in `n_obs`, reporting the number of groups that
+  provided a value instead of the number of rows the value was replicated
+  across.
+
+* `mldesc()`, `within_between_correlations()`, and
+  `decompose_within_between()` now error informatively when a variable in
+  `vars` contains only missing values (previously an uninformative low-level
+  error could be triggered).
+
+* Observations with a missing value on the grouping variable are no longer
+  silently treated as a group of their own. `mldesc()` and
+  `within_between_correlations()` now warn and exclude them (previously they
+  formed a spurious extra group in the correlations while being dropped from
+  the ICC models); `decompose_within_between()` keeps the rows but sets
+  their between- and within-group components to `NA`, with a warning.
 
 # mlstats 0.1.0
 

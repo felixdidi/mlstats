@@ -23,9 +23,11 @@ test_that("mldesc handles basic input correctly", {
 
 test_that("mldesc computes descriptive statistics correctly", {
   set.seed(456)
+  # x varies within groups (else it would be counted once per group in
+  # n_obs, like a trait), with an exact overall mean of 20
   data <- data.frame(
     group = rep(1:3, each = 10),
-    x = c(rep(10, 10), rep(20, 10), rep(30, 10))
+    x = c(rep(c(9, 11), 5), rep(c(19, 21), 5), rep(c(29, 31), 5))
   )
   
   result <- mldesc(
@@ -40,8 +42,9 @@ test_that("mldesc computes descriptive statistics correctly", {
   # Check mean - extract underlying value
   expect_equal(vctrs::vec_data(result$m)[1], "20.00")
   
-  # Check range format - extract underlying value
-  expect_match(vctrs::vec_data(result$range)[1], "^-?[0-9]+–-?[0-9]+$")
+  # Check range format - extract underlying value (whole-number data, so
+  # decimals are dropped)
+  expect_equal(vctrs::vec_data(result$range)[1], "9–31")
 })
 
 test_that("mldesc handles multiple variables", {
@@ -273,8 +276,8 @@ test_that("mldesc formats numbers correctly", {
   expect_match(m_val, "^[0-9]+\\.[0-9]{2}$")
   expect_match(sd_val, "^[0-9]+\\.[0-9]{2}$")
   
-  # Range should be integers
-  expect_match(range_val, "^-?[0-9]+–-?[0-9]+$")
+  # Range should have 2 decimal places
+  expect_match(range_val, "^-?[0-9]+\\.[0-9]{2}–-?[0-9]+\\.[0-9]{2}$")
   
   # ICC should have 2 decimal places
   expect_match(icc_val, "^\\.[0-9]{2}$")
@@ -1145,8 +1148,9 @@ test_that("mldesc method='sem' handles between-only variables correctly", {
   expect_s3_class(result, "mlstats_desc_tibble")
   expect_equal(nrow(result), 3)
 
-  # Descriptives should be computed for all variables
-  expect_equal(vctrs::vec_data(result$n_obs)[1], "500")
+  # Descriptives should be computed for all variables; the trait is constant
+  # within groups, so its n_obs counts groups (20), not rows (500)
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "20")
   expect_equal(vctrs::vec_data(result$n_obs)[2], "500")
 
   # Within-group correlations involving the trait should be NA
@@ -1322,7 +1326,7 @@ test_that("mldesc method='bayes' handles basic input correctly", {
   expect_match(result$n_obs, "^[0-9]+$")
   expect_match(result$m, "^[0-9]+\\.[0-9]{2}$")
   expect_match(result$sd, "^[0-9]+\\.[0-9]{2}$")
-  expect_match(result$range, "^-?[0-9]+–-?[0-9]+$")
+  expect_match(result$range, "^-?[0-9]+\\.[0-9]{2}–-?[0-9]+\\.[0-9]{2}$")
   expect_match(result$icc, "^\\.[0-9]{2}$")
   expect_equal(as.character(result$`1`[1]), "\u2013")
 
@@ -1481,4 +1485,97 @@ test_that("mldesc method='bayes' ignores significance with a message", {
     ),
     "no effect"
   )
+})
+test_that("mldesc counts trait variables once per group in n_obs", {
+  set.seed(8101)
+  data <- data.frame(
+    group = rep(1:10, each = 10)
+  )
+  data$trait <- rep(rnorm(10), each = 10)
+  data$x <- rnorm(100)
+
+  result <- mldesc(data, group = "group", vars = c("trait", "x"))
+
+  # trait is constant within every group: n_obs counts groups, not rows
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "10")
+  expect_equal(vctrs::vec_data(result$n_obs)[2], "100")
+})
+
+test_that("mldesc trait n_obs counts only groups that provided a value", {
+  set.seed(8102)
+  data <- data.frame(
+    group = rep(1:10, each = 10)
+  )
+  data$trait <- rep(rnorm(10), each = 10)
+  data$trait[data$group %in% 1:3] <- NA  # 3 groups never measured
+  data$x <- rnorm(100)
+
+  result <- mldesc(data, group = "group", vars = c("trait", "x"))
+
+  expect_equal(vctrs::vec_data(result$n_obs)[1], "7")
+})
+
+test_that("mldesc formats range with two decimals", {
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = c(1.512, rep(3, 18), 6.897)
+  )
+
+  result <- mldesc(data, group = "group", vars = "x")
+
+  expect_equal(vctrs::vec_data(result$range)[1], "1.51–6.90")
+})
+
+test_that("mldesc drops range decimals when min and max are whole numbers", {
+  set.seed(8106)
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = c(1, sample(c(2.5, 3, 4.5), 18, replace = TRUE), 7)
+  )
+
+  # Interior values have decimals, but min (1) and max (7) are whole
+  result <- mldesc(data, group = "group", vars = "x")
+
+  expect_equal(vctrs::vec_data(result$range)[1], "1–7")
+})
+
+test_that("mldesc errors informatively on all-NA variables", {
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = rnorm(20),
+    y = NA_real_
+  )
+
+  expect_error(
+    mldesc(data, group = "group", vars = c("x", "y")),
+    "only missing values"
+  )
+})
+
+test_that("mldesc warns on and excludes observations with a missing group", {
+  set.seed(8103)
+  data <- data.frame(
+    group = rep(1:10, each = 10),
+    x = rnorm(100),
+    y = rnorm(100)
+  )
+  data_na <- data
+  data_na$group[1:10] <- NA  # all of group 1 plus nothing else
+
+  result_na <- expect_warning_value(
+    mldesc(data_na, group = "group", vars = c("x", "y")),
+    "missing value on the grouping variable"
+  )
+  result_filtered <- mldesc(
+    data[data$group != 1, ],
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  expect_equal(
+    vctrs::vec_data(result_na$n_obs),
+    vctrs::vec_data(result_filtered$n_obs)
+  )
+  expect_equal(vctrs::vec_data(result_na$`2`), vctrs::vec_data(result_filtered$`2`))
+  expect_equal(vctrs::vec_data(result_na$icc), vctrs::vec_data(result_filtered$icc))
 })

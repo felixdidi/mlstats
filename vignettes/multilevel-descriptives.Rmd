@@ -99,7 +99,7 @@ The two correlations for `screen_time` and `wellbeing` tell different stories:
 
 - **Within-person (upper triangle):** Positive. On days when a person watches
   more entertainment media than they typically do, their wellbeing tends to be
-  slightly higher than their own average — consistent with short-term escapism
+  higher than their own average — consistent with short-term escapism
   or mood repair.
 - **Between-person (lower triangle):** Negative. People who watch more
   entertainment media on average tend to have lower average wellbeing — perhaps

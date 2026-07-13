@@ -65,10 +65,15 @@ decimal values in correlation and ICC columns according to APA standards.}
 A tibble of class \code{mlstats_desc_tibble} containing:
 \itemize{
 \item \code{variable}: Variable name
-\item \code{n_obs}: Number of observations
-\item \code{m}: Mean
-\item \code{sd}: Standard deviation
-\item \code{range}: Range from minimum to maximum
+\item \code{n_obs}: Number of observations. For variables that are
+constant within every group (e.g., a trait measured once per person
+but repeated across that person's rows), this is the number of groups
+that provided a value, not the number of rows it was replicated across.
+\item \code{m}: Mean (rounded to two decimals)
+\item \code{sd}: Standard deviation (rounded to two decimals)
+\item \code{range}: Range from observed minimum to maximum, rounded to
+two decimals unless both are whole numbers (e.g., integer scales), in
+which case decimals are dropped
 \item One column per variable in \code{vars} containing correlations
 \item \code{icc}: Intraclass correlation coefficient
 }

@@ -49,7 +49,7 @@ The dataset was generated to illustrate two processes that can operate simultane
    tend to have lower average wellbeing — perhaps because chronic heavy media
    use reflects lower trait self-control, which itself predicts lower wellbeing.
 2. **Within persons**: on days when someone watches more than usual, their
-   wellbeing is slightly higher — consistent with short-term escapism or mood
+   wellbeing tends to be higher — consistent with short-term escapism or mood
    repair through media use.
 
 Because these processes were built into the simulation, they are present by design — not empirical discoveries. The purpose of the example is to show how REWB models recover effects that point in *opposite directions*, and what happens when they are conflated. A naive regression conflates them and produces a near-zero coefficient, making it appear that screen time has no relationship with wellbeing, when in fact it has two real and opposing effects (in the simulation).

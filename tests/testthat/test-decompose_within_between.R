@@ -598,3 +598,55 @@ test_that("decompose_within_between column naming is consistent", {
   expect_true("var2_between_my_group" %in% colnames(result))
   expect_true("var2_within_my_group" %in% colnames(result))
 })
+test_that("decompose_within_between errors informatively on all-NA variables", {
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = rnorm(20),
+    y = NA_real_
+  )
+
+  expect_error(
+    decompose_within_between(data, group = "group", vars = c("x", "y")),
+    "only missing values"
+  )
+})
+
+test_that("decompose_within_between sets components to NA for missing groups", {
+  set.seed(8105)
+  data <- data.frame(
+    group = rep(1:5, each = 4),
+    x = rnorm(20)
+  )
+  data$group[1:2] <- NA
+
+  result <- expect_warning_value(
+    decompose_within_between(
+      data,
+      group = "group",
+      vars = "x",
+      components = c("gmc", "between", "within")
+    ),
+    "missing value on the grouping variable"
+  )
+
+  # Rows are kept, aligned with the input
+  expect_equal(nrow(result), nrow(data))
+
+  # Between/within components are NA where the group is unknown
+  expect_true(all(is.na(result$x_between_group[1:2])))
+  expect_true(all(is.na(result$x_within_group[1:2])))
+  expect_false(anyNA(result$x_between_group[-(1:2)]))
+  expect_false(anyNA(result$x_within_group[-(1:2)]))
+
+  # Grand mean centering does not involve the group and is unaffected
+  expect_false(anyNA(result$x_grand_mean_centered))
+
+  # Components for known groups match a run on the filtered data
+  filtered <- decompose_within_between(
+    data[!is.na(data$group), ],
+    group = "group",
+    vars = "x"
+  )
+  expect_equal(result$x_between_group[-(1:2)], filtered$x_between_group)
+  expect_equal(result$x_within_group[-(1:2)], filtered$x_within_group)
+})

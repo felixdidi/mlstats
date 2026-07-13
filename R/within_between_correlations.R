@@ -67,7 +67,7 @@
 #' based on the resulting z-tests. Because groups are weighted implicitly through
 #' maximum likelihood estimation rather than through the \code{weight} argument,
 #' this method is the more principled choice for data with very unequal group
-#' sizes or a moderate amount of missing data. It is slower than
+#' sizes. It is slower than
 #' \code{"decomposition"} and can occasionally fail to converge for small or
 #' collinear data sets.
 #'
@@ -174,6 +174,7 @@ within_between_correlations <- function(
   method <- base::match.arg(method)
   significance <- base::match.arg(significance)
   .validate_group_vars(data, group, vars)
+  data <- .drop_na_group(data, group)
 
   # Warn if weight is specified with SEM method. `weight` has no effect on
   # the correlation estimates under method = "sem" regardless of whether it

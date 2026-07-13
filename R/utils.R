@@ -25,6 +25,38 @@ utils::globalVariables("variable")
       "i" = "Available columns: {.val {base::names(data)}}."
     ))
   }
+
+  all_na_vars <- vars[base::vapply(
+    vars,
+    function(v) base::all(base::is.na(data[[v]])),
+    base::logical(1)
+  )]
+  if (base::length(all_na_vars) > 0) {
+    cli::cli_abort(c(
+      "Variable{?s} {.val {all_na_vars}} contain{?s/} only missing values.",
+      "i" = "All variables passed to {.arg vars} must have at least one non-missing value."
+    ))
+  }
+}
+
+# Warn about (and drop) observations with a missing value on the grouping
+# variable. Left in the data, dplyr::group_by() would treat NA as a group of
+# its own, so those rows would form a spurious extra group in the between-
+# group statistics while lme4::lmer() silently drops them from the ICC
+# models -- two different samples inside the same table. Used by mldesc()
+# and within_between_correlations(); decompose_within_between() keeps the
+# rows and NAs their components instead (see there).
+.drop_na_group <- function(data, group) {
+  na_group <- base::is.na(data[[group]])
+  n_na <- base::sum(na_group)
+  if (n_na > 0) {
+    cli::cli_warn(c(
+      "{n_na} observation{?s} {?has/have} a missing value on the grouping variable {.val {group}}.",
+      "i" = "{cli::qty(n_na)}{?This observation is/These observations are} excluded from all computations."
+    ))
+    data <- data[!na_group, , drop = FALSE]
+  }
+  data
 }
 
 # Heuristic: does `x` look binary/ordinal/count-like (few, whole-number
