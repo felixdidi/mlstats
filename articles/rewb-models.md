@@ -45,7 +45,7 @@ between-person levels:
     chronic heavy media use reflects lower trait self-control, which
     itself predicts lower wellbeing.
 2.  **Within persons**: on days when someone watches more than usual,
-    their wellbeing is slightly higher — consistent with short-term
+    their wellbeing tends to be higher — consistent with short-term
     escapism or mood repair through media use.
 
 Because these processes were built into the simulation, they are present

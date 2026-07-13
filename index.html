@@ -109,14 +109,14 @@
 <span>    vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"self_control"</span>, <span class="st">"wellbeing"</span>, <span class="st">"screen_time"</span>, <span class="st">"stress"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="do">## # Multilevel Descriptive Statistics</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="do">##   variable     n_obs      m    sd range   `1`   `2`   `3`   `4`   icc</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="do">##   ------------ ----- ------ ----- ----- ----- ----- ----- ----- -----</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="do">## 1 Self control 1,400   4.03  0.83   2–6     –    NA    NA    NA  1.00</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="do">## 2 Wellbeing    1,400   4.45  0.87   2–7  .61*     –  .42* -.43*   .46</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="do">## 3 Screen time  1,400 128.66 42.29 0–272 -.67* -.34*     –  .29*   .45</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="do">## 4 Stress       1,400   3.81  0.91   1–7 -.53* -.38*  .38*     –   .33</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="do">##   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="do">##   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="do">## 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="do">## 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="do">## 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="do">## 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====</span></span>
 <span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="do">## # ℹ Within-person correlations above, between-person correlations below the</span></span>
 <span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="do">## #   diagonal.</span></span>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="do">## # ℹ All correlations marked with a star are significant at p &lt; .05.</span></span>

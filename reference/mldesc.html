@@ -151,10 +151,15 @@ decimal values in correlation and ICC columns according to APA standards.</p></d
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble of class <code>mlstats_desc_tibble</code> containing:</p><ul><li><p><code>variable</code>: Variable name</p></li>
-<li><p><code>n_obs</code>: Number of observations</p></li>
-<li><p><code>m</code>: Mean</p></li>
-<li><p><code>sd</code>: Standard deviation</p></li>
-<li><p><code>range</code>: Range from minimum to maximum</p></li>
+<li><p><code>n_obs</code>: Number of observations. For variables that are
+constant within every group (e.g., a trait measured once per person
+but repeated across that person's rows), this is the number of groups
+that provided a value, not the number of rows it was replicated across.</p></li>
+<li><p><code>m</code>: Mean (rounded to two decimals)</p></li>
+<li><p><code>sd</code>: Standard deviation (rounded to two decimals)</p></li>
+<li><p><code>range</code>: Range from observed minimum to maximum, rounded to
+two decimals unless both are whole numbers (e.g., integer scales), in
+which case decimals are dropped</p></li>
 <li><p>One column per variable in <code>vars</code> containing correlations</p></li>
 <li><p><code>icc</code>: Intraclass correlation coefficient</p></li>
 </ul><p>The tibble can be returned as a gt object using <code>print(result, format = "gt")</code>
@@ -220,14 +225,14 @@ and between-group correlations are estimated and tested.</p></div>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">result</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Multilevel Descriptive Statistics</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   variable     n_obs      m    sd range   `1`   `2`   `3`   `4`   icc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">------------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Self control 1,400   4.03  0.83   2–6     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Wellbeing    1,400   4.45  0.87   2–7  .61*     <span style="color: #949494;">–</span>  .42* -.43*   .46</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Screen time  1,400 128.66 42.29 0–272 -.67* -.34*     <span style="color: #949494;">–</span>  .29*   .45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> Stress       1,400   3.81  0.91   1–7 -.53* -.38*  .38*     <span style="color: #949494;">–</span>   .33</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">------------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">---------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Self control   100   4.03  0.83 1.60–5.80     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     <span style="color: #949494;">–</span>  .42* -.43*   .46</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     <span style="color: #949494;">–</span>  .29*   .45</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     <span style="color: #949494;">–</span>   .33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Within-person correlations above, between-person correlations below the</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   diagonal.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ All correlations marked with a star are significant at p &lt; .05.</span></span>

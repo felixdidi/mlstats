@@ -12,8 +12,8 @@ within-person and between-person correlations, including a case where
 the two go in opposite directions (**screen_time** × **wellbeing**):
 
 - *Within persons*: on days when someone watches more entertainment
-  media than usual, they report slightly better wellbeing — consistent
-  with short-term escapism or mood repair through media use.
+  media than usual, they report better wellbeing — consistent with
+  short-term escapism or mood repair through media use.
 
 - *Between persons*: people who watch more entertainment media on
   average tend to report lower average wellbeing — chronic heavy media

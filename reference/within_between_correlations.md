@@ -123,9 +123,8 @@ simultaneously using maximum likelihood. Significance is based on the
 resulting z-tests. Because groups are weighted implicitly through
 maximum likelihood estimation rather than through the `weight` argument,
 this method is the more principled choice for data with very unequal
-group sizes or a moderate amount of missing data. It is slower than
-`"decomposition"` and can occasionally fail to converge for small or
-collinear data sets.
+group sizes. It is slower than `"decomposition"` and can occasionally
+fail to converge for small or collinear data sets.
 
 For `method = "sem"`, variables that never vary within a group (e.g.,
 time-invariant traits) are modeled only at the between-group level, and

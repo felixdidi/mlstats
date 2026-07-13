@@ -123,8 +123,8 @@ stories:
 
 - **Within-person (upper triangle):** Positive. On days when a person
   watches more entertainment media than they typically do, their
-  wellbeing tends to be slightly higher than their own average —
-  consistent with short-term escapism or mood repair.
+  wellbeing tends to be higher than their own average — consistent with
+  short-term escapism or mood repair.
 - **Between-person (lower triangle):** Negative. People who watch more
   entertainment media on average tend to have lower average wellbeing —
   perhaps because chronic heavy media use reflects lower trait
@@ -213,14 +213,14 @@ result <- mldesc(
 
 result
 #> # Multilevel Descriptive Statistics
-#>   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====
-#>   variable     n_obs      m    sd range   `1`   `2`   `3`   `4`   icc
-#>   ------------ ----- ------ ----- ----- ----- ----- ----- ----- -----
-#> 1 Self control 1,400   4.03  0.83   2–6     –    NA    NA    NA  1.00
-#> 2 Wellbeing    1,400   4.45  0.87   2–7  .61*     –  .42* -.43*   .46
-#> 3 Screen time  1,400 128.66 42.29 0–272 -.67* -.34*     –  .29*   .45
-#> 4 Stress       1,400   3.81  0.91   1–7 -.53* -.38*  .38*     –   .33
-#>   ============ ===== ====== ===== ===== ===== ===== ===== ===== =====
+#>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
+#>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc
+#>   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----
+#> 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00
+#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46
+#> 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45
+#> 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33
+#>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
@@ -243,14 +243,15 @@ mldesc(
   remove_leading_zero = FALSE        # keep "0.45" instead of ".45"
 )
 #> # Multilevel Descriptive Statistics
-#>   ============ ===== ====== ===== ===== ===== ======== ======== ======== =====
-#>   variable     n_obs      m    sd range   `1`      `2`      `3`      `4`   icc
-#>   ------------ ----- ------ ----- ----- ----- -------- -------- -------- -----
-#> 1 Self control 1,400   4.03  0.83   2–6     –  0.61*** -0.67*** -0.53***  1.00
-#> 2 Wellbeing    1,400   4.45  0.87   2–7    NA        – -0.34*** -0.38***  0.46
-#> 3 Screen time  1,400 128.66 42.29 0–272    NA  0.42***        –  0.38***  0.45
-#> 4 Stress       1,400   3.81  0.91   1–7    NA -0.43***  0.29***        –  0.33
-#>   ============ ===== ====== ===== ===== ===== ======== ======== ======== =====
+#>   ============ ===== ====== ===== ========= ===== ======== ======== ========
+#>   variable     n_obs      m    sd     range   `1`      `2`      `3`      `4`
+#>   ------------ ----- ------ ----- --------- ----- -------- -------- --------
+#> 1 Self control   100   4.03  0.83 1.60–5.80     –  0.61*** -0.67*** -0.53***
+#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90    NA        – -0.34*** -0.38***
+#> 3 Screen time  1,400 128.66 42.29     0–272    NA  0.42***        –  0.38***
+#> 4 Stress       1,400   3.81  0.91       1–7    NA -0.43***  0.29***        –
+#>   ============ ===== ====== ===== ========= ===== ======== ======== ========
+#> # ℹ 1 more variable: icc <mls>
 #> # ℹ Between-person correlations above, within-person correlations below the
 #> #   diagonal.
 #> # ℹ Correlations marked with * are significant at p < .05, ** at p < .01, and

@@ -209,6 +209,14 @@ size-weighted estimate can substantially overstate precision when group
 sizes are very unequal, treating data dominated by a few large groups as
 if it carried as much information as many similarly sized ones
 would.)</p>
+<p><strong>A note on serial dependence.</strong> Like other descriptive
+approaches to within-group correlation, these tests treat observations
+as exchangeable within their group: serial dependence (e.g.,
+autocorrelation across consecutive days in intensive longitudinal data)
+is not modeled. When consecutive observations are strongly dependent,
+within-group p-values can be somewhat liberal. This applies equally to
+the SEM and Bayesian methods, which likewise assume conditional
+independence of observations within groups.</p>
 </div>
 </div>
 <div class="section level2">
@@ -223,6 +231,14 @@ directly and simultaneously, using robust maximum likelihood (MLR; Hox,
 Moerbeek, &amp; van de Schoot, 2018, ch. 14, sec. 14.3). The
 standardized solution provides the within- and between-group
 correlations, and significance is based on the resulting z-tests.</p>
+<p>Note that the between-level covariance matrix in a two-level SEM
+refers to <em>latent</em> group means. Unlike the decomposition method,
+which correlates <em>observed</em> group means, the SEM estimate is
+corrected for that sampling error (Snijders &amp; Bosker, 2012).
+Between-group correlations from <code>method = "sem"</code> are
+therefore typically somewhat larger in absolute value than their
+decomposition counterparts, particularly when groups contribute few
+observations.</p>
 <p>Because MLR estimation incorporates each group’s sample size into the
 likelihood automatically, there is no separate <code>weight</code>
 argument for this method: unequal group sizes are handled natively by
@@ -282,18 +298,30 @@ controlled by the <code>ci</code> argument (default <code>0.9</code>, a
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><strong>Speed</strong></td>
-<td>Fast; closed-form</td>
-<td>Slower; iterative MLR estimation</td>
-<td>Slowest; MCMC sampling</td>
+<td><strong>Within-group estimand</strong></td>
+<td>Pooled within-group correlation, computed from observed
+group-mean-centered deviation scores</td>
+<td>Pooled within-group correlation, from the model-implied within-level
+covariance matrix; in practice near-identical to decomposition</td>
+<td>Pooled within-group correlation, from the same deviation scores as
+decomposition</td>
 </tr>
 <tr class="even">
+<td><strong>Between-group estimand</strong></td>
+<td>Correlation of <em>observed</em> group means; attenuated by
+within-group sampling error when groups contribute few observations</td>
+<td>Correlation of <em>latent</em> group means, corrected for
+within-group sampling error</td>
+<td>Correlation of <em>observed</em> group means, as in
+decomposition</td>
+</tr>
+<tr class="odd">
 <td><strong>Balanced group sizes</strong></td>
 <td>Works well</td>
 <td>Works well</td>
 <td>Works well</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Very unequal group sizes</strong></td>
 <td>
 <code>weight = TRUE</code> corrects the <em>point estimate</em>;
@@ -304,13 +332,13 @@ test</td>
 <code>weight = TRUE</code> corrects the point estimate; CI always
 uses unweighted group means (see above)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Missing data</strong></td>
 <td>Pairwise deletion per variable pair</td>
 <td>Listwise deletion across all modeled variables</td>
 <td>Pairwise deletion per variable pair</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Small number of groups</strong></td>
 <td>Significance tests are exact</td>
 <td>Asymptotic MLR standard errors; can be unreliable with few
@@ -318,17 +346,23 @@ groups</td>
 <td>Posteriors do not rely on asymptotic or bivariate-normal
 assumptions</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Uncertainty</strong></td>
 <td>p-values</td>
-<td>p-values (z-tests)</td>
+<td>p-values</td>
 <td>Credible intervals</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Interpretability</strong></td>
 <td>Simple, transparent formulas</td>
 <td>Estimates come from a fitted latent-variable model</td>
 <td>Estimates come from a fitted Bayesian model</td>
+</tr>
+<tr class="odd">
+<td><strong>Speed</strong></td>
+<td>Fast; closed-form</td>
+<td>Slower; iterative MLR estimation</td>
+<td>Slowest; MCMC sampling</td>
 </tr>
 </tbody>
 </table>

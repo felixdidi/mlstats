@@ -102,6 +102,11 @@ of the predictor.
 from their group mean. This removes all between-group variance and
 represents the within-group effect of the predictor in REWB models.
 
+Observations with a missing value on `group` are kept in the output, but
+their between- and within-group components are set to `NA` (with a
+warning): without a known group, no group mean can be assigned. Grand
+mean centering does not involve the grouping variable and is unaffected.
+
 ## References
 
 Bell, A., Fairbrother, M., & Jones, K. (2019). Fixed and random effects
