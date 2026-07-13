@@ -61,48 +61,48 @@ fact it has two real and opposing effects (in the simulation).
 [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
 splits each specified variable into up to three components:
 
-- **`_grand_mean_centered`**: grand-mean-centered value
 - **`_between_{group}`**: group mean (stable between-group component)
 - **`_within_{group}`**: deviation from the group mean (within-group
   fluctuation)
+- **`_grand_mean_centered`**: grand-mean-centered value (opt-in; see
+  below)
 
 The `vars` argument names the variables to decompose. `group` names the
-grouping variable.
+grouping variable. By default,
+[`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
+returns the within- and between-group components — the two predictors
+REWB models need.
 
 ``` r
 
 media_diary |>
   decompose_within_between(group = "person", vars = "screen_time") |>
   select(starts_with("screen_time_"))
-#> # A tibble: 1,400 × 3
-#>    screen_time_grand_mean_centered screen_time_between_…¹ screen_time_within_p…²
-#>                              <dbl>                  <dbl>                  <dbl>
-#>  1                          -48.7                    69.9                   10.1
-#>  2                           -8.66                   69.9                   50.1
-#>  3                          -30.7                    69.9                   28.1
-#>  4                          -16.7                    69.9                   42.1
-#>  5                         -108.                     69.9                  -48.9
-#>  6                          -44.7                    69.9                   14.1
-#>  7                          -80.7                    69.9                  -21.9
-#>  8                          -70.7                    69.9                  -11.9
-#>  9                          -89.7                    69.9                  -30.9
-#> 10                          -46.7                    69.9                   12.1
+#> # A tibble: 1,400 × 2
+#>    screen_time_between_person screen_time_within_person
+#>                         <dbl>                     <dbl>
+#>  1                       69.9                      10.1
+#>  2                       69.9                      50.1
+#>  3                       69.9                      28.1
+#>  4                       69.9                      42.1
+#>  5                       69.9                     -48.9
+#>  6                       69.9                      14.1
+#>  7                       69.9                     -21.9
+#>  8                       69.9                     -11.9
+#>  9                       69.9                     -30.9
+#> 10                       69.9                      12.1
 #> # ℹ 1,390 more rows
-#> # ℹ abbreviated names: ¹​screen_time_between_person, ²​screen_time_within_person
 ```
 
 `screen_time_within_person` is the group-mean-centred score: how many
 more (or fewer) minutes this person watched today compared to their own
 average. `screen_time_between_person` is the person’s average screen
 time, repeated for every row belonging to that person.
-`screen_time_grand_mean_centered` is the grand-mean-centred value, which
-shows each observation’s deviation from the overall mean.
 
 ### Selecting Components
 
-By default all three components are returned. Use the `components`
-argument to select a subset. For REWB models, the within and between
-components are the predictors you need.
+Use the `components` argument to add the grand-mean-centered score, or
+to restrict the output to a single component.
 
 ``` r
 
@@ -110,27 +110,31 @@ media_diary |>
   decompose_within_between(
     group = "person",
     vars = "screen_time",
-    components = c("within", "between")
+    components = c("within", "between", "gmc")
   ) |>
   select(starts_with("screen_time"))
-#> # A tibble: 1,400 × 3
-#>    screen_time screen_time_between_person screen_time_within_person
-#>          <dbl>                      <dbl>                     <dbl>
-#>  1          80                       69.9                      10.1
-#>  2         120                       69.9                      50.1
-#>  3          98                       69.9                      28.1
-#>  4         112                       69.9                      42.1
-#>  5          21                       69.9                     -48.9
-#>  6          84                       69.9                      14.1
-#>  7          48                       69.9                     -21.9
-#>  8          58                       69.9                     -11.9
-#>  9          39                       69.9                     -30.9
-#> 10          82                       69.9                      12.1
+#> # A tibble: 1,400 × 4
+#>    screen_time screen_time_grand_mean_centered screen_time_between_person
+#>          <dbl>                           <dbl>                      <dbl>
+#>  1          80                          -48.7                        69.9
+#>  2         120                           -8.66                       69.9
+#>  3          98                          -30.7                        69.9
+#>  4         112                          -16.7                        69.9
+#>  5          21                         -108.                         69.9
+#>  6          84                          -44.7                        69.9
+#>  7          48                          -80.7                        69.9
+#>  8          58                          -70.7                        69.9
+#>  9          39                          -89.7                        69.9
+#> 10          82                          -46.7                        69.9
 #> # ℹ 1,390 more rows
+#> # ℹ 1 more variable: screen_time_within_person <dbl>
 ```
 
-Valid values for `components` are any non-empty subset of
-`c("within", "between", "gmc")`.
+`screen_time_grand_mean_centered` is the grand-mean-centred value, which
+shows each observation’s deviation from the overall mean. Valid values
+for `components` are any non-empty subset of
+`c("within", "between", "gmc")`; the default is
+`c("within", "between")`.
 
 ### Customising Column Names
 

@@ -921,17 +921,21 @@ Components<a class="anchor" aria-label="anchor" href="#decomposing-variables-int
 <p>Before fitting multilevel models, time-varying predictors are
 typically decomposed into their within-group and between-group
 components. <code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> makes this easy by
-adding three new columns per variable:</p>
+adding, by default, two new columns per variable:</p>
 <ul>
-<li>
-<strong><code>_grand_mean_centered</code></strong>:
-grand-mean-centered value</li>
 <li>
 <strong><code>_between_{group}</code></strong>: group mean (stable
 between-group component)</li>
 <li>
 <strong><code>_within_{group}</code></strong>: deviation from the
 group mean (within-group fluctuation)</li>
+</ul>
+<p>A third, optional column can be requested via
+<code>components</code>:</p>
+<ul>
+<li>
+<strong><code>_grand_mean_centered</code></strong>:
+grand-mean-centered value</li>
 </ul>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">media_diary</span> <span class="op">|&gt;</span></span>
@@ -940,19 +944,19 @@ group mean (within-group fluctuation)</li>
 <span>    vars  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stress"</span>, <span class="st">"screen_time"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"stress"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 4</span></span></span>
-<span><span class="co">#&gt;    stress stress_grand_mean_centered stress_between_person stress_within_person</span></span>
-<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>    4.1                      0.294                  3.26               0.843 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>    4                        0.194                  3.26               0.743 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>    3.4                     -<span style="color: #BB0000;">0.406</span>                  3.26               0.143 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>    3.5                     -<span style="color: #BB0000;">0.306</span>                  3.26               0.243 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>    2.8                     -<span style="color: #BB0000;">1.01</span>                   3.26              -<span style="color: #BB0000;">0.457</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>    3.2                     -<span style="color: #BB0000;">0.606</span>                  3.26              -<span style="color: #BB0000;">0.057</span><span style="color: #BB0000; text-decoration: underline;">1</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>    2.6                     -<span style="color: #BB0000;">1.21</span>                   3.26              -<span style="color: #BB0000;">0.657</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>    2.6                     -<span style="color: #BB0000;">1.21</span>                   3.26              -<span style="color: #BB0000;">0.657</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>    2.4                     -<span style="color: #BB0000;">1.41</span>                   3.26              -<span style="color: #BB0000;">0.857</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    4                        0.194                  3.26               0.743 </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 3</span></span></span>
+<span><span class="co">#&gt;    stress stress_between_person stress_within_person</span></span>
+<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>    4.1                  3.26               0.843 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>    4                    3.26               0.743 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>    3.4                  3.26               0.143 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>    3.5                  3.26               0.243 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>    2.8                  3.26              -<span style="color: #BB0000;">0.457</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>    3.2                  3.26              -<span style="color: #BB0000;">0.057</span><span style="color: #BB0000; text-decoration: underline;">1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>    2.6                  3.26              -<span style="color: #BB0000;">0.657</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>    2.6                  3.26              -<span style="color: #BB0000;">0.657</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>    2.4                  3.26              -<span style="color: #BB0000;">0.857</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    4                    3.26               0.743 </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span></code></pre></div>
 <p>The within and between components serve as separate predictors in
 Random Effects Within-Between (REWB) models, which estimate distinct

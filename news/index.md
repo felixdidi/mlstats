@@ -4,6 +4,15 @@
 
 ## mlstats 0.1.1
 
+- [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
+  now defaults to `components = c("between", "within")`, so
+  grand-mean-centered scores are no longer returned by default. Grand
+  mean centering is rarely needed for REWB models (the within and
+  between components are the actual predictors), so this avoids adding
+  an extra column most callers don’t use. Pass
+  `components = c("gmc", "between", "within")` (or any subset including
+  `"gmc"`) to restore the previous output.
+
 - Fixed `print(..., format = "tt")` on
   [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
   output so that the *N*_(obs) column header renders “obs” as a proper

@@ -184,12 +184,15 @@ interpretation, see
 Before fitting multilevel models, time-varying predictors are typically
 decomposed into their within-group and between-group components.
 [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
-makes this easy by adding three new columns per variable:
+makes this easy by adding, by default, two new columns per variable:
 
-- **`_grand_mean_centered`**: grand-mean-centered value
 - **`_between_{group}`**: group mean (stable between-group component)
 - **`_within_{group}`**: deviation from the group mean (within-group
   fluctuation)
+
+A third, optional column can be requested via `components`:
+
+- **`_grand_mean_centered`**: grand-mean-centered value
 
 ``` r
 
@@ -199,19 +202,19 @@ media_diary |>
     vars  = c("stress", "screen_time")
   ) |>
   select(starts_with("stress"))
-#> # A tibble: 1,400 × 4
-#>    stress stress_grand_mean_centered stress_between_person stress_within_person
-#>     <dbl>                      <dbl>                 <dbl>                <dbl>
-#>  1    4.1                      0.294                  3.26               0.843 
-#>  2    4                        0.194                  3.26               0.743 
-#>  3    3.4                     -0.406                  3.26               0.143 
-#>  4    3.5                     -0.306                  3.26               0.243 
-#>  5    2.8                     -1.01                   3.26              -0.457 
-#>  6    3.2                     -0.606                  3.26              -0.0571
-#>  7    2.6                     -1.21                   3.26              -0.657 
-#>  8    2.6                     -1.21                   3.26              -0.657 
-#>  9    2.4                     -1.41                   3.26              -0.857 
-#> 10    4                        0.194                  3.26               0.743 
+#> # A tibble: 1,400 × 3
+#>    stress stress_between_person stress_within_person
+#>     <dbl>                 <dbl>                <dbl>
+#>  1    4.1                  3.26               0.843 
+#>  2    4                    3.26               0.743 
+#>  3    3.4                  3.26               0.143 
+#>  4    3.5                  3.26               0.243 
+#>  5    2.8                  3.26              -0.457 
+#>  6    3.2                  3.26              -0.0571
+#>  7    2.6                  3.26              -0.657 
+#>  8    2.6                  3.26              -0.657 
+#>  9    2.4                  3.26              -0.857 
+#> 10    4                    3.26               0.743 
 #> # ℹ 1,390 more rows
 ```
 

@@ -16,7 +16,7 @@ decompose_within_between(
   data,
   group,
   vars,
-  components = c("gmc", "between", "within"),
+  components = c("between", "within"),
   gmc_pattern = "{col}_grand_mean_centered",
   between_pattern = "{col}_between_{group}",
   within_pattern = "{col}_within_{group}"
@@ -40,11 +40,13 @@ decompose_within_between(
 - components:
 
   A character vector specifying which components to compute. Any subset
-  of `c("gmc", "between", "within")` (default: all three). `"gmc"` =
-  grand mean centering, `"between"` = group means, `"within"` =
-  within-group deviations. If `"within"` is requested without
-  `"between"`, the between component is computed internally as an
-  intermediate step and not included in the output.
+  of `c("gmc", "between", "within")` (default:
+  `c("between", "within")`). `"gmc"` = grand mean centering, `"between"`
+  = group means, `"within"` = within-group deviations. Grand mean
+  centered scores are not included by default and must be requested
+  explicitly. If `"within"` is requested without `"between"`, the
+  between component is computed internally as an intermediate step and
+  not included in the output.
 
 - gmc_pattern:
 
@@ -121,19 +123,19 @@ decomposition.
 ``` r
 data("media_diary")
 
-# Decompose all three components (default)
+# Decompose between and within components (default)
 result <- decompose_within_between(
   data = media_diary,
   group = "person",
   vars = c("stress", "screen_time")
 )
 
-# Only between and within (no grand mean centering)
-result_wb <- decompose_within_between(
+# Include grand mean centered scores as well
+result_gmc <- decompose_within_between(
   data = media_diary,
   group = "person",
   vars = c("stress", "screen_time"),
-  components = c("between", "within")
+  components = c("gmc", "between", "within")
 )
 
 # Custom column naming: flat suffixes without the group name

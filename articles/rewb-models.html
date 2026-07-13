@@ -132,73 +132,76 @@ simulation).</p>
 variable into up to three components:</p>
 <ul>
 <li>
-<strong><code>_grand_mean_centered</code></strong>:
-grand-mean-centered value</li>
-<li>
 <strong><code>_between_{group}</code></strong>: group mean (stable
 between-group component)</li>
 <li>
 <strong><code>_within_{group}</code></strong>: deviation from the
 group mean (within-group fluctuation)</li>
+<li>
+<strong><code>_grand_mean_centered</code></strong>:
+grand-mean-centered value (opt-in; see below)</li>
 </ul>
 <p>The <code>vars</code> argument names the variables to decompose.
-<code>group</code> names the grouping variable.</p>
+<code>group</code> names the grouping variable. By default,
+<code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> returns the within- and
+between-group components — the two predictors REWB models need.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">media_diary</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/decompose_within_between.html">decompose_within_between</a></span><span class="op">(</span>group <span class="op">=</span> <span class="st">"person"</span>, vars <span class="op">=</span> <span class="st">"screen_time"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"screen_time_"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 3</span></span></span>
-<span><span class="co">#&gt;    screen_time_grand_mean_centered screen_time_between_…¹ screen_time_within_p…²</span></span>
-<span><span class="co">#&gt;                              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>                          -<span style="color: #BB0000;">48.7</span>                    69.9                   10.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>                           -<span style="color: #BB0000;">8.66</span>                   69.9                   50.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>                          -<span style="color: #BB0000;">30.7</span>                    69.9                   28.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>                          -<span style="color: #BB0000;">16.7</span>                    69.9                   42.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>                         -<span style="color: #BB0000;">108.</span>                     69.9                  -<span style="color: #BB0000;">48.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>                          -<span style="color: #BB0000;">44.7</span>                    69.9                   14.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>                          -<span style="color: #BB0000;">80.7</span>                    69.9                  -<span style="color: #BB0000;">21.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>                          -<span style="color: #BB0000;">70.7</span>                    69.9                  -<span style="color: #BB0000;">11.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>                          -<span style="color: #BB0000;">89.7</span>                    69.9                  -<span style="color: #BB0000;">30.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>                          -<span style="color: #BB0000;">46.7</span>                    69.9                   12.1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ abbreviated names: ¹​screen_time_between_person, ²​screen_time_within_person</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 2</span></span></span>
+<span><span class="co">#&gt;    screen_time_between_person screen_time_within_person</span></span>
+<span><span class="co">#&gt;                         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>                       69.9                      10.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>                       69.9                      50.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>                       69.9                      28.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>                       69.9                      42.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>                       69.9                     -<span style="color: #BB0000;">48.9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>                       69.9                      14.1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>                       69.9                     -<span style="color: #BB0000;">21.9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>                       69.9                     -<span style="color: #BB0000;">11.9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>                       69.9                     -<span style="color: #BB0000;">30.9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>                       69.9                      12.1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span></code></pre></div>
 <p><code>screen_time_within_person</code> is the group-mean-centred
 score: how many more (or fewer) minutes this person watched today
 compared to their own average. <code>screen_time_between_person</code>
 is the person’s average screen time, repeated for every row belonging to
-that person. <code>screen_time_grand_mean_centered</code> is the
-grand-mean-centred value, which shows each observation’s deviation from
-the overall mean.</p>
+that person.</p>
 <div class="section level3">
 <h3 id="selecting-components">Selecting Components<a class="anchor" aria-label="anchor" href="#selecting-components"></a>
 </h3>
-<p>By default all three components are returned. Use the
-<code>components</code> argument to select a subset. For REWB models,
-the within and between components are the predictors you need.</p>
+<p>Use the <code>components</code> argument to add the
+grand-mean-centered score, or to restrict the output to a single
+component.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">media_diary</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/decompose_within_between.html">decompose_within_between</a></span><span class="op">(</span></span>
 <span>    group <span class="op">=</span> <span class="st">"person"</span>,</span>
 <span>    vars <span class="op">=</span> <span class="st">"screen_time"</span>,</span>
-<span>    components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"within"</span>, <span class="st">"between"</span><span class="op">)</span></span>
+<span>    components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"within"</span>, <span class="st">"between"</span>, <span class="st">"gmc"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"screen_time"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 3</span></span></span>
-<span><span class="co">#&gt;    screen_time screen_time_between_person screen_time_within_person</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          80                       69.9                      10.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         120                       69.9                      50.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          98                       69.9                      28.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         112                       69.9                      42.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          21                       69.9                     -<span style="color: #BB0000;">48.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          84                       69.9                      14.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          48                       69.9                     -<span style="color: #BB0000;">21.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          58                       69.9                     -<span style="color: #BB0000;">11.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          39                       69.9                     -<span style="color: #BB0000;">30.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          82                       69.9                      12.1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span></code></pre></div>
-<p>Valid values for <code>components</code> are any non-empty subset of
-<code>c("within", "between", "gmc")</code>.</p>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 4</span></span></span>
+<span><span class="co">#&gt;    screen_time screen_time_grand_mean_centered screen_time_between_person</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          80                          -<span style="color: #BB0000;">48.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         120                           -<span style="color: #BB0000;">8.66</span>                       69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          98                          -<span style="color: #BB0000;">30.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         112                          -<span style="color: #BB0000;">16.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          21                         -<span style="color: #BB0000;">108.</span>                         69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          84                          -<span style="color: #BB0000;">44.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          48                          -<span style="color: #BB0000;">80.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          58                          -<span style="color: #BB0000;">70.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          39                          -<span style="color: #BB0000;">89.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          82                          -<span style="color: #BB0000;">46.7</span>                        69.9</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: screen_time_within_person &lt;dbl&gt;</span></span></span></code></pre></div>
+<p><code>screen_time_grand_mean_centered</code> is the
+grand-mean-centred value, which shows each observation’s deviation from
+the overall mean. Valid values for <code>components</code> are any
+non-empty subset of <code>c("within", "between", "gmc")</code>; the
+default is <code>c("within", "between")</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="customising-column-names">Customising Column Names<a class="anchor" aria-label="anchor" href="#customising-column-names"></a>

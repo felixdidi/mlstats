@@ -65,7 +65,7 @@ Within-group scores (deviations from group means)
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">group</span>,</span>
 <span>  <span class="va">vars</span>,</span>
-<span>  components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gmc"</span>, <span class="st">"between"</span>, <span class="st">"within"</span><span class="op">)</span>,</span>
+<span>  components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"between"</span>, <span class="st">"within"</span><span class="op">)</span>,</span>
 <span>  gmc_pattern <span class="op">=</span> <span class="st">"{col}_grand_mean_centered"</span>,</span>
 <span>  between_pattern <span class="op">=</span> <span class="st">"{col}_between_{group}"</span>,</span>
 <span>  within_pattern <span class="op">=</span> <span class="st">"{col}_within_{group}"</span></span>
@@ -90,10 +90,12 @@ Within-group scores (deviations from group means)
 
 <dt id="arg-components">components<a class="anchor" aria-label="anchor" href="#arg-components"></a></dt>
 <dd><p>A character vector specifying which components to compute.
-Any subset of <code>c("gmc", "between", "within")</code> (default: all three).
-<code>"gmc"</code> = grand mean centering, <code>"between"</code> = group means,
-<code>"within"</code> = within-group deviations. If <code>"within"</code> is requested
-without <code>"between"</code>, the between component is computed internally as an
+Any subset of <code>c("gmc", "between", "within")</code> (default:
+<code>c("between", "within")</code>). <code>"gmc"</code> = grand mean centering,
+<code>"between"</code> = group means, <code>"within"</code> = within-group deviations.
+Grand mean centered scores are not included by default and must be
+requested explicitly. If <code>"within"</code> is requested without
+<code>"between"</code>, the between component is computed internally as an
 intermediate step and not included in the output.</p></dd>
 
 
@@ -155,19 +157,19 @@ function internally to perform the within/between decomposition.</p></div>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"media_diary"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Decompose all three components (default)</span></span></span>
+<span class="r-in"><span><span class="co"># Decompose between and within components (default)</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">decompose_within_between</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">media_diary</span>,</span></span>
 <span class="r-in"><span>  group <span class="op">=</span> <span class="st">"person"</span>,</span></span>
 <span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stress"</span>, <span class="st">"screen_time"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Only between and within (no grand mean centering)</span></span></span>
-<span class="r-in"><span><span class="va">result_wb</span> <span class="op">&lt;-</span> <span class="fu">decompose_within_between</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="co"># Include grand mean centered scores as well</span></span></span>
+<span class="r-in"><span><span class="va">result_gmc</span> <span class="op">&lt;-</span> <span class="fu">decompose_within_between</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  data <span class="op">=</span> <span class="va">media_diary</span>,</span></span>
 <span class="r-in"><span>  group <span class="op">=</span> <span class="st">"person"</span>,</span></span>
 <span class="r-in"><span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stress"</span>, <span class="st">"screen_time"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"between"</span>, <span class="st">"within"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gmc"</span>, <span class="st">"between"</span>, <span class="st">"within"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Custom column naming: flat suffixes without the group name</span></span></span>
