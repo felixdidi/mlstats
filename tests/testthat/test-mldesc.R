@@ -1067,26 +1067,29 @@ test_that("mldesc method='sem' works with flip=TRUE", {
     z = rnorm(200)
   )
 
-  result_normal <- expect_warning_value(
+  # Whether this particular model yields an out-of-range standardized
+  # solution (and hence the "out-of-range" warning) depends on the lavaan
+  # version: older versions converge on an inadmissible between-level
+  # solution here, newer ones do not. That is incidental to what this test
+  # checks -- the flip= symmetry -- so any warning is simply suppressed.
+  result_normal <- suppressWarnings(
     mldesc(
       data = data,
       group = "group",
       vars = c("x", "y", "z"),
       method = "sem",
       flip = FALSE
-    ),
-    "out-of-range"
+    )
   )
 
-  result_flipped <- expect_warning_value(
+  result_flipped <- suppressWarnings(
     mldesc(
       data = data,
       group = "group",
       vars = c("x", "y", "z"),
       method = "sem",
       flip = TRUE
-    ),
-    "out-of-range"
+    )
   )
 
   # Upper triangle of normal should equal lower triangle of flipped
@@ -1134,14 +1137,15 @@ test_that("mldesc method='sem' handles between-only variables correctly", {
   data$x <- rnorm(500, 5, 2)
   data$y <- rnorm(500, 5, 2)
 
-  result <- expect_warning_value(
+  # As above, an "out-of-range" warning here is lavaan-version dependent and
+  # incidental: this test checks the handling of the between-only variable.
+  result <- suppressWarnings(
     mldesc(
       data = data,
       group = "group",
       vars = c("trait", "x", "y"),
       method = "sem"
-    ),
-    "out-of-range"
+    )
   )
 
   # Check structure

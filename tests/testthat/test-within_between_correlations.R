@@ -1102,6 +1102,13 @@ test_that("method='sem' excludes within-only variables from the between-group mo
   data$wi <- rnorm(200)
   data$x <- rnorm(200)
 
+  # Group-mean-center `wi` so that it has *exactly* zero between-group
+  # variance, i.e. it is genuinely within-only and must be dropped from the
+  # between (level 2) model. Plain `rnorm()` would leave a small but nonzero
+  # between-group variance, which does not meet the ICC ~ 0 criterion used by
+  # .wb_cor_sem(), so the exclusion path being tested here would not be taken.
+  data$wi <- data$wi - stats::ave(data$wi, data$group)
+
   result <- suppressWarnings(
     within_between_correlations(data, "group", c("wi", "x"), method = "sem")
   )
