@@ -1,6 +1,6 @@
 Package: mlstats
 Title: Multilevel Descriptive Statistics and Data Preparation
-Version: 0.1.1
+Version: 0.1.1.9000
 Authors@R: 
     person("Felix", "Dietrich", , "mail@felix-dietrich.de", role = c("aut", "cre", "cph"))
 Description: Provides tools for multilevel descriptive statistics and data preparation.
