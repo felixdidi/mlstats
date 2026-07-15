@@ -1,6 +1,6 @@
 # Changelog
 
-## mlstats 0.1.0.9000 (development version)
+## mlstats 0.1.1
 
 - [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
   now defaults to `components = c("between", "within")`, so
@@ -22,13 +22,13 @@
   label and with how the “a”/“b” correlation-note superscripts are
   marked elsewhere in the table.
 
-  - [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
-    now reports the observed minimum and maximum in the `range` column
-    with two decimals instead of rounding them to whole numbers
-    (decimals are dropped when both the minimum and the maximum are
-    whole numbers, e.g., for integer scales). Previously, a variable
-    observed between 1.5 and 6.9 was reported as “2–7”, wrongly implying
-    that the scale endpoints were observed.
+- [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
+  now reports the observed minimum and maximum in the `range` column
+  with two decimals instead of rounding them to whole numbers (decimals
+  are dropped when both the minimum and the maximum are whole numbers,
+  e.g., for integer scales). Previously, a variable observed between 1.5
+  and 6.9 was reported as “2–7”, wrongly implying that the scale
+  endpoints were observed.
 
 - [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
   now counts variables that are constant within every group (e.g., a
@@ -55,6 +55,28 @@
   [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
   keeps the rows but sets their between- and within-group components to
   `NA`, with a warning.
+
+- Test-only fix for compatibility with lavaan 0.7-1 (no user-visible
+  changes to `mlstats` itself).
+
+  Four `method = "sem"` tests depended on `lavaan` converging on an
+  inadmissible (negative between-level variance) solution for particular
+  degenerate/small-sample models, either expecting `.wb_cor_sem()`’s
+  “out-of-range” warning to fire or a specific between-group correlation
+  to come back as `NA`. lavaan 0.7-1 converges on an admissible solution
+  instead for those same models, so the warning no longer fires and a
+  valid correlation is returned. Three of the affected tests now simply
+  suppress any warning instead of requiring the “out-of-range” one,
+  since that warning was incidental to what they actually check (flip=
+  symmetry, print methods, between-only variable handling). The fourth
+  test, which checks that within-only variables are excluded from the
+  between-group model, now constructs a variable with exactly zero
+  between-group variance so it exercises that exclusion path
+  deterministically rather than relying on lavaan returning an improper
+  estimate.
+
+  The package’s test suite now passes with both lavaan 0.6-21 and lavaan
+  0.7-1.
 
 ## mlstats 0.1.0
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mlstats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,20 +39,22 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/felixdidi/mlstats/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/felixdidi/mlstats/blob/v0.1.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0.9000" id="mlstats-0109000-development-version">mlstats 0.1.0.9000 (development version)<a class="anchor" aria-label="anchor" href="#mlstats-0109000-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.1.1" id="mlstats-011">mlstats 0.1.1<a class="anchor" aria-label="anchor" href="#mlstats-011"></a></h2>
 <ul><li><p><code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> now defaults to <code>components = c("between", "within")</code>, so grand-mean-centered scores are no longer returned by default. Grand mean centering is rarely needed for REWB models (the within and between components are the actual predictors), so this avoids adding an extra column most callers don’t use. Pass <code>components = c("gmc", "between", "within")</code> (or any subset including <code>"gmc"</code>) to restore the previous output.</p></li>
-<li>
-<p>Fixed <code>print(..., format = "tt")</code> on <code><a href="../reference/mldesc.html">mldesc()</a></code> output so that the <em>N</em><sub>obs</sub> column header renders “obs” as a proper subscript in Word/docx output, not just HTML. The header markup used a raw HTML <code>&lt;sub&gt;obs&lt;/sub&gt;</code> tag, which <code>tinytable</code> silently drops when going through its markdown-to-docx (Pandoc) conversion path; it is now written with <code>tinytable</code>’s markdown subscript syntax (<code>~obs~</code>), consistent with the markdown italics (<code>*N*</code>) already used on the same label and with how the “a”/“b” correlation-note superscripts are marked elsewhere in the table.</p>
-<ul><li>
-<code><a href="../reference/mldesc.html">mldesc()</a></code> now reports the observed minimum and maximum in the <code>range</code> column with two decimals instead of rounding them to whole numbers (decimals are dropped when both the minimum and the maximum are whole numbers, e.g., for integer scales). Previously, a variable observed between 1.5 and 6.9 was reported as “2–7”, wrongly implying that the scale endpoints were observed.</li>
-</ul></li>
+<li><p>Fixed <code>print(..., format = "tt")</code> on <code><a href="../reference/mldesc.html">mldesc()</a></code> output so that the <em>N</em><sub>obs</sub> column header renders “obs” as a proper subscript in Word/docx output, not just HTML. The header markup used a raw HTML <code>&lt;sub&gt;obs&lt;/sub&gt;</code> tag, which <code>tinytable</code> silently drops when going through its markdown-to-docx (Pandoc) conversion path; it is now written with <code>tinytable</code>’s markdown subscript syntax (<code>~obs~</code>), consistent with the markdown italics (<code>*N*</code>) already used on the same label and with how the “a”/“b” correlation-note superscripts are marked elsewhere in the table.</p></li>
+<li><p><code><a href="../reference/mldesc.html">mldesc()</a></code> now reports the observed minimum and maximum in the <code>range</code> column with two decimals instead of rounding them to whole numbers (decimals are dropped when both the minimum and the maximum are whole numbers, e.g., for integer scales). Previously, a variable observed between 1.5 and 6.9 was reported as “2–7”, wrongly implying that the scale endpoints were observed.</p></li>
 <li><p><code><a href="../reference/mldesc.html">mldesc()</a></code> now counts variables that are constant within every group (e.g., a trait measured once per person but repeated across that person’s rows) once per group in <code>n_obs</code>, reporting the number of groups that provided a value instead of the number of rows the value was replicated across.</p></li>
 <li><p><code><a href="../reference/mldesc.html">mldesc()</a></code>, <code><a href="../reference/within_between_correlations.html">within_between_correlations()</a></code>, and <code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> now error informatively when a variable in <code>vars</code> contains only missing values (previously an uninformative low-level error could be triggered).</p></li>
 <li><p>Observations with a missing value on the grouping variable are no longer silently treated as a group of their own. <code><a href="../reference/mldesc.html">mldesc()</a></code> and <code><a href="../reference/within_between_correlations.html">within_between_correlations()</a></code> now warn and exclude them (previously they formed a spurious extra group in the correlations while being dropped from the ICC models); <code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> keeps the rows but sets their between- and within-group components to <code>NA</code>, with a warning.</p></li>
+<li>
+<p>Test-only fix for compatibility with lavaan 0.7-1 (no user-visible changes to <code>mlstats</code> itself).</p>
+<p>Four <code>method = "sem"</code> tests depended on <code>lavaan</code> converging on an inadmissible (negative between-level variance) solution for particular degenerate/small-sample models, either expecting <code>.wb_cor_sem()</code>’s “out-of-range” warning to fire or a specific between-group correlation to come back as <code>NA</code>. lavaan 0.7-1 converges on an admissible solution instead for those same models, so the warning no longer fires and a valid correlation is returned. Three of the affected tests now simply suppress any warning instead of requiring the “out-of-range” one, since that warning was incidental to what they actually check (flip= symmetry, print methods, between-only variable handling). The fourth test, which checks that within-only variables are excluded from the between-group model, now constructs a variable with exactly zero between-group variance so it exercises that exclusion path deterministically rather than relying on lavaan returning an improper estimate.</p>
+<p>The package’s test suite now passes with both lavaan 0.6-21 and lavaan 0.7-1.</p>
+</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="mlstats-010">mlstats 0.1.0<a class="anchor" aria-label="anchor" href="#mlstats-010"></a></h2><p class="text-muted">CRAN release: 2026-07-11</p>
