@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">mlstats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,12 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/felixdidi/mlstats/blob/v0.1.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/felixdidi/mlstats/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="mlstats-development-version">mlstats (development version)<a class="anchor" aria-label="anchor" href="#mlstats-development-version"></a></h2>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.1" id="mlstats-011">mlstats 0.1.1<a class="anchor" aria-label="anchor" href="#mlstats-011"></a></h2>
 <ul><li><p><code><a href="../reference/decompose_within_between.html">decompose_within_between()</a></code> now defaults to <code>components = c("between", "within")</code>, so grand-mean-centered scores are no longer returned by default. Grand mean centering is rarely needed for REWB models (the within and between components are the actual predictors), so this avoids adding an extra column most callers don’t use. Pass <code>components = c("gmc", "between", "within")</code> (or any subset including <code>"gmc"</code>) to restore the previous output.</p></li>
