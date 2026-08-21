@@ -16,8 +16,10 @@ teams.
 
 To demonstrate, we use `media_diary`, a simulated daily diary dataset
 included with **mlstats**. It mimics a study in which 100 participants
-completed brief daily surveys for 14 consecutive days (*N* = 100
-persons, *T* = 1,400 daily observations). The variables are:
+were asked to complete a brief daily survey for up to 14 consecutive
+days; as in most real mobile diary studies, not everyone completed every
+day (*N* = 100 persons, *T* = 5–14 daily observations per person, 1,184
+total). The variables are:
 
 - **`person`**: person identifier
 - **`self_control`**: trait self-control, measured once at study entry
@@ -31,20 +33,20 @@ persons, *T* = 1,400 daily observations). The variables are:
 
 data("media_diary")
 media_diary
-#> # A tibble: 1,400 × 6
+#> # A tibble: 1,184 × 6
 #>    person self_control wellbeing screen_time stress enjoyment
 #>     <int>        <dbl>     <dbl>       <dbl>  <dbl>     <dbl>
-#>  1      1          5.1       4.9          80    4.1       5.7
-#>  2      1          5.1       5.4         120    4         5.6
-#>  3      1          5.1       5.8          98    3.4       5  
-#>  4      1          5.1       6.5         112    3.5       6.2
-#>  5      1          5.1       5.5          21    2.8       4.4
-#>  6      1          5.1       5.9          84    3.2       6  
-#>  7      1          5.1       6.4          48    2.6       5.1
-#>  8      1          5.1       5.7          58    2.6       4.5
-#>  9      1          5.1       6.5          39    2.4       5.3
-#> 10      1          5.1       4.8          82    4         5.4
-#> # ℹ 1,390 more rows
+#>  1      1            5       3.5          83    3.9       4.5
+#>  2      1            5       4            82    4.4       3.9
+#>  3      1            5       3.4         103    4.8       3.8
+#>  4      1            5       3.7         105    4.7       4.6
+#>  5      1            5       3.9          68    3.6       3.7
+#>  6      1            5       4.3         143    5.3       5  
+#>  7      1            5       5.3         139    2.9       5.4
+#>  8      1            5       3.5         105    4.7       4.2
+#>  9      1            5       3.1          75    3.7       3.9
+#> 10      1            5       3.9          55    2.6       3.8
+#> # ℹ 1,174 more rows
 ```
 
 The data are in long format: each row is one diary entry (one person on
@@ -72,14 +74,16 @@ result
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
 #>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc
 #>   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----
-#> 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00
-#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46
-#> 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45
-#> 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33
+#> 1 Self control   100   3.93  0.70 2.40–6.20     –    NA    NA    NA  1.00
+#> 2 Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     –  .42* -.40*   .50
+#> 3 Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     –  .29*   .34
+#> 4 Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     –   .39
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
@@ -121,7 +125,7 @@ Several options control the appearance of the output:
 The result can be formatted for publication via
 [`print()`](https://rdrr.io/r/base/print.html). All print methods accept
 optional arguments `table_title`, `correlation_note`,
-`significance_note`, and `note_text`.
+`significance_note`, `group_size_note`, and `note_text`.
 
 **tinytable** is included with **mlstats** (no extra installation
 needed):
@@ -135,15 +139,16 @@ result |>
 |  |  | Descriptives |  |  |  | Correlations^(a,b) |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *N*_(obs) | *M* | *SD* | Range | 1 | 2 | 3 | 4 |  |
-| 1 | Self control | 100 | 4.03 | 0.83 | 1.60–5.80 | – | NA | NA | NA | 1.00 |
-| 2 | Wellbeing | 1,400 | 4.45 | 0.87 | 1.50–6.90 | .61\* | – | .42\* | -.43\* | .46 |
-| 3 | Screen time | 1,400 | 128.66 | 42.29 | 0–272 | -.67\* | -.34\* | – | .29\* | .45 |
-| 4 | Stress | 1,400 | 3.81 | 0.91 | 1–7 | -.53\* | -.38\* | .38\* | – | .33 |
+| 1 | Self control | 100 | 3.93 | 0.70 | 2.40–6.20 | – | NA | NA | NA | 1.00 |
+| 2 | Wellbeing | 1,184 | 4.42 | 0.89 | 1.50–7.00 | .47\* | – | .42\* | -.40\* | .50 |
+| 3 | Screen time | 1,184 | 132.05 | 39.01 | 15–246 | -.66\* | -.32\* | – | .29\* | .34 |
+| 4 | Stress | 1,184 | 3.77 | 0.95 | 1–7 | -.55\* | -.27\* | .46\* | – | .39 |
 | *Note.* Group-weighted multilevel descriptive statistics computed with mlstats. |  |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_ya08tpxs7fzqv0x2gd4b
+Multilevel Descriptive Statistics {#tinytable_um962jdg6gn0l9g3g3t6
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -202,20 +207,20 @@ media_diary |>
     vars  = c("stress", "screen_time")
   ) |>
   select(starts_with("stress"))
-#> # A tibble: 1,400 × 3
+#> # A tibble: 1,184 × 3
 #>    stress stress_between_person stress_within_person
 #>     <dbl>                 <dbl>                <dbl>
-#>  1    4.1                  3.26               0.843 
-#>  2    4                    3.26               0.743 
-#>  3    3.4                  3.26               0.143 
-#>  4    3.5                  3.26               0.243 
-#>  5    2.8                  3.26              -0.457 
-#>  6    3.2                  3.26              -0.0571
-#>  7    2.6                  3.26              -0.657 
-#>  8    2.6                  3.26              -0.657 
-#>  9    2.4                  3.26              -0.857 
-#> 10    4                    3.26               0.743 
-#> # ℹ 1,390 more rows
+#>  1    3.9                  4.12               -0.221
+#>  2    4.4                  4.12                0.279
+#>  3    4.8                  4.12                0.679
+#>  4    4.7                  4.12                0.579
+#>  5    3.6                  4.12               -0.521
+#>  6    5.3                  4.12                1.18 
+#>  7    2.9                  4.12               -1.22 
+#>  8    4.7                  4.12                0.579
+#>  9    3.7                  4.12               -0.421
+#> 10    2.6                  4.12               -1.52 
+#> # ℹ 1,174 more rows
 ```
 
 The within and between components serve as separate predictors in Random

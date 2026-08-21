@@ -98,7 +98,7 @@
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p>This example uses the simulated <code>media_diary</code> dataset included with <strong>mlstats</strong>. It mimics a study in which 100 participants completed brief daily surveys for 14 consecutive days (<em>N</em> = 100 persons, <em>T</em> = 1,400 daily observations).</p>
+<p>This example uses the simulated <code>media_diary</code> dataset included with <strong>mlstats</strong>. It mimics a study in which 100 participants were asked to complete a brief daily survey for up to 14 consecutive days (<em>N</em> = 100 persons, <em>T</em> = 5–14 daily observations per person, 1,184 total).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://felixdidi.github.io/mlstats/">mlstats</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"media_diary"</span><span class="op">)</span></span>
@@ -112,16 +112,18 @@
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====</span></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="do">##   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc</span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="do">##   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="do">## 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="do">## 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="do">## 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="do">## 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="do">## 1 Self control   100   3.93  0.70 2.40–6.20     –    NA    NA    NA  1.00</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="do">## 2 Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     –  .42* -.40*   .50</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="do">## 3 Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     –  .29*   .34</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="do">## 4 Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     –   .39</span></span>
 <span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="do">##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====</span></span>
 <span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="do">## # ℹ Within-person correlations above, between-person correlations below the</span></span>
 <span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="do">## #   diagonal.</span></span>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="do">## # ℹ All correlations marked with a star are significant at p &lt; .05.</span></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="do">## # ℹ Correlations estimated via variance decomposition.</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="do">## # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.</span></span></code></pre></div>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="do">## # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="do">## #   5–14).</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="do">## # ℹ Correlations estimated via variance decomposition.</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="do">## # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="learning-more">Learning more<a class="anchor" aria-label="anchor" href="#learning-more"></a>

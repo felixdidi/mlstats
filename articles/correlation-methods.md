@@ -172,6 +172,7 @@ interval is controlled by the `ci` argument (default `0.9`, a 90% CI).
 | **Very unequal group sizes** | `weight = TRUE` corrects the *point estimate*; significance test always uses unweighted group means (see above) | Handled natively by ML for both point estimate and significance test | `weight = TRUE` corrects the point estimate; CI always uses unweighted group means (see above) |
 | **Missing data** | Pairwise deletion per variable pair | Listwise deletion across all modeled variables | Pairwise deletion per variable pair |
 | **Small number of groups** | Significance tests are exact | Asymptotic MLR standard errors; can be unreliable with few groups | Posteriors do not rely on asymptotic or bivariate-normal assumptions |
+| **Few observations per group** | Between-group correlation attenuated toward zero; more severely so at lower ICCs | Recovers the latent (unattenuated) between-group correlation | Between-group correlation attenuated toward zero, as in decomposition |
 | **Uncertainty** | p-values | p-values | Credible intervals |
 | **Interpretability** | Simple, transparent formulas | Estimates come from a fitted latent-variable model | Estimates come from a fitted Bayesian model |
 | **Speed** | Fast; closed-form | Slower; iterative MLR estimation | Slowest; MCMC sampling |
@@ -180,10 +181,11 @@ As a starting point: use `method = "decomposition"` (the default) for
 most applications, particularly when group sizes are reasonably similar
 or the number of groups is small. Consider `method = "sem"` when group
 sizes are very unequal and you want the significance tests — not just
-the point estimate — to fully account for that imbalance. Consider
-`method = "bayes"` when the number of groups is small and you want
-credible intervals instead of p-values, and are willing to accept longer
-computation times.
+the point estimate — to fully account for that imbalance, or when groups
+contribute few observations and you want the between-group correlation
+corrected for the resulting attenuation. Consider `method = "bayes"`
+when the number of groups is small and you want credible intervals
+instead of p-values, and are willing to accept longer computation times.
 
 ## References
 

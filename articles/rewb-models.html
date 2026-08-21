@@ -97,9 +97,11 @@ and how to fit and interpret those models.</p>
 <h2 id="example-data">Example Data<a class="anchor" aria-label="anchor" href="#example-data"></a>
 </h2>
 <p>We use <code>media_diary</code>, a simulated daily diary dataset
-included with <strong>mlstats</strong> (100 participants over 14 days;
-<em>N</em> = 100 persons, <em>T</em> = 1,400 daily observations). See
-<code><a href="../reference/media_diary.html">?media_diary</a></code> for details.</p>
+included with <strong>mlstats</strong> (100 participants asked to
+complete up to 14 daily surveys; as in most real mobile diary studies,
+not everyone completed every day, so <em>T</em> varies from 5 to 14
+observations per person, 1,184 total across the <em>N</em> = 100
+persons). See <code><a href="../reference/media_diary.html">?media_diary</a></code> for details.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"media_diary"</span><span class="op">)</span></span></code></pre></div>
 <p>The dataset was generated to illustrate two processes that can
@@ -149,20 +151,20 @@ between-group components — the two predictors REWB models need.</p>
 <code class="sourceCode R"><span><span class="va">media_diary</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/decompose_within_between.html">decompose_within_between</a></span><span class="op">(</span>group <span class="op">=</span> <span class="st">"person"</span>, vars <span class="op">=</span> <span class="st">"screen_time"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"screen_time_"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,184 × 2</span></span></span>
 <span><span class="co">#&gt;    screen_time_between_person screen_time_within_person</span></span>
 <span><span class="co">#&gt;                         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>                       69.9                      10.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>                       69.9                      50.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>                       69.9                      28.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>                       69.9                      42.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>                       69.9                     -<span style="color: #BB0000;">48.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>                       69.9                      14.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>                       69.9                     -<span style="color: #BB0000;">21.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>                       69.9                     -<span style="color: #BB0000;">11.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>                       69.9                     -<span style="color: #BB0000;">30.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>                       69.9                      12.1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>                         98                       -<span style="color: #BB0000;">15</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>                         98                       -<span style="color: #BB0000;">16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>                         98                         5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>                         98                         7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>                         98                       -<span style="color: #BB0000;">30</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>                         98                        45</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>                         98                        41</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>                         98                         7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>                         98                       -<span style="color: #BB0000;">23</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>                         98                       -<span style="color: #BB0000;">43</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,174 more rows</span></span></span></code></pre></div>
 <p><code>screen_time_within_person</code> is the group-mean-centred
 score: how many more (or fewer) minutes this person watched today
 compared to their own average. <code>screen_time_between_person</code>
@@ -182,20 +184,20 @@ component.</p>
 <span>    components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"within"</span>, <span class="st">"between"</span>, <span class="st">"gmc"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"screen_time"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,184 × 4</span></span></span>
 <span><span class="co">#&gt;    screen_time screen_time_grand_mean_centered screen_time_between_person</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          80                          -<span style="color: #BB0000;">48.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         120                           -<span style="color: #BB0000;">8.66</span>                       69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          98                          -<span style="color: #BB0000;">30.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         112                          -<span style="color: #BB0000;">16.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          21                         -<span style="color: #BB0000;">108.</span>                         69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          84                          -<span style="color: #BB0000;">44.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          48                          -<span style="color: #BB0000;">80.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          58                          -<span style="color: #BB0000;">70.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          39                          -<span style="color: #BB0000;">89.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          82                          -<span style="color: #BB0000;">46.7</span>                        69.9</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          83                          -<span style="color: #BB0000;">49.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          82                          -<span style="color: #BB0000;">50.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>         103                          -<span style="color: #BB0000;">29.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         105                          -<span style="color: #BB0000;">27.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          68                          -<span style="color: #BB0000;">64.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         143                           11.0                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         139                            6.95                         98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         105                          -<span style="color: #BB0000;">27.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          75                          -<span style="color: #BB0000;">57.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          55                          -<span style="color: #BB0000;">77.0</span>                          98</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,174 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: screen_time_within_person &lt;dbl&gt;</span></span></span></code></pre></div>
 <p><code>screen_time_grand_mean_centered</code> is the
 grand-mean-centred value, which shows each observation’s deviation from
@@ -225,20 +227,20 @@ names:</p>
 <span>    between_pattern <span class="op">=</span> <span class="st">"{col}_bg"</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"screen_time"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,400 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1,184 × 3</span></span></span>
 <span><span class="co">#&gt;    screen_time screen_time_bg screen_time_wg</span></span>
 <span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          80           69.9           10.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         120           69.9           50.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>          98           69.9           28.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         112           69.9           42.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          21           69.9          -<span style="color: #BB0000;">48.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>          84           69.9           14.1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>          48           69.9          -<span style="color: #BB0000;">21.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>          58           69.9          -<span style="color: #BB0000;">11.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          39           69.9          -<span style="color: #BB0000;">30.9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          82           69.9           12.1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,390 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>          83             98            -<span style="color: #BB0000;">15</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>          82             98            -<span style="color: #BB0000;">16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>         103             98              5</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         105             98              7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>          68             98            -<span style="color: #BB0000;">30</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         143             98             45</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         139             98             41</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         105             98              7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>          75             98            -<span style="color: #BB0000;">23</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>          55             98            -<span style="color: #BB0000;">43</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,174 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="decomposing-multiple-variables-at-once">Decomposing Multiple Variables at Once<a class="anchor" aria-label="anchor" href="#decomposing-multiple-variables-at-once"></a>
@@ -254,18 +256,18 @@ patterns apply to all variables:</p>
 <span>    components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"within"</span>, <span class="st">"between"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rows: 1,400</span></span>
+<span><span class="co">#&gt; Rows: 1,184</span></span>
 <span><span class="co">#&gt; Columns: 10</span></span>
 <span><span class="co">#&gt; $ person                     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2…</span></span>
-<span><span class="co">#&gt; $ self_control               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>5.1…</span></span>
-<span><span class="co">#&gt; $ wellbeing                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 4.9<span style="color: #949494;">, </span>5.4<span style="color: #949494;">, </span>5.8<span style="color: #949494;">, </span>6.5<span style="color: #949494;">, </span>5.5<span style="color: #949494;">, </span>5.9<span style="color: #949494;">, </span>6.4<span style="color: #949494;">, </span>5.7<span style="color: #949494;">, </span>6.5…</span></span>
-<span><span class="co">#&gt; $ screen_time                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 80<span style="color: #949494;">, </span>120<span style="color: #949494;">, </span>98<span style="color: #949494;">, </span>112<span style="color: #949494;">, </span>21<span style="color: #949494;">, </span>84<span style="color: #949494;">, </span>48<span style="color: #949494;">, </span>58<span style="color: #949494;">, </span>39<span style="color: #949494;">, </span>82<span style="color: #949494;">, </span>8…</span></span>
-<span><span class="co">#&gt; $ stress                     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 4.1<span style="color: #949494;">, </span>4.0<span style="color: #949494;">, </span>3.4<span style="color: #949494;">, </span>3.5<span style="color: #949494;">, </span>2.8<span style="color: #949494;">, </span>3.2<span style="color: #949494;">, </span>2.6<span style="color: #949494;">, </span>2.6<span style="color: #949494;">, </span>2.4…</span></span>
-<span><span class="co">#&gt; $ enjoyment                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.7<span style="color: #949494;">, </span>5.6<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>6.2<span style="color: #949494;">, </span>4.4<span style="color: #949494;">, </span>6.0<span style="color: #949494;">, </span>5.1<span style="color: #949494;">, </span>4.5<span style="color: #949494;">, </span>5.3…</span></span>
-<span><span class="co">#&gt; $ screen_time_between_person <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 69.92857<span style="color: #949494;">, </span>69.92857<span style="color: #949494;">, </span>69.92857<span style="color: #949494;">, </span>69.92857<span style="color: #949494;">, </span>69.…</span></span>
-<span><span class="co">#&gt; $ stress_between_person      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3.257143<span style="color: #949494;">, </span>3.257143<span style="color: #949494;">, </span>3.257143<span style="color: #949494;">, </span>3.257143<span style="color: #949494;">, </span>3.2…</span></span>
-<span><span class="co">#&gt; $ screen_time_within_person  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 10.071429<span style="color: #949494;">, </span>50.071429<span style="color: #949494;">, </span>28.071429<span style="color: #949494;">, </span>42.071429<span style="color: #949494;">,</span>…</span></span>
-<span><span class="co">#&gt; $ stress_within_person       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.84285714<span style="color: #949494;">, </span>0.74285714<span style="color: #949494;">, </span>0.14285714<span style="color: #949494;">, </span>0.24285…</span></span></code></pre></div>
+<span><span class="co">#&gt; $ self_control               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.0…</span></span>
+<span><span class="co">#&gt; $ wellbeing                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3.5<span style="color: #949494;">, </span>4.0<span style="color: #949494;">, </span>3.4<span style="color: #949494;">, </span>3.7<span style="color: #949494;">, </span>3.9<span style="color: #949494;">, </span>4.3<span style="color: #949494;">, </span>5.3<span style="color: #949494;">, </span>3.5<span style="color: #949494;">, </span>3.1…</span></span>
+<span><span class="co">#&gt; $ screen_time                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 83<span style="color: #949494;">, </span>82<span style="color: #949494;">, </span>103<span style="color: #949494;">, </span>105<span style="color: #949494;">, </span>68<span style="color: #949494;">, </span>143<span style="color: #949494;">, </span>139<span style="color: #949494;">, </span>105<span style="color: #949494;">, </span>75<span style="color: #949494;">, </span>55…</span></span>
+<span><span class="co">#&gt; $ stress                     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 3.9<span style="color: #949494;">, </span>4.4<span style="color: #949494;">, </span>4.8<span style="color: #949494;">, </span>4.7<span style="color: #949494;">, </span>3.6<span style="color: #949494;">, </span>5.3<span style="color: #949494;">, </span>2.9<span style="color: #949494;">, </span>4.7<span style="color: #949494;">, </span>3.7…</span></span>
+<span><span class="co">#&gt; $ enjoyment                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 4.5<span style="color: #949494;">, </span>3.9<span style="color: #949494;">, </span>3.8<span style="color: #949494;">, </span>4.6<span style="color: #949494;">, </span>3.7<span style="color: #949494;">, </span>5.0<span style="color: #949494;">, </span>5.4<span style="color: #949494;">, </span>4.2<span style="color: #949494;">, </span>3.9…</span></span>
+<span><span class="co">#&gt; $ screen_time_between_person <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 98.0000<span style="color: #949494;">, </span>98.0000<span style="color: #949494;">, </span>98.0000<span style="color: #949494;">, </span>98.0000<span style="color: #949494;">, </span>98.0000…</span></span>
+<span><span class="co">#&gt; $ stress_between_person      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 4.121429<span style="color: #949494;">, </span>4.121429<span style="color: #949494;">, </span>4.121429<span style="color: #949494;">, </span>4.121429<span style="color: #949494;">, </span>4.1…</span></span>
+<span><span class="co">#&gt; $ screen_time_within_person  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> -15.0000000<span style="color: #949494;">, </span>-16.0000000<span style="color: #949494;">, </span>5.0000000<span style="color: #949494;">, </span>7.0000…</span></span>
+<span><span class="co">#&gt; $ stress_within_person       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> -0.22142857<span style="color: #949494;">, </span>0.27857143<span style="color: #949494;">, </span>0.67857143<span style="color: #949494;">, </span>0.5785…</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -298,37 +300,37 @@ intercept for person. This is the core REWB specification:</p>
 <span><span class="co">#&gt; Formula: wellbeing ~ screen_time_within + screen_time_between + (1 | person)</span></span>
 <span><span class="co">#&gt;    Data: diary_decomp</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; REML criterion at convergence: 2747.7</span></span>
+<span><span class="co">#&gt; REML criterion at convergence: 2311.7</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Scaled residuals: </span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -2.9465 -0.6343 -0.0225  0.6429  3.3618 </span></span>
+<span><span class="co">#&gt; -3.5585 -0.6411 -0.0129  0.6385  2.7273 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Random effects:</span></span>
 <span><span class="co">#&gt;  Groups   Name        Variance Std.Dev.</span></span>
-<span><span class="co">#&gt;  person   (Intercept) 0.3126   0.5591  </span></span>
-<span><span class="co">#&gt;  Residual             0.3393   0.5825  </span></span>
-<span><span class="co">#&gt; Number of obs: 1400, groups:  person, 100</span></span>
+<span><span class="co">#&gt;  person   (Intercept) 0.3626   0.6022  </span></span>
+<span><span class="co">#&gt;  Residual             0.3235   0.5687  </span></span>
+<span><span class="co">#&gt; Number of obs: 1184, groups:  person, 100</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
 <span><span class="co">#&gt;                       Estimate Std. Error         df t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)          5.364e+00  2.596e-01  9.800e+01  20.659  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; screen_time_within   8.585e-03  5.143e-04  1.299e+03  16.694  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; screen_time_between -7.095e-03  1.967e-03  9.800e+01  -3.607  0.00049 ***</span></span>
+<span><span class="co">#&gt; (Intercept)          5.548e+00  3.378e-01  9.855e+01   16.43  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; screen_time_within   8.397e-03  5.442e-04  1.083e+03   15.43  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; screen_time_between -8.487e-03  2.526e-03  9.834e+01   -3.36  0.00111 ** </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p><strong>Interpreting the coefficients:</strong></p>
-<p>In this simulated dataset, the within-person coefficient (0.0086) is
+<p>In this simulated dataset, the within-person coefficient (0.0084) is
 positive and highly significant. To illustrate how such an effect would
 be interpreted: on days when someone watches one minute more than their
-own average, their wellbeing is 0.0086 points higher. For a person
-watching 60 minutes more than usual, the expected gain would be 0.52
+own average, their wellbeing is 0.0084 points higher. For a person
+watching 60 minutes more than usual, the expected gain would be 0.5
 wellbeing points.</p>
-<p>The between-person coefficient (-0.0071) is negative and significant.
+<p>The between-person coefficient (-0.0085) is negative and significant.
 Illustrating interpretation: people who watch one minute more per day on
-average show 0.0071 lower wellbeing. For someone who watches 60 minutes
+average show 0.0085 lower wellbeing. For someone who watches 60 minutes
 more per day on average than another person, the expected wellbeing gap
-would be 0.43 points.</p>
+would be 0.51 points.</p>
 <p>The two effects point in <em>opposite directions</em> — exactly the
 pattern built into the simulation. A naive regression conflates
 them:</p>
@@ -341,18 +343,18 @@ them:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Residuals:</span></span>
 <span><span class="co">#&gt;      Min       1Q   Median       3Q      Max </span></span>
-<span><span class="co">#&gt; -2.95423 -0.61285  0.01078  0.60269  2.42402 </span></span>
+<span><span class="co">#&gt; -2.91016 -0.60219 -0.01771  0.59952  2.57131 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
 <span><span class="co">#&gt;              Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept) 4.3293929  0.0744348  58.164   &lt;2e-16 ***</span></span>
-<span><span class="co">#&gt; screen_time 0.0009457  0.0005496   1.721   0.0855 .  </span></span>
+<span><span class="co">#&gt; (Intercept) 4.1887746  0.0907832  46.140  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; screen_time 0.0017710  0.0006594   2.686  0.00733 ** </span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Residual standard error: 0.8693 on 1398 degrees of freedom</span></span>
-<span><span class="co">#&gt; Multiple R-squared:  0.002113,   Adjusted R-squared:  0.0014 </span></span>
-<span><span class="co">#&gt; F-statistic: 2.961 on 1 and 1398 DF,  p-value: 0.08553</span></span></code></pre></div>
+<span><span class="co">#&gt; Residual standard error: 0.8847 on 1182 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.006067,   Adjusted R-squared:  0.005226 </span></span>
+<span><span class="co">#&gt; F-statistic: 7.215 on 1 and 1182 DF,  p-value: 0.007332</span></span></code></pre></div>
 <p>The naive coefficient is near zero because the positive within-person
 and negative between-person effects cancel each other out — an entirely
 uninformative result that hides two simulated effects pointing in
@@ -384,34 +386,34 @@ persists after removing this alternative explanation.</p>
 <span><span class="co">#&gt;     (1 | person)</span></span>
 <span><span class="co">#&gt;    Data: diary_decomp</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; REML criterion at convergence: 2715.5</span></span>
+<span><span class="co">#&gt; REML criterion at convergence: 2295.7</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Scaled residuals: </span></span>
 <span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
-<span><span class="co">#&gt; -2.9677 -0.6221 -0.0331  0.6453  3.3345 </span></span>
+<span><span class="co">#&gt; -3.5307 -0.6466 -0.0147  0.6388  2.7396 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Random effects:</span></span>
 <span><span class="co">#&gt;  Groups   Name        Variance Std.Dev.</span></span>
-<span><span class="co">#&gt;  person   (Intercept) 0.2129   0.4614  </span></span>
-<span><span class="co">#&gt;  Residual             0.3393   0.5825  </span></span>
-<span><span class="co">#&gt; Number of obs: 1400, groups:  person, 100</span></span>
+<span><span class="co">#&gt;  person   (Intercept) 0.3001   0.5478  </span></span>
+<span><span class="co">#&gt;  Residual             0.3233   0.5686  </span></span>
+<span><span class="co">#&gt; Number of obs: 1184, groups:  person, 100</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Fixed effects:</span></span>
 <span><span class="co">#&gt;                      Estimate Std. Error        df t value Pr(&gt;|t|)    </span></span>
-<span><span class="co">#&gt; (Intercept)         2.026e+00  5.582e-01 9.700e+01   3.629 0.000457 ***</span></span>
-<span><span class="co">#&gt; screen_time_within  8.585e-03  5.143e-04 1.299e+03  16.694  &lt; 2e-16 ***</span></span>
-<span><span class="co">#&gt; screen_time_between 2.673e-03  2.233e-03 9.700e+01   1.197 0.234218    </span></span>
-<span><span class="co">#&gt; self_control        5.170e-01  7.960e-02 9.700e+01   6.495 3.56e-09 ***</span></span>
+<span><span class="co">#&gt; (Intercept)         2.512e+00  7.422e-01 9.953e+01   3.384  0.00102 ** </span></span>
+<span><span class="co">#&gt; screen_time_within  8.397e-03  5.440e-04 1.084e+03  15.435  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; screen_time_between 5.065e-04  3.058e-03 9.886e+01   0.166  0.86880    </span></span>
+<span><span class="co">#&gt; self_control        4.713e-01  1.047e-01 9.984e+01   4.501 1.83e-05 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p><strong>Interpreting the coefficients:</strong></p>
 <p>In this simulated dataset, the within-person coefficient is unchanged
-(0.0086): <code>self_control</code> is a stable trait measured once per
+(0.0084): <code>self_control</code> is a stable trait measured once per
 person, so it carries no within-person variation and cannot alter the
 within-person estimate. This is a general property of between-person
 covariates in REWB models, not specific to these simulated data.</p>
-<p>The between-person coefficient changes substantially — from -0.0071
-(significant) in the unadjusted model to 0.0027 (<em>p</em> = .23,
+<p>The between-person coefficient changes substantially — from -0.0085
+(significant) in the unadjusted model to 5^{-4} (<em>p</em> = .23,
 non-significant) after adjusting for <code>self_control</code>. This
 illustrates confounding: the simulation was designed so that the
 apparent between-person harm of screen time is driven by self-control.

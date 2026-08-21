@@ -87,9 +87,11 @@ functions see <code><a href="../articles/mlstats.html">vignette("mlstats")</a></
 <h2 id="example-data">Example Data<a class="anchor" aria-label="anchor" href="#example-data"></a>
 </h2>
 <p>We use <code>media_diary</code>, a simulated daily diary dataset
-included with <strong>mlstats</strong> (100 participants over 14 days;
-<em>N</em> = 100 persons, <em>T</em> = 1,400 daily observations). The
-variables are:</p>
+included with <strong>mlstats</strong> (100 participants asked to
+complete up to 14 daily surveys; as in most real mobile diary studies,
+not everyone completed every day, so <em>T</em> varies from 5 to 14
+observations per person, 1,184 total across the <em>N</em> = 100
+persons). The variables are:</p>
 <ul>
 <li>
 <strong><code>person</code></strong>: person identifier</li>
@@ -144,13 +146,15 @@ triangle).</p>
 <span><span class="co">#&gt;   variable        `1`    `2`   `3`    `4`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">------------</span> <span style="color: #949494;">------</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> self_control      <span style="color: #949494;">–</span>     NA    NA     NA</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> wellbeing     0.61*      <span style="color: #949494;">–</span> 0.42* -0.43*</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> screen_time  -0.67* -0.34*     <span style="color: #949494;">–</span>  0.29*</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> stress       -0.53* -0.38* 0.38*      <span style="color: #949494;">–</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> wellbeing     0.47*      <span style="color: #949494;">–</span> 0.42* -0.40*</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> screen_time  -0.66* -0.32*     <span style="color: #949494;">–</span>  0.29*</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> stress       -0.55* -0.27* 0.46*      <span style="color: #949494;">–</span></span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">============</span> <span style="color: #949494;">======</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Within-person correlations above, between-person correlations below the</span></span></span>
 <span><span class="co"><span style="color: #949494;">#&gt; #   diagonal.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ All correlations marked with a star are significant at p &lt; .05.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span></span>
+<span><span class="co"><span style="color: #949494;">#&gt; #   5–14).</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Correlations estimated via variance decomposition.</span></span></span></code></pre></div>
 <div class="section level3">
 <h3 id="reading-the-matrix">Reading the Matrix<a class="anchor" aria-label="anchor" href="#reading-the-matrix"></a>
@@ -187,11 +191,13 @@ sometimes differ in direction:</p>
 <span><span class="co">#&gt;   variable       `1`   `2`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">-----------</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> wellbeing        <span style="color: #949494;">–</span> 0.42*</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> screen_time -0.34*     <span style="color: #949494;">–</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> screen_time -0.32*     <span style="color: #949494;">–</span></span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">===========</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Within-person correlations above, between-person correlations below the</span></span></span>
 <span><span class="co"><span style="color: #949494;">#&gt; #   diagonal.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ All correlations marked with a star are significant at p &lt; .05.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span></span>
+<span><span class="co"><span style="color: #949494;">#&gt; #   5–14).</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Correlations estimated via variance decomposition.</span></span></span></code></pre></div>
 <p>The two correlations for <code>screen_time</code> and
 <code>wellbeing</code> tell different stories:</p>
@@ -210,7 +216,7 @@ self-control.</li>
 <p>Now look at what a naive pooled correlation gives:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">media_diary</span><span class="op">$</span><span class="va">screen_time</span>, <span class="va">media_diary</span><span class="op">$</span><span class="va">wellbeing</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.04597101</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.07788938</span></span></code></pre></div>
 <p>The pooled correlation is near zero. A researcher relying only on
 this number would conclude that entertainment media use has no
 relationship with wellbeing — missing a real positive within-person
@@ -289,14 +295,16 @@ deviations, ranges, and ICCs to the output:</p>
 <span><span class="co">#&gt;   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span></span>
 <span><span class="co">#&gt;   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">------------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">---------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Self control   100   4.03  0.83 1.60–5.80     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     <span style="color: #949494;">–</span>  .42* -.43*   .46</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     <span style="color: #949494;">–</span>  .29*   .45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     <span style="color: #949494;">–</span>   .33</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Self control   100   3.93  0.70 2.40–6.20     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     <span style="color: #949494;">–</span>  .42* -.40*   .50</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     <span style="color: #949494;">–</span>  .29*   .34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     <span style="color: #949494;">–</span>   .39</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Within-person correlations above, between-person correlations below the</span></span></span>
 <span><span class="co"><span style="color: #949494;">#&gt; #   diagonal.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ All correlations marked with a star are significant at p &lt; .05.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span></span>
+<span><span class="co"><span style="color: #949494;">#&gt; #   5–14).</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Correlations estimated via variance decomposition.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Group-weighted multilevel descriptive statistics computed with mlstats.</span></span></span></code></pre></div>
 <div class="section level3">
@@ -316,16 +324,18 @@ deviations, ranges, and ICCs to the output:</p>
 <span><span class="co">#&gt;   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">========</span> <span style="color: #949494;">========</span> <span style="color: #949494;">========</span></span></span>
 <span><span class="co">#&gt;   variable     n_obs      m    sd     range   `1`      `2`      `3`      `4`</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">------------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">---------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">--------</span> <span style="color: #949494;">--------</span> <span style="color: #949494;">--------</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Self control   100   4.03  0.83 1.60–5.80     <span style="color: #949494;">–</span>  0.61*** -0.67*** -0.53***</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing    1,400   4.45  0.87 1.50–6.90    NA        <span style="color: #949494;">–</span> -0.34*** -0.38***</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  1,400 128.66 42.29     0–272    NA  0.42***        <span style="color: #949494;">–</span>  0.38***</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       1,400   3.81  0.91       1–7    NA -0.43***  0.29***        <span style="color: #949494;">–</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Self control   100   3.93  0.70 2.40–6.20     <span style="color: #949494;">–</span>  0.47*** -0.66*** -0.55***</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing    1,184   4.42  0.89 1.50–7.00    NA        <span style="color: #949494;">–</span>  -0.32**  -0.27**</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  1,184 132.05 39.01    15–246    NA  0.42***        <span style="color: #949494;">–</span>  0.46***</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       1,184   3.77  0.95       1–7    NA -0.40***  0.29***        <span style="color: #949494;">–</span></span></span>
 <span><span class="co">#&gt;   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">========</span> <span style="color: #949494;">========</span> <span style="color: #949494;">========</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: icc &lt;mls&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Between-person correlations above, within-person correlations below the</span></span></span>
 <span><span class="co"><span style="color: #949494;">#&gt; #   diagonal.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Correlations marked with * are significant at p &lt; .05, ** at p &lt; .01, and</span></span></span>
 <span><span class="co"><span style="color: #949494;">#&gt; #   *** at p &lt; .001.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span></span>
+<span><span class="co"><span style="color: #949494;">#&gt; #   5–14).</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Correlations estimated via variance decomposition.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ Group-weighted multilevel descriptive statistics computed with mlstats.</span></span></span></code></pre></div>
 <ul>
@@ -365,9 +375,9 @@ strips formatting and significance stars:</p>
 <span><span class="co">#&gt;   variable       `1`   `2`   `3`   `4`   icc</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Self control <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>     1   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing     0.61 <span style="color: #BB0000;">NA</span>     0.42 -<span style="color: #BB0000;">0.43</span>  0.46</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  -<span style="color: #BB0000;">0.67</span> -<span style="color: #BB0000;">0.34</span> <span style="color: #BB0000;">NA</span>     0.29  0.45</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       -<span style="color: #BB0000;">0.53</span> -<span style="color: #BB0000;">0.38</span>  0.38 <span style="color: #BB0000;">NA</span>     0.33</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Wellbeing     0.47 <span style="color: #BB0000;">NA</span>     0.42 -<span style="color: #BB0000;">0.4</span>   0.5 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Screen time  -<span style="color: #BB0000;">0.66</span> -<span style="color: #BB0000;">0.32</span> <span style="color: #BB0000;">NA</span>     0.29  0.34</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Stress       -<span style="color: #BB0000;">0.55</span> -<span style="color: #BB0000;">0.27</span>  0.46 <span style="color: #BB0000;">NA</span>     0.39</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">

@@ -16,8 +16,10 @@ default output to a fully-customised, journal-ready table.
 ## Example data
 
 We use `media_diary`, a simulated daily diary dataset included with
-**mlstats** (100 participants over 14 days; *N* = 100 persons, *T* =
-1,400 daily observations). See
+**mlstats** (100 participants asked to complete up to 14 daily surveys;
+as in most real mobile diary studies, not everyone completed every day,
+so *T* varies from 5 to 14 observations per person, 1,184 total across
+the *N* = 100 persons). See
 [`?media_diary`](https://felixdidi.github.io/mlstats/reference/media_diary.md)
 for details.
 
@@ -43,15 +45,17 @@ result
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== ===== =====
 #>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   `5`   icc
 #>   ------------ ----- ------ ----- --------- ----- ----- ----- ----- ----- -----
-#> 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA    NA  1.00
-#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*  .45*   .46
-#> 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*  .57*   .45
-#> 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –  .05*   .33
-#> 5 Enjoyment    1,400   4.44  0.79       2–7  -.18 -.21*  .22*  .25*     –   .44
+#> 1 Self control   100   3.93  0.70 2.40–6.20     –    NA    NA    NA    NA  1.00
+#> 2 Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     –  .42* -.40*  .51*   .50
+#> 3 Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     –  .29*  .54*   .34
+#> 4 Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     –  -.02   .39
+#> 5 Enjoyment    1,184   4.49  0.83 2.30–7.00  -.12  .40*  .32*   .15     –   .50
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== ===== =====
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
@@ -70,16 +74,17 @@ print(result, format = "tt")
 |  |  | Descriptives |  |  |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *N*_(obs) | *M* | *SD* | Range | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Self control | 100 | 4.03 | 0.83 | 1.60–5.80 | – | NA | NA | NA | NA | 1.00 |
-| 2 | Wellbeing | 1,400 | 4.45 | 0.87 | 1.50–6.90 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time | 1,400 | 128.66 | 42.29 | 0–272 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Stress | 1,400 | 3.81 | 0.91 | 1–7 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Enjoyment | 1,400 | 4.44 | 0.79 | 2–7 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
+| 1 | Self control | 100 | 3.93 | 0.70 | 2.40–6.20 | – | NA | NA | NA | NA | 1.00 |
+| 2 | Wellbeing | 1,184 | 4.42 | 0.89 | 1.50–7.00 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time | 1,184 | 132.05 | 39.01 | 15–246 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Stress | 1,184 | 3.77 | 0.95 | 1–7 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Enjoyment | 1,184 | 4.49 | 0.83 | 2.30–7.00 | -.12 | .40\* | .32\* | .15 | – | .50 |
 | *Note.* Group-weighted multilevel descriptive statistics computed with mlstats. |  |  |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_hqj4w0ioy0lc1w6vygmi
+Multilevel Descriptive Statistics {#tinytable_bravtsddz419efs76l34
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -90,7 +95,7 @@ via Quarto/R Markdown (see below).
 ### Custom title and notes
 
 All print methods accept `table_title`, `correlation_note`,
-`significance_note`, and `note_text`:
+`significance_note`, `group_size_note`, and `note_text`:
 
 ``` r
 
@@ -98,24 +103,26 @@ print(result,
   format           = "tt",
   table_title      = "Daily diary study: descriptive statistics and multilevel correlations",
   correlation_note = "Within-person correlations above, between-person below the diagonal.",
-  note_text        = "N = 100 persons, 14 daily observations each. Simulated data."
+  group_size_note  = "Based on 100 persons; observations per person varied due to non-response.",
+  note_text        = "Simulated data."
 )
 ```
 
 |  |  | Descriptives |  |  |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *N*_(obs) | *M* | *SD* | Range | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Self control | 100 | 4.03 | 0.83 | 1.60–5.80 | – | NA | NA | NA | NA | 1.00 |
-| 2 | Wellbeing | 1,400 | 4.45 | 0.87 | 1.50–6.90 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time | 1,400 | 128.66 | 42.29 | 0–272 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Stress | 1,400 | 3.81 | 0.91 | 1–7 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Enjoyment | 1,400 | 4.44 | 0.79 | 2–7 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
-| *Note.* N = 100 persons, 14 daily observations each. Simulated data. |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Self control | 100 | 3.93 | 0.70 | 2.40–6.20 | – | NA | NA | NA | NA | 1.00 |
+| 2 | Wellbeing | 1,184 | 4.42 | 0.89 | 1.50–7.00 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time | 1,184 | 132.05 | 39.01 | 15–246 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Stress | 1,184 | 3.77 | 0.95 | 1–7 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Enjoyment | 1,184 | 4.49 | 0.83 | 2.30–7.00 | -.12 | .40\* | .32\* | .15 | – | .50 |
+| *Note.* Simulated data. |  |  |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons; observations per person varied due to non-response. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
 Daily diary study: descriptive statistics and multilevel correlations
-{#tinytable_0fayebf9wmd8io9wpp61 .table .tinytable
+{#tinytable_kt2yqdi2emezfe8jxpab .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
 
@@ -162,16 +169,17 @@ result |>
 |  |  | Descriptives |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *M* | *SD* | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Self control | 4.03 | 0.83 | – | NA | NA | NA | NA | 1.00 |
-| 2 | Wellbeing | 4.45 | 0.87 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time | 128.66 | 42.29 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Stress | 3.81 | 0.91 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Enjoyment | 4.44 | 0.79 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
+| 1 | Self control | 3.93 | 0.70 | – | NA | NA | NA | NA | 1.00 |
+| 2 | Wellbeing | 4.42 | 0.89 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time | 132.05 | 39.01 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Stress | 3.77 | 0.95 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Enjoyment | 4.49 | 0.83 | -.12 | .40\* | .32\* | .15 | – | .50 |
 | *Note.* Group-weighted multilevel descriptive statistics computed with mlstats. |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_zri9umrdtulfupqtq1uz
+Multilevel Descriptive Statistics {#tinytable_y9cv3i5mbi0py6dlaipc
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -191,16 +199,17 @@ result |>
 |  |  | Descriptives |  |  |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *N*_(obs) | *M* | *SD* | Range | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Self control | 100 | 4.03 | 0.83 | 1.60–5.80 | – | – | – | – | – | 1.00 |
-| 2 | Wellbeing | 1,400 | 4.45 | 0.87 | 1.50–6.90 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time | 1,400 | 128.66 | 42.29 | 0–272 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Stress | 1,400 | 3.81 | 0.91 | 1–7 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Enjoyment | 1,400 | 4.44 | 0.79 | 2–7 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
+| 1 | Self control | 100 | 3.93 | 0.70 | 2.40–6.20 | – | – | – | – | – | 1.00 |
+| 2 | Wellbeing | 1,184 | 4.42 | 0.89 | 1.50–7.00 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time | 1,184 | 132.05 | 39.01 | 15–246 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Stress | 1,184 | 3.77 | 0.95 | 1–7 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Enjoyment | 1,184 | 4.49 | 0.83 | 2.30–7.00 | -.12 | .40\* | .32\* | .15 | – | .50 |
 | *Note.* Group-weighted multilevel descriptive statistics computed with mlstats. |  |  |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Multilevel Descriptive Statistics {#tinytable_q82zfc3ctpf1mvkpz5em
+Multilevel Descriptive Statistics {#tinytable_880x8197i2kv6ukt7sgc
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -225,16 +234,17 @@ result |>
 |  |  | Descriptives |  |  |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *N*_(obs) | *M* | *SD* | Range | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Trait self-control | 100 | 4.03 | 0.83 | 1.60–5.80 | – | NA | NA | NA | NA | 1.00 |
-| 2 | Daily wellbeing | 1,400 | 4.45 | 0.87 | 1.50–6.90 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time (min) | 1,400 | 128.66 | 42.29 | 0–272 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Perceived stress | 1,400 | 3.81 | 0.91 | 1–7 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Media enjoyment | 1,400 | 4.44 | 0.79 | 2–7 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
+| 1 | Trait self-control | 100 | 3.93 | 0.70 | 2.40–6.20 | – | NA | NA | NA | NA | 1.00 |
+| 2 | Daily wellbeing | 1,184 | 4.42 | 0.89 | 1.50–7.00 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time (min) | 1,184 | 132.05 | 39.01 | 15–246 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Perceived stress | 1,184 | 3.77 | 0.95 | 1–7 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Media enjoyment | 1,184 | 4.49 | 0.83 | 2.30–7.00 | -.12 | .40\* | .32\* | .15 | – | .50 |
 | *Note.* Group-weighted multilevel descriptive statistics computed with mlstats. |  |  |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person correlations below the diagonal. |  |  |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |  |  |
 
-Study variables: descriptive statistics {#tinytable_5xd9n7up7icpcob4k5bs
+Study variables: descriptive statistics {#tinytable_y21wqt1p5karaff51194
 .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
@@ -260,24 +270,25 @@ result |>
     format           = "tt",
     table_title      = "Descriptive statistics and multilevel correlations",
     correlation_note = "Within-person correlations above, between-person below the diagonal.",
-    note_text        = "N = 100, T = 1,400 daily observations. Self-control was measured as a trait (between-person only)."
+    note_text        = "N = 100, T = 5-14 daily observations per person (1,184 total). Self-control was measured as a trait (between-person only)."
   )
 ```
 
 |  |  | Descriptives |  | Correlations^(a,b) |  |  |  |  | ICC |
 |----|----|----|----|----|----|----|----|----|----|
 |  | Variable | *M* | *SD* | 1 | 2 | 3 | 4 | 5 |  |
-| 1 | Trait self-control | 4.03 | 0.83 | – | – | – | – | – | 1.00 |
-| 2 | Daily wellbeing | 4.45 | 0.87 | .61\* | – | .42\* | -.43\* | .45\* | .46 |
-| 3 | Screen time (min) | 128.66 | 42.29 | -.67\* | -.34\* | – | .29\* | .57\* | .45 |
-| 4 | Perceived stress | 3.81 | 0.91 | -.53\* | -.38\* | .38\* | – | .05\* | .33 |
-| 5 | Media enjoyment | 4.44 | 0.79 | -.18 | -.21\* | .22\* | .25\* | – | .44 |
-| *Note.* N = 100, T = 1,400 daily observations. Self-control was measured as a trait (between-person only). |  |  |  |  |  |  |  |  |  |
+| 1 | Trait self-control | 3.93 | 0.70 | – | – | – | – | – | 1.00 |
+| 2 | Daily wellbeing | 4.42 | 0.89 | .47\* | – | .42\* | -.40\* | .51\* | .50 |
+| 3 | Screen time (min) | 132.05 | 39.01 | -.66\* | -.32\* | – | .29\* | .54\* | .34 |
+| 4 | Perceived stress | 3.77 | 0.95 | -.55\* | -.27\* | .46\* | – | -.02 | .39 |
+| 5 | Media enjoyment | 4.49 | 0.83 | -.12 | .40\* | .32\* | .15 | – | .50 |
+| *Note.* N = 100, T = 5-14 daily observations per person (1,184 total). Self-control was measured as a trait (between-person only). |  |  |  |  |  |  |  |  |  |
+|  Based on 100 persons and 1,184 observations (median 12 per person; range: 5–14). |  |  |  |  |  |  |  |  |  |
 | ^(a) Within-person correlations above, between-person below the diagonal. |  |  |  |  |  |  |  |  |  |
 | ^(b) All correlations marked with a star are significant at p \< .05. |  |  |  |  |  |  |  |  |  |
 
 Descriptive statistics and multilevel correlations
-{#tinytable_hhvqo0accobap1r92a8r .table .tinytable
+{#tinytable_6xn75fgklf8u4j2rkfnt .table .tinytable
 style="width: auto; margin-left: auto; margin-right: auto;"
 quarto-disable-processing="true"}
 
@@ -302,7 +313,7 @@ result |>
     format           = "gt",
     table_title      = "Descriptive statistics and multilevel correlations",
     correlation_note = "Within-person correlations above, between-person below the diagonal.",
-    note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 1,400 daily observations."
+    note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 5–14 daily observations per person (1,184 total)."
   ) |>
   gt::tab_source_note(
     source_note = gt::html(

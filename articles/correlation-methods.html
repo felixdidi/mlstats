@@ -347,18 +347,26 @@ groups</td>
 assumptions</td>
 </tr>
 <tr class="odd">
+<td><strong>Few observations per group</strong></td>
+<td>Between-group correlation attenuated toward zero; more severely so
+at lower ICCs</td>
+<td>Recovers the latent (unattenuated) between-group correlation</td>
+<td>Between-group correlation attenuated toward zero, as in
+decomposition</td>
+</tr>
+<tr class="even">
 <td><strong>Uncertainty</strong></td>
 <td>p-values</td>
 <td>p-values</td>
 <td>Credible intervals</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><strong>Interpretability</strong></td>
 <td>Simple, transparent formulas</td>
 <td>Estimates come from a fitted latent-variable model</td>
 <td>Estimates come from a fitted Bayesian model</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><strong>Speed</strong></td>
 <td>Fast; closed-form</td>
 <td>Slower; iterative MLR estimation</td>
@@ -371,9 +379,11 @@ default) for most applications, particularly when group sizes are
 reasonably similar or the number of groups is small. Consider
 <code>method = "sem"</code> when group sizes are very unequal and you
 want the significance tests — not just the point estimate — to fully
-account for that imbalance. Consider <code>method = "bayes"</code> when
-the number of groups is small and you want credible intervals instead of
-p-values, and are willing to accept longer computation times.</p>
+account for that imbalance, or when groups contribute few observations
+and you want the between-group correlation corrected for the resulting
+attenuation. Consider <code>method = "bayes"</code> when the number of
+groups is small and you want credible intervals instead of p-values, and
+are willing to accept longer computation times.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

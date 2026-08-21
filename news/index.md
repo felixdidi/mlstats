@@ -2,7 +2,21 @@
 
 ## mlstats (development version)
 
+- [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
+  and
+  [`within_between_correlations()`](https://felixdidi.github.io/mlstats/reference/within_between_correlations.md)
+  now report the number of groups, the total number of observations, and
+  observations per group (e.g., “Based on 100 persons and 1,184
+  observations (median 12 per person; range: 5–14).”) in a note.
+
+- The bundled `media_diary` example dataset now has a variable number of
+  diary days per person (5–14, median 12; 1,184 rows total) instead of a
+  fixed 14 days (1,400 rows), simulating realistic non-response in a
+  mobile diary study.
+
 ## mlstats 0.1.1
+
+CRAN release: 2026-07-15
 
 - [`decompose_within_between()`](https://felixdidi.github.io/mlstats/reference/decompose_within_between.md)
   now defaults to `components = c("between", "within")`, so

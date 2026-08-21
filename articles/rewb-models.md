@@ -26,8 +26,10 @@ models.
 ## Example Data
 
 We use `media_diary`, a simulated daily diary dataset included with
-**mlstats** (100 participants over 14 days; *N* = 100 persons, *T* =
-1,400 daily observations). See
+**mlstats** (100 participants asked to complete up to 14 daily surveys;
+as in most real mobile diary studies, not everyone completed every day,
+so *T* varies from 5 to 14 observations per person, 1,184 total across
+the *N* = 100 persons). See
 [`?media_diary`](https://felixdidi.github.io/mlstats/reference/media_diary.md)
 for details.
 
@@ -78,20 +80,20 @@ REWB models need.
 media_diary |>
   decompose_within_between(group = "person", vars = "screen_time") |>
   select(starts_with("screen_time_"))
-#> # A tibble: 1,400 × 2
+#> # A tibble: 1,184 × 2
 #>    screen_time_between_person screen_time_within_person
 #>                         <dbl>                     <dbl>
-#>  1                       69.9                      10.1
-#>  2                       69.9                      50.1
-#>  3                       69.9                      28.1
-#>  4                       69.9                      42.1
-#>  5                       69.9                     -48.9
-#>  6                       69.9                      14.1
-#>  7                       69.9                     -21.9
-#>  8                       69.9                     -11.9
-#>  9                       69.9                     -30.9
-#> 10                       69.9                      12.1
-#> # ℹ 1,390 more rows
+#>  1                         98                       -15
+#>  2                         98                       -16
+#>  3                         98                         5
+#>  4                         98                         7
+#>  5                         98                       -30
+#>  6                         98                        45
+#>  7                         98                        41
+#>  8                         98                         7
+#>  9                         98                       -23
+#> 10                         98                       -43
+#> # ℹ 1,174 more rows
 ```
 
 `screen_time_within_person` is the group-mean-centred score: how many
@@ -113,20 +115,20 @@ media_diary |>
     components = c("within", "between", "gmc")
   ) |>
   select(starts_with("screen_time"))
-#> # A tibble: 1,400 × 4
+#> # A tibble: 1,184 × 4
 #>    screen_time screen_time_grand_mean_centered screen_time_between_person
 #>          <dbl>                           <dbl>                      <dbl>
-#>  1          80                          -48.7                        69.9
-#>  2         120                           -8.66                       69.9
-#>  3          98                          -30.7                        69.9
-#>  4         112                          -16.7                        69.9
-#>  5          21                         -108.                         69.9
-#>  6          84                          -44.7                        69.9
-#>  7          48                          -80.7                        69.9
-#>  8          58                          -70.7                        69.9
-#>  9          39                          -89.7                        69.9
-#> 10          82                          -46.7                        69.9
-#> # ℹ 1,390 more rows
+#>  1          83                          -49.0                          98
+#>  2          82                          -50.0                          98
+#>  3         103                          -29.0                          98
+#>  4         105                          -27.0                          98
+#>  5          68                          -64.0                          98
+#>  6         143                           11.0                          98
+#>  7         139                            6.95                         98
+#>  8         105                          -27.0                          98
+#>  9          75                          -57.0                          98
+#> 10          55                          -77.0                          98
+#> # ℹ 1,174 more rows
 #> # ℹ 1 more variable: screen_time_within_person <dbl>
 ```
 
@@ -156,20 +158,20 @@ media_diary |>
     between_pattern = "{col}_bg"
   ) |>
   select(starts_with("screen_time"))
-#> # A tibble: 1,400 × 3
+#> # A tibble: 1,184 × 3
 #>    screen_time screen_time_bg screen_time_wg
 #>          <dbl>          <dbl>          <dbl>
-#>  1          80           69.9           10.1
-#>  2         120           69.9           50.1
-#>  3          98           69.9           28.1
-#>  4         112           69.9           42.1
-#>  5          21           69.9          -48.9
-#>  6          84           69.9           14.1
-#>  7          48           69.9          -21.9
-#>  8          58           69.9          -11.9
-#>  9          39           69.9          -30.9
-#> 10          82           69.9           12.1
-#> # ℹ 1,390 more rows
+#>  1          83             98            -15
+#>  2          82             98            -16
+#>  3         103             98              5
+#>  4         105             98              7
+#>  5          68             98            -30
+#>  6         143             98             45
+#>  7         139             98             41
+#>  8         105             98              7
+#>  9          75             98            -23
+#> 10          55             98            -43
+#> # ℹ 1,174 more rows
 ```
 
 ### Decomposing Multiple Variables at Once
@@ -187,18 +189,18 @@ media_diary |>
     components = c("within", "between")
   ) |>
   glimpse()
-#> Rows: 1,400
+#> Rows: 1,184
 #> Columns: 10
 #> $ person                     <int> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2…
-#> $ self_control               <dbl> 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1, 5.1…
-#> $ wellbeing                  <dbl> 4.9, 5.4, 5.8, 6.5, 5.5, 5.9, 6.4, 5.7, 6.5…
-#> $ screen_time                <dbl> 80, 120, 98, 112, 21, 84, 48, 58, 39, 82, 8…
-#> $ stress                     <dbl> 4.1, 4.0, 3.4, 3.5, 2.8, 3.2, 2.6, 2.6, 2.4…
-#> $ enjoyment                  <dbl> 5.7, 5.6, 5.0, 6.2, 4.4, 6.0, 5.1, 4.5, 5.3…
-#> $ screen_time_between_person <dbl> 69.92857, 69.92857, 69.92857, 69.92857, 69.…
-#> $ stress_between_person      <dbl> 3.257143, 3.257143, 3.257143, 3.257143, 3.2…
-#> $ screen_time_within_person  <dbl> 10.071429, 50.071429, 28.071429, 42.071429,…
-#> $ stress_within_person       <dbl> 0.84285714, 0.74285714, 0.14285714, 0.24285…
+#> $ self_control               <dbl> 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0…
+#> $ wellbeing                  <dbl> 3.5, 4.0, 3.4, 3.7, 3.9, 4.3, 5.3, 3.5, 3.1…
+#> $ screen_time                <dbl> 83, 82, 103, 105, 68, 143, 139, 105, 75, 55…
+#> $ stress                     <dbl> 3.9, 4.4, 4.8, 4.7, 3.6, 5.3, 2.9, 4.7, 3.7…
+#> $ enjoyment                  <dbl> 4.5, 3.9, 3.8, 4.6, 3.7, 5.0, 5.4, 4.2, 3.9…
+#> $ screen_time_between_person <dbl> 98.0000, 98.0000, 98.0000, 98.0000, 98.0000…
+#> $ stress_between_person      <dbl> 4.121429, 4.121429, 4.121429, 4.121429, 4.1…
+#> $ screen_time_within_person  <dbl> -15.0000000, -16.0000000, 5.0000000, 7.0000…
+#> $ stress_within_person       <dbl> -0.22142857, 0.27857143, 0.67857143, 0.5785…
 ```
 
 ## Fitting the REWB Model
@@ -231,41 +233,41 @@ summary(fit_rewb, correlation = FALSE)
 #> Formula: wellbeing ~ screen_time_within + screen_time_between + (1 | person)
 #>    Data: diary_decomp
 #> 
-#> REML criterion at convergence: 2747.7
+#> REML criterion at convergence: 2311.7
 #> 
 #> Scaled residuals: 
 #>     Min      1Q  Median      3Q     Max 
-#> -2.9465 -0.6343 -0.0225  0.6429  3.3618 
+#> -3.5585 -0.6411 -0.0129  0.6385  2.7273 
 #> 
 #> Random effects:
 #>  Groups   Name        Variance Std.Dev.
-#>  person   (Intercept) 0.3126   0.5591  
-#>  Residual             0.3393   0.5825  
-#> Number of obs: 1400, groups:  person, 100
+#>  person   (Intercept) 0.3626   0.6022  
+#>  Residual             0.3235   0.5687  
+#> Number of obs: 1184, groups:  person, 100
 #> 
 #> Fixed effects:
 #>                       Estimate Std. Error         df t value Pr(>|t|)    
-#> (Intercept)          5.364e+00  2.596e-01  9.800e+01  20.659  < 2e-16 ***
-#> screen_time_within   8.585e-03  5.143e-04  1.299e+03  16.694  < 2e-16 ***
-#> screen_time_between -7.095e-03  1.967e-03  9.800e+01  -3.607  0.00049 ***
+#> (Intercept)          5.548e+00  3.378e-01  9.855e+01   16.43  < 2e-16 ***
+#> screen_time_within   8.397e-03  5.442e-04  1.083e+03   15.43  < 2e-16 ***
+#> screen_time_between -8.487e-03  2.526e-03  9.834e+01   -3.36  0.00111 ** 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 **Interpreting the coefficients:**
 
-In this simulated dataset, the within-person coefficient (0.0086) is
+In this simulated dataset, the within-person coefficient (0.0084) is
 positive and highly significant. To illustrate how such an effect would
 be interpreted: on days when someone watches one minute more than their
-own average, their wellbeing is 0.0086 points higher. For a person
-watching 60 minutes more than usual, the expected gain would be 0.52
+own average, their wellbeing is 0.0084 points higher. For a person
+watching 60 minutes more than usual, the expected gain would be 0.5
 wellbeing points.
 
-The between-person coefficient (-0.0071) is negative and significant.
+The between-person coefficient (-0.0085) is negative and significant.
 Illustrating interpretation: people who watch one minute more per day on
-average show 0.0071 lower wellbeing. For someone who watches 60 minutes
+average show 0.0085 lower wellbeing. For someone who watches 60 minutes
 more per day on average than another person, the expected wellbeing gap
-would be 0.43 points.
+would be 0.51 points.
 
 The two effects point in *opposite directions* — exactly the pattern
 built into the simulation. A naive regression conflates them:
@@ -280,18 +282,18 @@ summary(fit_naive)
 #> 
 #> Residuals:
 #>      Min       1Q   Median       3Q      Max 
-#> -2.95423 -0.61285  0.01078  0.60269  2.42402 
+#> -2.91016 -0.60219 -0.01771  0.59952  2.57131 
 #> 
 #> Coefficients:
 #>              Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept) 4.3293929  0.0744348  58.164   <2e-16 ***
-#> screen_time 0.0009457  0.0005496   1.721   0.0855 .  
+#> (Intercept) 4.1887746  0.0907832  46.140  < 2e-16 ***
+#> screen_time 0.0017710  0.0006594   2.686  0.00733 ** 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Residual standard error: 0.8693 on 1398 degrees of freedom
-#> Multiple R-squared:  0.002113,   Adjusted R-squared:  0.0014 
-#> F-statistic: 2.961 on 1 and 1398 DF,  p-value: 0.08553
+#> Residual standard error: 0.8847 on 1182 degrees of freedom
+#> Multiple R-squared:  0.006067,   Adjusted R-squared:  0.005226 
+#> F-statistic: 7.215 on 1 and 1182 DF,  p-value: 0.007332
 ```
 
 The naive coefficient is near zero because the positive within-person
@@ -326,24 +328,24 @@ summary(fit_rewb_conf, correlation = FALSE)
 #>     (1 | person)
 #>    Data: diary_decomp
 #> 
-#> REML criterion at convergence: 2715.5
+#> REML criterion at convergence: 2295.7
 #> 
 #> Scaled residuals: 
 #>     Min      1Q  Median      3Q     Max 
-#> -2.9677 -0.6221 -0.0331  0.6453  3.3345 
+#> -3.5307 -0.6466 -0.0147  0.6388  2.7396 
 #> 
 #> Random effects:
 #>  Groups   Name        Variance Std.Dev.
-#>  person   (Intercept) 0.2129   0.4614  
-#>  Residual             0.3393   0.5825  
-#> Number of obs: 1400, groups:  person, 100
+#>  person   (Intercept) 0.3001   0.5478  
+#>  Residual             0.3233   0.5686  
+#> Number of obs: 1184, groups:  person, 100
 #> 
 #> Fixed effects:
 #>                      Estimate Std. Error        df t value Pr(>|t|)    
-#> (Intercept)         2.026e+00  5.582e-01 9.700e+01   3.629 0.000457 ***
-#> screen_time_within  8.585e-03  5.143e-04 1.299e+03  16.694  < 2e-16 ***
-#> screen_time_between 2.673e-03  2.233e-03 9.700e+01   1.197 0.234218    
-#> self_control        5.170e-01  7.960e-02 9.700e+01   6.495 3.56e-09 ***
+#> (Intercept)         2.512e+00  7.422e-01 9.953e+01   3.384  0.00102 ** 
+#> screen_time_within  8.397e-03  5.440e-04 1.084e+03  15.435  < 2e-16 ***
+#> screen_time_between 5.065e-04  3.058e-03 9.886e+01   0.166  0.86880    
+#> self_control        4.713e-01  1.047e-01 9.984e+01   4.501 1.83e-05 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -351,13 +353,13 @@ summary(fit_rewb_conf, correlation = FALSE)
 **Interpreting the coefficients:**
 
 In this simulated dataset, the within-person coefficient is unchanged
-(0.0086): `self_control` is a stable trait measured once per person, so
+(0.0084): `self_control` is a stable trait measured once per person, so
 it carries no within-person variation and cannot alter the within-person
 estimate. This is a general property of between-person covariates in
 REWB models, not specific to these simulated data.
 
-The between-person coefficient changes substantially — from -0.0071
-(significant) in the unadjusted model to 0.0027 (*p* = .23,
+The between-person coefficient changes substantially — from -0.0085
+(significant) in the unadjusted model to 5^{-4} (*p* = .23,
 non-significant) after adjusting for `self_control`. This illustrates
 confounding: the simulation was designed so that the apparent
 between-person harm of screen time is driven by self-control. In a real

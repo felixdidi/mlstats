@@ -17,8 +17,10 @@ results. For a brief introduction to both functions see
 ## Example Data
 
 We use `media_diary`, a simulated daily diary dataset included with
-**mlstats** (100 participants over 14 days; *N* = 100 persons, *T* =
-1,400 daily observations). The variables are:
+**mlstats** (100 participants asked to complete up to 14 daily surveys;
+as in most real mobile diary studies, not everyone completed every day,
+so *T* varies from 5 to 14 observations per person, 1,184 total across
+the *N* = 100 persons). The variables are:
 
 - **`person`**: person identifier
 - **`self_control`**: trait self-control (stable between-person
@@ -64,13 +66,15 @@ within_between_correlations(
 #>   variable        `1`    `2`   `3`    `4`
 #>   ------------ ------ ------ ----- ------
 #> 1 self_control      –     NA    NA     NA
-#> 2 wellbeing     0.61*      – 0.42* -0.43*
-#> 3 screen_time  -0.67* -0.34*     –  0.29*
-#> 4 stress       -0.53* -0.38* 0.38*      –
+#> 2 wellbeing     0.47*      – 0.42* -0.40*
+#> 3 screen_time  -0.66* -0.32*     –  0.29*
+#> 4 stress       -0.55* -0.27* 0.46*      –
 #>   ============ ====== ====== ===== ======
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 ```
 
@@ -110,11 +114,13 @@ within_between_correlations(
 #>   variable       `1`   `2`
 #>   ----------- ------ -----
 #> 1 wellbeing        – 0.42*
-#> 2 screen_time -0.34*     –
+#> 2 screen_time -0.32*     –
 #>   =========== ====== =====
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 ```
 
@@ -135,7 +141,7 @@ Now look at what a naive pooled correlation gives:
 ``` r
 
 cor(media_diary$screen_time, media_diary$wellbeing)
-#> [1] 0.04597101
+#> [1] 0.07788938
 ```
 
 The pooled correlation is near zero. A researcher relying only on this
@@ -216,14 +222,16 @@ result
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
 #>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc
 #>   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----
-#> 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00
-#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46
-#> 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45
-#> 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33
+#> 1 Self control   100   3.93  0.70 2.40–6.20     –    NA    NA    NA  1.00
+#> 2 Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     –  .42* -.40*   .50
+#> 3 Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     –  .29*   .34
+#> 4 Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     –   .39
 #>   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
 #> # ℹ Within-person correlations above, between-person correlations below the
 #> #   diagonal.
 #> # ℹ All correlations marked with a star are significant at p < .05.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
@@ -246,16 +254,18 @@ mldesc(
 #>   ============ ===== ====== ===== ========= ===== ======== ======== ========
 #>   variable     n_obs      m    sd     range   `1`      `2`      `3`      `4`
 #>   ------------ ----- ------ ----- --------- ----- -------- -------- --------
-#> 1 Self control   100   4.03  0.83 1.60–5.80     –  0.61*** -0.67*** -0.53***
-#> 2 Wellbeing    1,400   4.45  0.87 1.50–6.90    NA        – -0.34*** -0.38***
-#> 3 Screen time  1,400 128.66 42.29     0–272    NA  0.42***        –  0.38***
-#> 4 Stress       1,400   3.81  0.91       1–7    NA -0.43***  0.29***        –
+#> 1 Self control   100   3.93  0.70 2.40–6.20     –  0.47*** -0.66*** -0.55***
+#> 2 Wellbeing    1,184   4.42  0.89 1.50–7.00    NA        –  -0.32**  -0.27**
+#> 3 Screen time  1,184 132.05 39.01    15–246    NA  0.42***        –  0.46***
+#> 4 Stress       1,184   3.77  0.95       1–7    NA -0.40***  0.29***        –
 #>   ============ ===== ====== ===== ========= ===== ======== ======== ========
 #> # ℹ 1 more variable: icc <mls>
 #> # ℹ Between-person correlations above, within-person correlations below the
 #> #   diagonal.
 #> # ℹ Correlations marked with * are significant at p < .05, ** at p < .01, and
 #> #   *** at p < .001.
+#> # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+#> #   5–14).
 #> # ℹ Correlations estimated via variance decomposition.
 #> # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 ```
@@ -295,9 +305,9 @@ as_tibble(result_num)
 #>   variable       `1`   `2`   `3`   `4`   icc
 #>   <chr>        <dbl> <dbl> <dbl> <dbl> <dbl>
 #> 1 Self control NA    NA    NA    NA     1   
-#> 2 Wellbeing     0.61 NA     0.42 -0.43  0.46
-#> 3 Screen time  -0.67 -0.34 NA     0.29  0.45
-#> 4 Stress       -0.53 -0.38  0.38 NA     0.33
+#> 2 Wellbeing     0.47 NA     0.42 -0.4   0.5 
+#> 3 Screen time  -0.66 -0.32 NA     0.29  0.34
+#> 4 Stress       -0.55 -0.27  0.46 NA     0.39
 ```
 
 ## Bayesian Estimation

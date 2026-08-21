@@ -228,14 +228,16 @@ and between-group correlations are estimated and tested.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">------------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">---------</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span> <span style="color: #949494;">-----</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Self control   100   4.03  0.83 1.60–5.80     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     <span style="color: #949494;">–</span>  .42* -.43*   .46</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     <span style="color: #949494;">–</span>  .29*   .45</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     <span style="color: #949494;">–</span>   .33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Self control   100   3.93  0.70 2.40–6.20     <span style="color: #949494;">–</span>    NA    NA    NA  1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     <span style="color: #949494;">–</span>  .42* -.40*   .50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     <span style="color: #949494;">–</span>  .29*   .34</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     <span style="color: #949494;">–</span>   .39</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494;">============</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">======</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=========</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span> <span style="color: #949494;">=====</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Within-person correlations above, between-person correlations below the</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   diagonal.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ All correlations marked with a star are significant at p &lt; .05.</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   5–14).</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Correlations estimated via variance decomposition.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ Group-weighted multilevel descriptive statistics computed with mlstats.</span></span>
 <span class="r-in"><span></span></span>
@@ -275,6 +277,9 @@ and between-group correlations are estimated and tested.</p></div>
 <span class="r-in"><span>  method <span class="op">=</span> <span class="st">"bayes"</span>,</span></span>
 <span class="r-in"><span>  folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in .fun(model_code = .x1) : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Boost not found; call install.packages('BH')</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in .fun(model_code = .x1):</span> Boost not found; call install.packages('BH')</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

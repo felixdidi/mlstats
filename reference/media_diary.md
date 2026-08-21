@@ -2,10 +2,13 @@
 
 A simulated daily diary dataset for illustrating multilevel descriptive
 statistics with **mlstats**. The data mimics a study in which 100
-participants completed brief daily surveys for 14 consecutive days,
-reporting their wellbeing, perceived stress, entertainment media use,
-and enjoyment on that media. Trait self-control was measured once at the
-beginning of the study.
+participants were asked to complete a brief daily survey for up to 14
+consecutive days, reporting their wellbeing, perceived stress,
+entertainment media use, and enjoyment on that media. As in most real
+mobile diary studies, not everyone completes every day: the number of
+completed surveys per person is itself simulated (ranging from 5 to 14,
+median 12) to illustrate realistic, unequal group sizes. Trait
+self-control was measured once at the beginning of the study.
 
 The dataset is designed to illustrate the difference between
 within-person and between-person correlations, including a case where
@@ -31,11 +34,13 @@ media_diary
 
 ## Format
 
-A data frame with 1,400 rows and 6 columns:
+A data frame with 1,184 rows and 6 columns:
 
 - person:
 
-  Integer person identifier (1–100).
+  Integer person identifier (1–100). Each person contributes between 5
+  and 14 rows (diary days), simulating non-response; see
+  `data-raw/media_diary.R`.
 
 - self_control:
 
@@ -74,17 +79,17 @@ data("media_diary")
 
 # Quick look at the structure
 str(media_diary)
-#> tibble [1,400 × 6] (S3: tbl_df/tbl/data.frame)
-#>  $ person      : int [1:1400] 1 1 1 1 1 1 1 1 1 1 ...
-#>  $ self_control: num [1:1400] 5.1 5.1 5.1 5.1 5.1 5.1 5.1 5.1 5.1 5.1 ...
-#>  $ wellbeing   : num [1:1400] 4.9 5.4 5.8 6.5 5.5 5.9 6.4 5.7 6.5 4.8 ...
-#>  $ screen_time : num [1:1400] 80 120 98 112 21 84 48 58 39 82 ...
-#>  $ stress      : num [1:1400] 4.1 4 3.4 3.5 2.8 3.2 2.6 2.6 2.4 4 ...
-#>  $ enjoyment   : num [1:1400] 5.7 5.6 5 6.2 4.4 6 5.1 4.5 5.3 5.4 ...
+#> tibble [1,184 × 6] (S3: tbl_df/tbl/data.frame)
+#>  $ person      : int [1:1184] 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ self_control: num [1:1184] 5 5 5 5 5 5 5 5 5 5 ...
+#>  $ wellbeing   : num [1:1184] 3.5 4 3.4 3.7 3.9 4.3 5.3 3.5 3.1 3.9 ...
+#>  $ screen_time : num [1:1184] 83 82 103 105 68 143 139 105 75 55 ...
+#>  $ stress      : num [1:1184] 3.9 4.4 4.8 4.7 3.6 5.3 2.9 4.7 3.7 2.6 ...
+#>  $ enjoyment   : num [1:1184] 4.5 3.9 3.8 4.6 3.7 5 5.4 4.2 3.9 3.8 ...
 
 # Number of persons and observations
 length(unique(media_diary$person))  # 100 persons
 #> [1] 100
-nrow(media_diary)                   # 1,400 diary entries
-#> [1] 1400
+nrow(media_diary)                   # 1,184 diary entries (5-14 per person)
+#> [1] 1184
 ```
