@@ -37,7 +37,7 @@ pak::pak("felixdidi/mlstats")
 
 ## Example
 
-This example uses the simulated `media_diary` dataset included with **mlstats**. It mimics a study in which 100 participants completed brief daily surveys for 14 consecutive days (*N* = 100 persons, *T* = 1,400 daily observations).
+This example uses the simulated `media_diary` dataset included with **mlstats**. It mimics a study in which 100 participants were asked to complete a brief daily survey for up to 14 consecutive days (*N* = 100 persons, *T* = 5–14 daily observations per person, 1,184 total).
 
 ```{r mldesc, warning = FALSE}
 library(mlstats)

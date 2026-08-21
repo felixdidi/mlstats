@@ -121,6 +121,40 @@ utils::globalVariables("variable")
   base::tolower(group)
 }
 
+# Reports the number of groups, the total number of observations, and
+# observations per group.
+.group_size_note <- function(data, group) {
+  group_sizes <- base::table(data[[group]])
+  n_groups <- base::length(group_sizes)
+  n_total <- base::sum(group_sizes)
+  group_label <- .group_note_label(group)
+  group_label_plural <- base::paste0(group_label, if (n_groups == 1) "" else "s")
+  n_total_fmt <- scales::comma(n_total)
+
+  min_n <- base::min(group_sizes)
+  max_n <- base::max(group_sizes)
+
+  size_text <- if (min_n == max_n) {
+    base::paste0(min_n, " per ", group_label)
+  } else {
+    med_n <- stats::median(group_sizes)
+    med_fmt <- if (med_n == base::round(med_n)) {
+      base::sprintf("%.0f", med_n)
+    } else {
+      base::sprintf("%.1f", med_n)
+    }
+    base::paste0(
+      "median ", med_fmt, " per ", group_label,
+      "; range: ", min_n, "\u2013", max_n
+    )
+  }
+
+  base::paste0(
+    "Based on ", n_groups, " ", group_label_plural, " and ", n_total_fmt,
+    " observations (", size_text, ")."
+  )
+}
+
 # Shared footer-note builder for tbl_format_footer.mlstats_wb_tibble and
 # tbl_format_footer.mlstats_desc_tibble: the correlation-note, significance-
 # note, and method-note lines are identical for both classes.
@@ -150,6 +184,13 @@ utils::globalVariables("variable")
     base::paste0("\u2139 ", significance_note_val)
   }
 
+  group_size_note_val <- base::attr(x, "group_size_note", exact = TRUE)
+  group_size_note <- if (base::is.null(group_size_note_val)) {
+    NULL
+  } else {
+    base::paste0("\u2139 ", group_size_note_val)
+  }
+
   method <- base::attr(x, "method", exact = TRUE)
   method_note <- if (!base::is.null(method) && method == "sem") {
     "\u2139 Correlations estimated via two-level SEM (lavaan)."
@@ -163,7 +204,8 @@ utils::globalVariables("variable")
 
   notes <- base::c(
     format_comment(correlation_note, width = setup$width),
-    format_comment(significance_note, width = setup$width)
+    format_comment(significance_note, width = setup$width),
+    format_comment(group_size_note, width = setup$width)
   )
   if (!base::is.null(method_note)) {
     notes <- base::c(notes, format_comment(method_note, width = setup$width))

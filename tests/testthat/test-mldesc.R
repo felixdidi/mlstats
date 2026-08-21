@@ -698,6 +698,54 @@ test_that("mldesc stores default attributes for printing", {
   expect_match(attr(result_unweighted, "note_text"), "Unweighted")
 })
 
+test_that("mldesc stores a group_size_note attribute (balanced groups)", {
+  set.seed(4001)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result <- mldesc(data = data, group = "group", vars = c("x", "y"))
+
+  expect_equal(
+    attr(result, "group_size_note"),
+    "Based on 3 groups and 30 observations (10 per group)."
+  )
+})
+
+test_that("mldesc group_size_note reports median and range for unbalanced groups", {
+  set.seed(888)
+  data <- data.frame(
+    group = c(rep("A", 5), rep("B", 15), rep("C", 30)),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+
+  result <- mldesc(data = data, group = "group", vars = c("x", "y"))
+
+  expect_equal(
+    attr(result, "group_size_note"),
+    "Based on 3 groups and 50 observations (median 15 per group; range: 5–30)."
+  )
+})
+
+test_that("mldesc group_size_note is method-independent", {
+  set.seed(4005)
+  data <- data.frame(
+    group = rep(1:3, each = 10),
+    x = rnorm(30),
+    y = rnorm(30)
+  )
+
+  result_decomp <- mldesc(data, "group", c("x", "y"), method = "decomposition")
+  result_sem <- suppressWarnings(mldesc(data, "group", c("x", "y"), method = "sem"))
+
+  expected_note <- "Based on 3 groups and 30 observations (10 per group)."
+  expect_equal(attr(result_decomp, "group_size_note"), expected_note)
+  expect_equal(attr(result_sem, "group_size_note"), expected_note)
+})
+
 test_that("mldesc flip=FALSE stores correct attributes", {
   set.seed(4002)
   data <- data.frame(
@@ -1219,6 +1267,25 @@ test_that("mldesc print accepts a custom significance_note", {
 
   output <- capture.output(print(result, significance_note = "Custom significance note."))
   expect_true(any(grepl("Custom significance note", output)))
+})
+
+test_that("mldesc print accepts a custom group_size_note", {
+  set.seed(13)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+  result <- mldesc(data, "group", c("x", "y"))
+
+  output <- capture.output(print(result, group_size_note = "Custom group size note."))
+  expect_true(any(grepl("Custom group size note", output)))
+
+  result_gt <- print(result, "gt", group_size_note = "Custom group size note.")
+  expect_s3_class(result_gt, "gt_tbl")
+
+  result_tt <- print(result, "tt", group_size_note = "Custom group size note.")
+  expect_s4_class(result_tt, "tinytable")
 })
 
 # ---- Tests for `ci`/`folder` being no-ops outside method = "bayes" ----

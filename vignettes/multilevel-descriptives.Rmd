@@ -26,7 +26,10 @@ brief introduction to both functions see `vignette("mlstats")`.
 ## Example Data
 
 We use `media_diary`, a simulated daily diary dataset included with **mlstats**
-(100 participants over 14 days; *N* = 100 persons, *T* = 1,400 daily observations). The variables are:
+(100 participants asked to complete up to 14 daily surveys; as in most real
+mobile diary studies, not everyone completed every day, so *T* varies from
+5 to 14 observations per person, 1,184 total across the *N* = 100 persons).
+The variables are:
 
 - **`person`**: person identifier
 - **`self_control`**: trait self-control (stable between-person characteristic;

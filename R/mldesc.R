@@ -459,8 +459,9 @@ mldesc <- function(
     )
   }
 
-  # Get significance note from correlation matrix
+  # Get significance note and group size note from correlation matrix
   attr(result, "significance_note") <- base::attr(corr_matrix, "significance_note")
+  attr(result, "group_size_note") <- base::attr(corr_matrix, "group_size_note")
 
   if (method == "bayes") {
     attr(result, "note_text") <- if (weight) {

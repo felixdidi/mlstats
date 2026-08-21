@@ -2,7 +2,9 @@
 #
 # Design
 # ------
-# N = 100 persons, T = 14 days (1,400 rows total).
+# N = 100 persons, up to T = 14 days each. The number of completed diary
+# days per person is itself simulated (5-14, median 12) to mimic realistic
+# non-response/dropout in a mobile diary study.
 #
 # Variables
 # ---------
@@ -38,7 +40,10 @@
 
 set.seed(42)
 n_persons <- 100
-n_days    <- 14
+
+# Observations per person: floor of 5, ceiling of 14 (the maximum number of
+# diary prompts), centered so most people complete most days.
+person_days <- pmin(14, pmax(5, round(rnorm(n_persons, mean = 12, sd = 2.5))))
 
 # ---- Between-person level ------------------------------------------------
 
@@ -50,11 +55,12 @@ self_control_b <- rnorm(n_persons, mean = 4, sd = 0.8)
 person_wellbeing   <- 4.5 + 0.45 * (self_control_b - 4) + rnorm(n_persons, 0, 0.50)
 person_screen_time <- 130 - 20   * (self_control_b - 4) + rnorm(n_persons, 0, 20)
 person_stress      <- 3.8 - 0.40 * (self_control_b - 4) + rnorm(n_persons, 0, 0.50)
-person_enjoyment   <- 4.5 - 0.15 * (self_control_b - 4) + rnorm(n_persons, 0, 0.50)
+person_enjoyment   <- 4.5 + 0.5 * (person_wellbeing - 4.5) + 0.008 * (person_screen_time - 130) +
+  rnorm(n_persons, 0, 0.45)
 
 # ---- Within-person level -------------------------------------------------
 
-n_total <- n_persons * n_days
+n_total <- sum(person_days)
 
 # Daily stress deviations
 stress_w <- rnorm(n_total, 0, 0.75)
@@ -77,21 +83,21 @@ enjoyment_w <- 0.30 * wellbeing_w + 0.008 * screen_time_w + rnorm(n_total, 0, 0.
 # ---- Assemble and clip to valid ranges -----------------------------------
 
 media_diary <- dplyr::tibble(
-  person       = rep(seq_len(n_persons), each = n_days),
+  person       = rep(seq_len(n_persons), times = person_days),
   self_control = round(
-    pmin(pmax(rep(self_control_b, each = n_days), 1), 7), 1
+    pmin(pmax(rep(self_control_b, times = person_days), 1), 7), 1
   ),
   wellbeing    = round(
-    pmin(pmax(rep(person_wellbeing,   each = n_days) + wellbeing_w,   1), 7), 1
+    pmin(pmax(rep(person_wellbeing,   times = person_days) + wellbeing_w,   1), 7), 1
   ),
   screen_time  = pmax(
-    round(rep(person_screen_time, each = n_days) + screen_time_w), 0
+    round(rep(person_screen_time, times = person_days) + screen_time_w), 0
   ),
   stress       = round(
-    pmin(pmax(rep(person_stress,      each = n_days) + stress_w,      1), 7), 1
+    pmin(pmax(rep(person_stress,      times = person_days) + stress_w,      1), 7), 1
   ),
   enjoyment    = round(
-    pmin(pmax(rep(person_enjoyment,   each = n_days) + enjoyment_w,   1), 7), 1
+    pmin(pmax(rep(person_enjoyment,   times = person_days) + enjoyment_w,   1), 7), 1
   )
 )
 

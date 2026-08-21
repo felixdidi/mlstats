@@ -314,6 +314,7 @@ within_between_correlations <- function(
     )
   }
   base::attr(result_tibble, "significance_note") <- significance_note
+  base::attr(result_tibble, "group_size_note") <- .group_size_note(data, group)
   base::attr(result_tibble, "method") <- method
   if (method == "bayes") {
     base::attr(result_tibble, "bayesian") <- TRUE

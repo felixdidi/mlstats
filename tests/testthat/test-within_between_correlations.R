@@ -267,6 +267,64 @@ test_that("within_between_correlations handles unbalanced groups", {
   expect_equal(nrow(result), 2)
 })
 
+test_that("within_between_correlations stores a group_size_note attribute (balanced groups)", {
+  set.seed(888)
+  data <- data.frame(
+    group = rep(1:5, each = 10),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  expect_equal(
+    attr(result, "group_size_note"),
+    "Based on 5 groups and 50 observations (10 per group)."
+  )
+})
+
+test_that("within_between_correlations group_size_note reports median and range for unbalanced groups", {
+  set.seed(777)
+  data <- data.frame(
+    group = c(rep("A", 5), rep("B", 15), rep("C", 30)),
+    x = rnorm(50),
+    y = rnorm(50)
+  )
+
+  result <- within_between_correlations(
+    data = data,
+    group = "group",
+    vars = c("x", "y")
+  )
+
+  expect_equal(
+    attr(result, "group_size_note"),
+    "Based on 3 groups and 50 observations (median 15 per group; range: 5–30)."
+  )
+})
+
+test_that("within_between_correlations group_size_note is method-independent", {
+  skip_if_no_bayes()
+  data <- bayes_fixture_basic
+
+  result_decomp <- within_between_correlations(data, group = "group", vars = c("x", "y"), method = "decomposition")
+  result_sem <- suppressWarnings(
+    within_between_correlations(data, group = "group", vars = c("x", "y"), method = "sem")
+  )
+  result_bayes <- within_between_correlations(
+    data, group = "group", vars = c("x", "y"), method = "bayes", folder = bayes_cache_folder
+  )
+
+  expected_note <- "Based on 3 groups and 30 observations (10 per group)."
+  expect_equal(attr(result_decomp, "group_size_note"), expected_note)
+  expect_equal(attr(result_sem, "group_size_note"), expected_note)
+  expect_equal(attr(result_bayes, "group_size_note"), expected_note)
+})
+
 test_that("within_between_correlations output format is correct", {
   set.seed(888)
   data <- data.frame(
@@ -599,6 +657,7 @@ test_that("within_between_correlations print method accepts custom parameters", 
   custom_title <- "Custom Within-Between Correlations Table"
   custom_note <- "Custom correlation interpretation"
   custom_significance_note <- "Custom significance interpretation"
+  custom_group_size_note <- "Custom group size note"
   custom_footer <- "Custom footer note"
 
   result_gt <- print(
@@ -607,6 +666,7 @@ test_that("within_between_correlations print method accepts custom parameters", 
     table_title = custom_title,
     correlation_note = custom_note,
     significance_note = custom_significance_note,
+    group_size_note = custom_group_size_note,
     note_text = custom_footer
   )
 
@@ -616,6 +676,7 @@ test_that("within_between_correlations print method accepts custom parameters", 
     table_title = custom_title,
     correlation_note = custom_note,
     significance_note = custom_significance_note,
+    group_size_note = custom_group_size_note,
     note_text = custom_footer
   )
 

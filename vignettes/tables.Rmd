@@ -28,7 +28,10 @@ output to a fully-customised, journal-ready table.
 ## Example data
 
 We use `media_diary`, a simulated daily diary dataset included with **mlstats**
-(100 participants over 14 days; *N* = 100 persons, *T* = 1,400 daily observations). See `?media_diary` for details.
+(100 participants asked to complete up to 14 daily surveys; as in most real
+mobile diary studies, not everyone completed every day, so *T* varies from
+5 to 14 observations per person, 1,184 total across the *N* = 100 persons).
+See `?media_diary` for details.
 
 ```{r data}
 data("media_diary")
@@ -61,14 +64,15 @@ The result is a `tinytable` object that renders to HTML, PDF, or Word via Quarto
 ### Custom title and notes
 
 All print methods accept `table_title`, `correlation_note`,
-`significance_note`, and `note_text`:
+`significance_note`, `group_size_note`, and `note_text`:
 
 ```{r tt-custom, warning = FALSE}
 print(result,
   format           = "tt",
   table_title      = "Daily diary study: descriptive statistics and multilevel correlations",
   correlation_note = "Within-person correlations above, between-person below the diagonal.",
-  note_text        = "N = 100 persons, 14 daily observations each. Simulated data."
+  group_size_note  = "Based on 100 persons; observations per person varied due to non-response.",
+  note_text        = "Simulated data."
 )
 ```
 
@@ -151,7 +155,7 @@ result |>
     format           = "tt",
     table_title      = "Descriptive statistics and multilevel correlations",
     correlation_note = "Within-person correlations above, between-person below the diagonal.",
-    note_text        = "N = 100, T = 1,400 daily observations. Self-control was measured as a trait (between-person only)."
+    note_text        = "N = 100, T = 5-14 daily observations per person (1,184 total). Self-control was measured as a trait (between-person only)."
   )
 ```
 
@@ -175,7 +179,7 @@ result |>
     format           = "gt",
     table_title      = "Descriptive statistics and multilevel correlations",
     correlation_note = "Within-person correlations above, between-person below the diagonal.",
-    note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 1,400 daily observations."
+    note_text        = "<i>Note</i>. <i>N</i> = 100, <i>T</i> = 5–14 daily observations per person (1,184 total)."
   ) |>
   gt::tab_source_note(
     source_note = gt::html(

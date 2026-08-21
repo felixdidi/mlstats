@@ -3,10 +3,13 @@
 #' @description
 #' A simulated daily diary dataset for illustrating multilevel descriptive
 #' statistics with **mlstats**. The data mimics a study in which 100
-#' participants completed brief daily surveys for 14 consecutive days,
-#' reporting their wellbeing, perceived stress, entertainment media use, and
-#' enjoyment on that media. Trait self-control was measured once at the
-#' beginning of the study.
+#' participants were asked to complete a brief daily survey for up to 14
+#' consecutive days, reporting their wellbeing, perceived stress,
+#' entertainment media use, and enjoyment on that media. As in most real
+#' mobile diary studies, not everyone completes every day: the number of
+#' completed surveys per person is itself simulated (ranging from 5 to 14,
+#' median 12) to illustrate realistic, unequal group sizes. Trait
+#' self-control was measured once at the beginning of the study.
 #'
 #' The dataset is designed to illustrate the difference between within-person
 #' and between-person correlations, including a case where the two go in
@@ -23,9 +26,11 @@
 #' The pooled (naive) correlation between **screen_time** and **wellbeing**
 #' is near zero, masking both of these real effects.
 #'
-#' @format A data frame with 1,400 rows and 6 columns:
+#' @format A data frame with 1,184 rows and 6 columns:
 #' \describe{
-#'   \item{person}{Integer person identifier (1–100).}
+#'   \item{person}{Integer person identifier (1–100). Each person
+#'     contributes between 5 and 14 rows (diary days), simulating
+#'     non-response; see \code{data-raw/media_diary.R}.}
 #'   \item{self_control}{Trait self-control, measured once at study entry
 #'     (1–7 scale, higher = more self-control). Constant within persons;
 #'     ICC approximately 1.}
@@ -51,5 +56,5 @@
 #'
 #' # Number of persons and observations
 #' length(unique(media_diary$person))  # 100 persons
-#' nrow(media_diary)                   # 1,400 diary entries
+#' nrow(media_diary)                   # 1,184 diary entries (5-14 per person)
 "media_diary"

@@ -35,6 +35,7 @@ print.mlstats_desc_tibble <- function(
   table_title = NULL,
   correlation_note = NULL,
   significance_note = NULL,
+  group_size_note = NULL,
   note_text = NULL,
   ...
 ) {
@@ -48,6 +49,9 @@ print.mlstats_desc_tibble <- function(
   if (!is.null(significance_note)) {
     attr(x, "significance_note") <- significance_note
   }
+  if (!is.null(group_size_note)) {
+    attr(x, "group_size_note") <- group_size_note
+  }
   if (!is.null(note_text)) {
     attr(x, "note_text") <- note_text
   }
@@ -58,6 +62,7 @@ print.mlstats_desc_tibble <- function(
   }
   correlation_note <- attr(x, "correlation_note", exact = TRUE)
   significance_note <- attr(x, "significance_note", exact = TRUE)
+  group_size_note <- attr(x, "group_size_note", exact = TRUE)
   note_text <- attr(x, "note_text", exact = TRUE)
 
   if (format == "gt") {
@@ -180,6 +185,9 @@ print.mlstats_desc_tibble <- function(
         source_note = gt::md(note_text)
       ) |>
       gt::tab_source_note(
+        source_note = gt::md(group_size_note)
+      ) |>
+      gt::tab_source_note(
         source_note = gt::md(
           base::paste0(
             "<sup>a</sup> ",
@@ -199,10 +207,10 @@ print.mlstats_desc_tibble <- function(
 
     return(gt_result)
   } else if (format == "tt") {
-    
+
     all_cols <- base::names(x)
     correlation_cols <- all_cols[base::grepl("^[0-9]+$", all_cols)]
-    
+
     tt_data <-
       x |>
       dplyr::rename_with(
@@ -226,6 +234,7 @@ print.mlstats_desc_tibble <- function(
         caption = table_title,
         notes = list(
           stringr::str_c("*Note.* ", note_text),
+          group_size_note,
           a = correlation_note,
           b = significance_note
         )

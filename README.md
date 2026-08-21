@@ -54,9 +54,9 @@ pak::pak("felixdidi/mlstats")
 ## Example
 
 This example uses the simulated `media_diary` dataset included with
-**mlstats**. It mimics a study in which 100 participants completed brief
-daily surveys for 14 consecutive days (*N* = 100 persons, *T* = 1,400
-daily observations).
+**mlstats**. It mimics a study in which 100 participants were asked to
+complete a brief daily survey for up to 14 consecutive days (*N* = 100
+persons, *T* = 5–14 daily observations per person, 1,184 total).
 
 ``` r
 library(mlstats)
@@ -73,14 +73,16 @@ media_diary |>
     ##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
     ##   variable     n_obs      m    sd     range   `1`   `2`   `3`   `4`   icc
     ##   ------------ ----- ------ ----- --------- ----- ----- ----- ----- -----
-    ## 1 Self control   100   4.03  0.83 1.60–5.80     –    NA    NA    NA  1.00
-    ## 2 Wellbeing    1,400   4.45  0.87 1.50–6.90  .61*     –  .42* -.43*   .46
-    ## 3 Screen time  1,400 128.66 42.29     0–272 -.67* -.34*     –  .29*   .45
-    ## 4 Stress       1,400   3.81  0.91       1–7 -.53* -.38*  .38*     –   .33
+    ## 1 Self control   100   3.93  0.70 2.40–6.20     –    NA    NA    NA  1.00
+    ## 2 Wellbeing    1,184   4.42  0.89 1.50–7.00  .47*     –  .42* -.40*   .50
+    ## 3 Screen time  1,184 132.05 39.01    15–246 -.66* -.32*     –  .29*   .34
+    ## 4 Stress       1,184   3.77  0.95       1–7 -.55* -.27*  .46*     –   .39
     ##   ============ ===== ====== ===== ========= ===== ===== ===== ===== =====
     ## # ℹ Within-person correlations above, between-person correlations below the
     ## #   diagonal.
     ## # ℹ All correlations marked with a star are significant at p < .05.
+    ## # ℹ Based on 100 persons and 1,184 observations (median 12 per person; range:
+    ## #   5–14).
     ## # ℹ Correlations estimated via variance decomposition.
     ## # ℹ Group-weighted multilevel descriptive statistics computed with mlstats.
 
