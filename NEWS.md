@@ -1,9 +1,10 @@
-# mlstats (development version)
+# mlstats 0.1.2
 
 * `mldesc()` and `within_between_correlations()` now report the number of
   groups, the total number of observations, and observations per group
   (e.g., "Based on 100 persons and 1,184 observations (median 12 per
-  person; range: 5–14).") in a note.
+  person; range: 5–14).") in a note. The note can be replaced via the new
+  `group_size_note` argument of the `print()` methods.
 
 * The bundled `media_diary` example dataset now has a variable number of
   diary days per person (5–14, median 12; 1,184 rows total) instead of a
