@@ -223,7 +223,8 @@ between-person covariates in REWB models, not specific to these simulated data.
 The between-person coefficient changes substantially — from
 `r round(fixef(fit_rewb)["screen_time_between"], 4)` (significant) in the
 unadjusted model to
-`r round(fixef(fit_rewb_conf)["screen_time_between"], 4)` (*p* = .23,
+`r round(fixef(fit_rewb_conf)["screen_time_between"], 4)`
+(*p* = `r sub("^0", "", sprintf("%.2f", coef(summary(fit_rewb_conf))["screen_time_between", "Pr(>|t|)"]))`,
 non-significant) after adjusting for `self_control`. This illustrates confounding:
 the simulation was designed so that the apparent between-person harm of screen
 time is driven by self-control. In a real study, a similar pattern would suggest
