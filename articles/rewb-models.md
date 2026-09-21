@@ -260,7 +260,7 @@ In this simulated dataset, the within-person coefficient (0.0084) is
 positive and highly significant. To illustrate how such an effect would
 be interpreted: on days when someone watches one minute more than their
 own average, their wellbeing is 0.0084 points higher. For a person
-watching 60 minutes more than usual, the expected gain would be 0.5
+watching 60 minutes more than usual, the expected gain would be 0.50
 wellbeing points.
 
 The between-person coefficient (-0.0085) is negative and significant.
@@ -359,7 +359,7 @@ estimate. This is a general property of between-person covariates in
 REWB models, not specific to these simulated data.
 
 The between-person coefficient changes substantially — from -0.0085
-(significant) in the unadjusted model to 5^{-4} (*p* = .87,
+(significant) in the unadjusted model to 0.0005 (*p* = .87,
 non-significant) after adjusting for `self_control`. This illustrates
 confounding: the simulation was designed so that the apparent
 between-person harm of screen time is driven by self-control. In a real
