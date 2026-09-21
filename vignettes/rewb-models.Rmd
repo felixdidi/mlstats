@@ -164,20 +164,20 @@ summary(fit_rewb, correlation = FALSE)
 **Interpreting the coefficients:**
 
 In this simulated dataset, the within-person coefficient
-(`r round(fixef(fit_rewb)["screen_time_within"], 4)`) is positive and highly
+(`r sprintf("%.4f", fixef(fit_rewb)["screen_time_within"])`) is positive and highly
 significant. To illustrate how such an effect would be interpreted: on days
 when someone watches one minute more than their own average, their wellbeing is
-`r round(fixef(fit_rewb)["screen_time_within"], 4)` points higher. For a person
+`r sprintf("%.4f", fixef(fit_rewb)["screen_time_within"])` points higher. For a person
 watching 60 minutes more than usual, the expected gain would be
-`r round(60 * fixef(fit_rewb)["screen_time_within"], 2)` wellbeing points.
+`r sprintf("%.2f", 60 * fixef(fit_rewb)["screen_time_within"])` wellbeing points.
 
-The between-person coefficient (`r round(fixef(fit_rewb)["screen_time_between"], 4)`)
+The between-person coefficient (`r sprintf("%.4f", fixef(fit_rewb)["screen_time_between"])`)
 is negative and significant. Illustrating interpretation: people who watch one
 minute more per day on average show
-`r abs(round(fixef(fit_rewb)["screen_time_between"], 4))` lower wellbeing. For
+`r sprintf("%.4f", abs(fixef(fit_rewb)["screen_time_between"]))` lower wellbeing. For
 someone who watches 60 minutes more per day on average than another person, the
 expected wellbeing gap would be
-`r abs(round(60 * fixef(fit_rewb)["screen_time_between"], 2))` points.
+`r sprintf("%.2f", abs(60 * fixef(fit_rewb)["screen_time_between"]))` points.
 
 The two effects point in *opposite directions* — exactly the pattern built into
 the simulation. A naive regression conflates them:
@@ -215,15 +215,15 @@ summary(fit_rewb_conf, correlation = FALSE)
 **Interpreting the coefficients:**
 
 In this simulated dataset, the within-person coefficient is unchanged
-(`r round(fixef(fit_rewb_conf)["screen_time_within"], 4)`): `self_control` is a
+(`r sprintf("%.4f", fixef(fit_rewb_conf)["screen_time_within"])`): `self_control` is a
 stable trait measured once per person, so it carries no within-person variation
 and cannot alter the within-person estimate. This is a general property of
 between-person covariates in REWB models, not specific to these simulated data.
 
 The between-person coefficient changes substantially — from
-`r round(fixef(fit_rewb)["screen_time_between"], 4)` (significant) in the
+`r sprintf("%.4f", fixef(fit_rewb)["screen_time_between"])` (significant) in the
 unadjusted model to
-`r round(fixef(fit_rewb_conf)["screen_time_between"], 4)`
+`r sprintf("%.4f", fixef(fit_rewb_conf)["screen_time_between"])`
 (*p* = `r sub("^0", "", sprintf("%.2f", coef(summary(fit_rewb_conf))["screen_time_between", "Pr(>|t|)"]))`,
 non-significant) after adjusting for `self_control`. This illustrates confounding:
 the simulation was designed so that the apparent between-person harm of screen
