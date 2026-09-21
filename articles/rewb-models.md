@@ -359,7 +359,7 @@ estimate. This is a general property of between-person covariates in
 REWB models, not specific to these simulated data.
 
 The between-person coefficient changes substantially — from -0.0085
-(significant) in the unadjusted model to 5^{-4} (*p* = .23,
+(significant) in the unadjusted model to 5^{-4} (*p* = .87,
 non-significant) after adjusting for `self_control`. This illustrates
 confounding: the simulation was designed so that the apparent
 between-person harm of screen time is driven by self-control. In a real
