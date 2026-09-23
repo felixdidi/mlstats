@@ -250,8 +250,5 @@ result_bayes <- mldesc(
   method = "bayes",
   folder = tempdir()
 )
-#> Error in .fun(model_code = .x1) : 
-#>   Boost not found; call install.packages('BH')
-#> Error in .fun(model_code = .x1): Boost not found; call install.packages('BH')
 # }
 ```

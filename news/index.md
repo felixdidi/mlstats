@@ -1,13 +1,17 @@
 # Changelog
 
-## mlstats (development version)
+## mlstats 0.1.2
+
+CRAN release: 2026-09-21
 
 - [`mldesc()`](https://felixdidi.github.io/mlstats/reference/mldesc.md)
   and
   [`within_between_correlations()`](https://felixdidi.github.io/mlstats/reference/within_between_correlations.md)
   now report the number of groups, the total number of observations, and
   observations per group (e.g., “Based on 100 persons and 1,184
-  observations (median 12 per person; range: 5–14).”) in a note.
+  observations (median 12 per person; range: 5–14).”) in a note. The
+  note can be replaced via the new `group_size_note` argument of the
+  [`print()`](https://rdrr.io/r/base/print.html) methods.
 
 - The bundled `media_diary` example dataset now has a variable number of
   diary days per person (5–14, median 12; 1,184 rows total) instead of a
